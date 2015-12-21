@@ -16,7 +16,7 @@ import scala.io.Source
 @RunWith(classOf[JUnitRunner])
 class IOTest extends FunSuite {
 
-  val testCache = "test_test"
+  val testCache = "test"
   val articles = {
     val raw = Corpus.articles(files = Corpus.walk(new File(Config.testPath + testCache), ".xml"))
     val annotations = Corpus.annotations()
