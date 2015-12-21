@@ -1,0 +1,53 @@
+plugins {
+    id 'scala'
+    id 'application'
+    id 'com.github.johnrengelman.shadow' version '1.2.2'
+}
+
+sourceCompatibility = 1.7
+
+mainClassName = 'no.habitats.corpus.SparkUtil'
+
+repositories {
+    mavenCentral()
+}
+
+shadowJar {
+    zip64 = true
+    dependencies {
+        exclude(dependency('org.apache.spark:.*'))
+    }
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    testCompile 'org.scalatest:scalatest_2.10:3.0.0-M7'
+    compile 'org.apache.hbase:hbase-client:1.0.1'
+    compile 'org.apache.hbase:hbase-common:1.0.1'
+    compile 'org.apache.hbase:hbase-server:1.0.1'
+    compile 'org.apache.hbase:hbase-protocol:1.0.1'
+    compile 'org.mortbay.jetty.alpn:alpn-boot:8.1.6.v20151105'
+    compile 'com.esotericsoftware:reflectasm:+'
+    compile 'com.esotericsoftware.reflectasm:reflectasm:+'
+    compile 'org.cloudera.htrace:htrace-core:2.02'
+    compile 'com.google.code.gson:gson:2.4'
+    compile 'com.google.cloud.bigtable:bigtable-hbase-1.0:0.2.0'
+    compile 'org.apache.jena:jena-core:3.0.0' // RDF
+    compile 'org.apache.spark:spark-core_2.10:1.5.0'
+    compile 'org.apache.spark:spark-mllib_2.10:1.5.0'
+    // Theese are required for json4s to work. Something imported a depricated version.
+    compile 'com.fasterxml.jackson.core:jackson-core:2.6.3'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.6.3'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.3'
+    compile 'com.fasterxml.jackson.module:jackson-module-scala_2.10:2.6.3'
+    // The main Json library
+    compile 'org.json4s:json4s-native_2.10:3.3.0'
+    compile 'org.json4s:json4s-jackson_2.10:3.3.0'
+    compile files('libs/alpn-boot-8.1.6.v20151105.jar')
+}
+
+configurations {
+    all {
+        exclude group: 'org.mortbay.jetty'
+    }
+}
