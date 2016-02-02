@@ -5,6 +5,7 @@
 import java.io.File
 
 import no.habitats.corpus._
+import no.habitats.corpus.sources.FreeBase
 import no.habitats.corpus.spark.Preprocess._
 import no.habitats.corpus.spark.{Context, Preprocess}
 import org.junit.runner.RunWith
@@ -37,12 +38,12 @@ class CorpusTest extends FunSuite {
     val a = Preprocess.computeIptc(sc.parallelize(articles.take(2)), true)
     val yo = a.collect
     val annCounts = a.flatMap(a => a.iptc.map(c => (c, a.ann.size))).reduceByKey(_ + _).collectAsMap
-    Log.r3(annCounts.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "annotation_pr_iptc")
+    Log.toFile(annCounts.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "annotation_pr_iptc")
     val artByAnn = a.flatMap(a => a.iptc.map(c => (c, 1))).reduceByKey(_+ _).collectAsMap
-    Log.r3(artByAnn.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "articles_pr_iptc")
+    Log.toFile(artByAnn.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "articles_pr_iptc")
     val iptc = a.flatMap(_.iptc).distinct.collect
     val avgAnnIptc = iptc.map(c => (c, annCounts(c).toDouble / artByAnn(c))).toMap
-    Log.r3(avgAnnIptc.map(c => f"${c._1}%30s ${c._2}%10.0f").mkString("\n"), "average_ann_pr_iptc")
+    Log.toFile(avgAnnIptc.map(c => f"${c._1}%30s ${c._2}%10.0f").mkString("\n"), "average_ann_pr_iptc")
     annCounts.foreach(println)
   }
 
@@ -57,10 +58,7 @@ class CorpusTest extends FunSuite {
   test("print stuff") {
     val prefs = Prefs(
       wikiDataOnly = false,
-      //      salienceMultiplier = true,
-      salientOnly = false,
-      termFrequencyThreshold = 2,
-      wikiDataBroadSalience = 1
+      termFrequencyThreshold = 2
     )
 
     val superRaw = Corpus.rawArticles(files = testFiles)
@@ -74,7 +72,7 @@ class CorpusTest extends FunSuite {
 
     val phrases = processed.flatMap(_.ann.keySet).distinct.toSeq.sorted
     println(phrases.map(p => f"$p%-200s").map(_.substring(0, 15)).mkString(f"${"Freebase"}%-15s", "  ", ""))
-    println(phrases.map(p => if (FreeBase.fbToWikiMapping.contains(p)) "Q" + FreeBase.fbToWikiMapping(p) else "").map(p => f"${p}%-200s").map(_.substring(0, 15)).mkString(f"${"WikiData"}%-15s", "  ", ""))
+    println(phrases.map(p => if (FreeBase.fbToWikiMapping.contains(p)) "Q" + FreeBase.fbToWikiMapping(p) else "").map(p => f"$p%-200s").map(_.substring(0, 15)).mkString(f"${"WikiData"}%-15s", "  ", ""))
     println(phrases.map(p => if (FreeBase.fbToWikiMapping.contains(p)) FreeBase.wdToString(FreeBase.fbToWikiMapping(p)) else "").map(p => f"${p}%-200s").map(_.substring(0, 15)).mkString(f"${"Phrase"}%-15s", "  ", ""))
     processed.map(a => a.toVector(phrases)).map(_.toArray).map(_.map(d => f"$d%.3f").map(p => f"${p}%-15s").mkString(f"${"Article "}%-15s", "  ", "")).foreach(println)
   }

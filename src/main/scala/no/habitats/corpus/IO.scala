@@ -11,7 +11,7 @@ import scala.util.Marshal
 
 object IO extends JsonSerializer {
   val rddCacheDir = Config.cachePath + "rdd_" + Config.data
-  val cacheFile = Config.cachePath + Config.data + ".cache"
+  val cacheFile   = Config.cachePath + Config.data + ".cache"
 
   // General methods
   def cache(seq: Seq[Article], cacheFile: String = cacheFile) = {
@@ -38,7 +38,7 @@ object IO extends JsonSerializer {
     val annotations = rdd.flatMap(_.ann.values).map(ann => (ann.id, ann.mc)).reduceByKey(_ + _).collect.sortBy(_._2)
     val annotationsUnique = rdd.flatMap(_.ann.values).map(ann => (ann.id, 1)).reduceByKey(_ + _).collect.sortBy(_._2)
 
-    def cache(name: String, annotations:Seq[(String, Int)]) = {
+    def cache(name: String, annotations: Seq[(String, Int)]) = {
       val f = new File(name)
       val p = new PrintWriter(f)
       f.createNewFile()

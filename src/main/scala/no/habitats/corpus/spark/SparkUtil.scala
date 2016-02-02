@@ -1,8 +1,6 @@
 package no.habitats.corpus.spark
 
-import java.io.{File, PrintWriter}
-
-import no.habitats.corpus.hbase.{C, HBaseUtil}
+import no.habitats.corpus.hbase.HBaseUtil
 import no.habitats.corpus.models.Article
 import no.habitats.corpus.{Config, Log, Prefs}
 import org.apache.log4j.Logger
@@ -13,7 +11,7 @@ import org.apache.spark.rdd.RDD
 object SparkUtil {
   @transient lazy val log = Logger.getLogger(getClass.getName)
   val cacheDir = "cache"
-  lazy val sc = if (Config.cluster) Context.clusterContext else Context.localContext
+  lazy val sc = if (Config.standalone) Context.localContext else Context.clusterContext
   var iter = 0
 
   def sparkTest() = {
@@ -23,11 +21,9 @@ object SparkUtil {
   lazy val rdd: RDD[Article] = RddFetcher.rdd(sc)
 
   def main(args: Array[String]) = {
-    // init config
-    System.setProperty("hadoop.home.dir", "C:\\hadoop\\")
 
     // args
-    if (args.length > 0) Config.cluster = args(0).toBoolean
+    if (args.length > 0) Config.standalone = args(0).toBoolean
     if (args.length > 1) Config.rdd = args(1)
     if (args.length > 2) Config.job = args(2)
     if (args.length > 3) Config.data = args(3)
@@ -46,7 +42,6 @@ object SparkUtil {
       case "preprocess" => Preprocess.preprocess(sc, sc.broadcast(Prefs()), rdd)
       case "train" =>
         //        Experiments.baseline(sc, rdd)
-        //        Experiments.salienceExperiment(sc, rdd)
         //        Experiments.frequencyExperiment(sc, rdd)
         Experiments.stats(sc, rdd)
       //        Experiments.ontologyExperiment(sc, rdd)
@@ -75,16 +70,6 @@ object SparkUtil {
       .map(w => w.replaceAll("[^a-zA-Z0-9]", ""))
       .map(w => (w, 1)).reduceByKey(_ + _)
       .collect.sortBy(_._2).reverse.toMap
-  }
-
-  // WRITE RESULTS TO FILE AS (KEY, VALUE) PAIRS
-  def writeResults(name: String, res: Map[String, Int]) = {
-    val f = new File(name)
-    f.delete()
-    f.createNewFile()
-    val p = new PrintWriter(f)
-    res.foreach(r => p.println(r._1 + C.delim + r._2))
-    p.close()
   }
 
   def memstat() = {

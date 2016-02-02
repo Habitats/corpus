@@ -94,5 +94,5 @@ object W2V extends App {
 
   // load google
   val gModel = new File("D:/Archive/w2v/freebase-vectors-skipgram1000-en.bin")
-  val gVec = WordVectorSerializer.loadGoogleModel(gModel, true)
+  val gVec   = WordVectorSerializer.loadGoogleModel(gModel, true)
 }

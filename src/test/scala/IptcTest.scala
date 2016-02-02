@@ -2,7 +2,7 @@
   * Created by Patrick on 13.11.2015.
   */
 
-import no.habitats.corpus._
+import no.habitats.corpus.sources.IPTC
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -44,10 +44,5 @@ class IptcTest extends FunSuite {
     assert(expectedBroad == broad)
     assert(expectedBroadMinus == broadMinus)
     assert(expectedBroadMinus2 == broadMinus2)
-  }
-
-  test("iptc?") {
-    val desc = "united states international relations, guides, world, politics and government, \n              united states armament and defense, features, candidates, middle east, armament, \n              defense and military forces, iran, international relations, washington, \n              united states politics and government, travel, shiite muslims, \n              countries and territories, news, iraq, top, destinations, campaign 2004".split(",").map(_.trim)
-    IPTC.toBroad(desc.toSet, 0)
   }
 }

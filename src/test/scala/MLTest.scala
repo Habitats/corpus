@@ -89,24 +89,24 @@ class MLTest extends FunSuite {
   test("feature vector") {
     val a1id = "a1"
     val ann1 = Seq(
-      Annotation(articleId = a1id, index = 0, phrase = A, salience = 1, mc = 1, wd = A),
-      Annotation(articleId = a1id, index = 1, phrase = B, salience = 1, mc = 2, wd = B),
-      Annotation(articleId = a1id, index = 2, phrase = C, salience = 0, mc = 3, wd = C)
+      Annotation(articleId = a1id, index = 0, phrase = A, mc = 1, wd = A),
+      Annotation(articleId = a1id, index = 1, phrase = B, mc = 2, wd = B),
+      Annotation(articleId = a1id, index = 2, phrase = C, mc = 3, wd = C)
     )
     val a1 = Article(id = a1id, ann = ann1.map(x => (x.id, x)).toMap)
 
     val a2id = "a2"
     val ann2 = Seq(
-      Annotation(articleId = a2id, index = 1, phrase = B, salience = 1, mc = 2, wd = B),
-      Annotation(articleId = a2id, index = 2, phrase = C, salience = 1, mc = 1, wd = C),
-      Annotation(articleId = a2id, index = 2, phrase = D, salience = 2, mc = 1, wd = D)
+      Annotation(articleId = a2id, index = 1, phrase = B, mc = 2, wd = B),
+      Annotation(articleId = a2id, index = 2, phrase = C, mc = 1, wd = C),
+      Annotation(articleId = a2id, index = 2, phrase = D, mc = 1, wd = D)
     )
     val a2 = Article(id = a2id, ann = ann2.map(x => (x.id, x)).toMap)
 
     val a3id = "a3"
     val ann3 = Seq(
-      Annotation(articleId = a3id, index = 0, phrase = C, salience = 1, mc = 3, wd = C),
-      Annotation(articleId = a3id, index = 1, phrase = D, salience = 0, mc = 2, wd = D)
+      Annotation(articleId = a3id, index = 0, phrase = C, mc = 3, wd = C),
+      Annotation(articleId = a3id, index = 1, phrase = D, mc = 2, wd = D)
     )
     val a3 = Article(id = a3id, ann = ann3.map(x => (x.id, x)).toMap)
 
@@ -140,14 +140,10 @@ class MLTest extends FunSuite {
     assert(tfidfann2.tfIdf === ans2)
     assert(tfidfann3.tfIdf === ans3)
 
-    assert(tfidfann1.salientTfIdf(-0.5) === ans1 + (ans1 ) * -0.5)
-    assert(tfidfann2.salientTfIdf(2) === ans2 + (ans2) * 2)
-    assert(tfidfann3.salientTfIdf(2) === 0.0)
-
     val computed = tc.computed.collect
     val denseVectors = computed.map(a => (a.id, a.toVectorDense(Seq(A,B,C,D))))
     val sparseVectors = computed.map(a => (a.id, a.toVectorSparse(Seq(A,B,C,D))))
-    for(i <- 0 until computed.size){
+    for(i <- computed.indices){
       val d = denseVectors(i)._2
       val s = sparseVectors(i)._2
       assert(s === d.toSparse)

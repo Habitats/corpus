@@ -28,7 +28,7 @@ object RddFetcher {
     Log.i("Loading local RDD ...")
     val annotations = Corpus.annotations()
     val articles = Corpus.articles()
-    val annotatedArticles = Corpus.annotatedArticles(articles, annotations).map(_.strip)
+    val annotatedArticles = Corpus.annotatedArticles(articles, annotations)
     val rdd = sc.parallelize(annotatedArticles)
     Log.i(s"Loaded ${annotatedArticles.size} articles in ${(System.currentTimeMillis - s) / 1000} seconds")
     cache(rdd)
@@ -81,7 +81,7 @@ object RddFetcher {
 
   def cache(rdd: RDD[Article]) = {
     try {
-      if (Config.cluster) {
+      if (Config.standalone) {
         IO.cacheRdd(rdd)
       } else {
         IO.cache(rdd.collect)

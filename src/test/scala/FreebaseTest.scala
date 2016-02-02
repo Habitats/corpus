@@ -2,7 +2,8 @@
   * Created by Patrick on 13.11.2015.
   */
 
-import no.habitats.corpus.FreeBase._
+import no.habitats.corpus.sources.FreeBase
+import FreeBase._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -25,7 +26,7 @@ class FreebaseTest extends FunSuite {
     assert(wd1 == Some("Q377623"))
     assert(wd2 == Some("Q43196"))
     assert(wd3 == Some("Q7204"))
-    assert(wd4 == None)
+    assert(wd4.isEmpty)
   }
 
   test("instance of") {

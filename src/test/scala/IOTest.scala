@@ -32,8 +32,6 @@ class IOTest extends FunSuite {
     assert(a1.ann.size == 12)
     assert(a1.ann.map(_._2.phrase).toSet.intersect(Set("Sunni", "Baghdad", "Iraqi")).size == 3)
     assert(a1.ann.map(_._2.id).toSet.intersect(Set("/m/078tg", "/m/01fqm", "/m/0d05q4")).size == 3)
-    assert(a1.ann("/m/078tg").salience == 0d)
-    assert(a1.ann("/m/01fqm").salience == 1d)
   }
 
   test("serializing test") {

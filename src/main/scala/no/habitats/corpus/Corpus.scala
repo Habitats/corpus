@@ -4,9 +4,11 @@ import java.io.{File, PrintWriter}
 
 import com.nytlabs.corpus.{NYTCorpusDocument, NYTCorpusDocumentParser}
 import no.habitats.corpus.models.{Annotation, Annotations, Article, ArticleWrapper}
+import no.habitats.corpus.sources.FreeBase
 
 import scala.collection.mutable.ListBuffer
 import scala.io.{Codec, Source}
+import scala.util.Try
 
 object Corpus {
 
@@ -34,19 +36,10 @@ object Corpus {
     else Seq(root).distinct
   }
 
-  lazy val nytWalk = walk(new File(Config.testPath + Config.data), ".xml", relevantArticleIds)
+  lazy val nytWalk    = walk(new File(Config.testPath + Config.data), ".xml", relevantArticleIds)
   lazy val googleWalk = walk(new File(Config.testPath + Config.data), ".txt")
-  lazy val stopWords = Source.fromInputStream(getClass.getResourceAsStream("/stop_words_long.txt")).getLines().toSeq
-  lazy val relevantArticleIds: Set[String] = {
-    val f = new File("relevant_article_ids.txt")
-    if (!f.exists) Set()
-    else {
-      val source = Source.fromFile(f)
-      val ids = source.getLines().toSet
-      source.close
-      ids
-    }
-  }
+
+  lazy val relevantArticleIds: Set[String] = Try(Config.dataFile("google_annotations/relevant_article_ids.txt").getLines().toSet).getOrElse(Set())
 
   def articles(files: Seq[File] = nytWalk, count: Int = Int.MaxValue, from: Int = 0): Seq[Article] = {
     val p = new NYTCorpusDocumentParser
@@ -68,7 +61,7 @@ object Corpus {
   def toAnnotation(line: String, id: String): Annotation = {
     // the file's a little funky, and they use tabs and spaces as different delimiters
     val arr = line.split("\\t")
-    Annotation(articleId = id, index = arr(0).toInt, salience = arr(1).toInt, mc = arr(2).toInt, phrase = arr(3), offset = arr(4).toInt, fb = arr(6), wd = FreeBase.fbToWikiMapping.getOrElse(arr(6), "NONE"))
+    Annotation(articleId = id, index = arr(0).toInt, mc = arr(2).toInt, phrase = arr(3), offset = arr(4).toInt, fb = arr(6), wd = FreeBase.fbToWikiMapping.getOrElse(arr(6), "NONE"))
   }
 
   def toAnnotations(file: File): Seq[Annotations] = {
@@ -97,7 +90,7 @@ object Corpus {
   }
 
   def cacheAnnotationIds(annotations: Set[String]) = {
-    val f = new File("relevant_article_ids.txt")
+    val f = new File("data/google_annotations/relevant_article_ids.txt")
     if (!f.exists) {
       Log.v("Caching annotation id's ...")
       f.createNewFile

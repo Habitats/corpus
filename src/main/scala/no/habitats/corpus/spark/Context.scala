@@ -6,11 +6,11 @@ import org.apache.spark.{SparkConf, SparkContext}
 object Context {
   lazy val clusterContext = {
     Log.i("Attempting to use cluster context ...")
-    Config.cluster = true
+    Config.standalone = true
     val conf = new SparkConf().setAppName("Corpus")
     val sc = conf.getOption("spark.master") match {
       case Some(_) => new SparkContext(conf)
-      case None => localContext
+      case _ => localContext
     }
     sc.setLogLevel("ERROR")
     sc
@@ -18,7 +18,7 @@ object Context {
 
   lazy val localContext = {
     Log.i("Using local context!")
-    Config.cluster = false
+    Config.standalone = false
     System.setProperty("hadoop.home.dir", "C:\\hadoop\\")
     val conf = new SparkConf().setMaster("local[8]").setAppName("Corpus")
     val sc = new SparkContext(conf)

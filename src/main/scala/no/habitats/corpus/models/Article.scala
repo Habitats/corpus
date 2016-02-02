@@ -33,7 +33,7 @@ case class Article(id: String,
   def toResult: String = {
     val iptcstr = iptc.mkString(" - ")
     val predstr = pred.mkString(" - ")
-//    f"$id - TAGS >> $iptcstr%150s >> PREDICTION >> $predstr"
+    //    f"$id - TAGS >> $iptcstr%150s >> PREDICTION >> $predstr"
     f"$id - $hl - $url - IPTC >> $iptcstr >> PREDICTION >> $predstr"
   }
 
@@ -48,30 +48,15 @@ case class Article(id: String,
 
   def toVectorSparse(phrases: Seq[String]): Vector = {
     val values: Seq[(Int, Double)] = for {
-      i <- 0 until phrases.size
+      i <- phrases.indices
       w = phrases(i) if ann.contains(w) && ann(w).tfIdf > 0
     } yield (i, ann(w).tfIdf)
     Vectors.sparse(phrases.size, values)
   }
-
-  def equals(o: Article): Boolean = {
-    id == o.id &&
-      hl == o.hl &&
-      body == o.body &&
-      wc == o.wc &&
-      desc == o.desc &&
-      pred == o.pred &&
-      date == o.date &&
-      iptc == o.iptc &&
-      url == o.url &&
-      ann == o.ann
-  }
-
-  def strip = Article(id = id, hl = hl, iptc = iptc, pred = pred, ann = ann, wc = wc, desc = desc)
 }
 
 case class ArticleWrapper(a: NYTCorpusDocument) {
-  implicit def stringToOption(s: String): Option[String] = if (s != null) Some(s) else None
+  implicit def stringToOption(s: String): Option[String] = Option(s)
 
   implicit def intToOption(s: Integer): Option[String] = if (s != null) Some(s.toString) else None
 

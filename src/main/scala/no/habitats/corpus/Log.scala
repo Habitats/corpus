@@ -6,8 +6,8 @@ import java.time.format.DateTimeFormatter
 
 
 /**
-  * Created by mail on 10.11.2015.
-  */
+ * Created by mail on 10.11.2015.
+ */
 object Log {
   def resultsFile(name: String) = {
     new File(Config.cachePath + "res/").mkdirs()
@@ -43,7 +43,7 @@ object Log {
     writeLine(f(m), resultsFile(Config.resultsCatsFileName))
   }
 
-  def r3(m: Any, name: String) = {
+  def toFile(m: Any, name: String) = {
     val resultsFile = new File("stats/" + name + ".txt")
     if (!resultsFile.exists) {
       Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")

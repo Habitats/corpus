@@ -28,20 +28,6 @@ object ML {
     evaluate(rdd, predicted, training, phrases, prefs)
   }
 
-  def trainModelsSVM(training: RDD[(Set[String], Vector)]): Map[String, ClassificationModel] = {
-    // Run training algorithm to build the model
-    val numIterations = 100
-    val cats = training.flatMap(_._1).collect.toSet
-    cats.map(c => {
-      Log.v(s"Training ... $c ...")
-      val labeledTraining = training
-        .map(a => (if (a._1.contains(c)) 1 else 0, a._2))
-        .map(a => LabeledPoint(a._1, a._2))
-      val model = SVMWithSGD.train(labeledTraining, numIterations)
-      (c, model)
-    }).toMap
-  }
-
   def trainModelsNaiveBayedMultiNominal(training: RDD[(Set[String], Vector)]): Map[String, ClassificationModel] = {
     val cats = training.flatMap(_._1).collect.toSet
     cats.map(c => {
@@ -50,18 +36,6 @@ object ML {
         .map(a => (if (a._1.contains(c)) 1 else 0, a._2))
         .map(a => LabeledPoint(a._1, a._2))
       val model = NaiveBayes.train(input = labeledTraining, lambda = 1.0, modelType = "multinomial")
-      (c, model)
-    }).toMap
-  }
-
-  def trainModelsNaiveBayedProbabilistic(training: RDD[(Set[String], Vector)]): Map[String, ClassificationModel] = {
-    val cats = training.flatMap(_._1).collect.toSet
-    cats.map(c => {
-      Log.v(s"Training ... $c ...")
-      val labeledTraining = training
-        .map(a => (if (a._1.contains(c)) 1 else 0, a._2))
-        .map(a => LabeledPoint(a._1, a._2))
-      val model = NaiveBayes.train(input = labeledTraining, lambda = 1.0, modelType = "bernoulli")
       (c, model)
     }).toMap
   }
@@ -75,9 +49,9 @@ object ML {
 
   def evaluate(rdd: RDD[Article], predicted: RDD[Article], training: RDD[(Set[String], Vector)], phrases: Seq[String], prefs: Broadcast[Prefs]) = {
     val sampleResult = predicted.take(1000).map(_.toResult).mkString("\n")
-    Log.r3(sampleResult, "sample_result_" + Config.data)
+    Log.toFile(sampleResult, "sample_result_" + Config.data)
     val labelCardinalityDistribution = predicted.take(2000).map(p => f"${p.iptc.size}%2d ${p.pred.size}%2d").mkString("\n")
-    Log.r3(labelCardinalityDistribution, "label_cardinality_distribution_" + Config.data)
+    Log.toFile(labelCardinalityDistribution, "label_cardinality_distribution_" + Config.data)
 
     val stats = MLStats(predicted, training, phrases, prefs)
     if (stats.catStats.nonEmpty) {
@@ -94,20 +68,20 @@ object ML {
 
 case class MLStats(predicted: RDD[Article], training: RDD[(Set[String], Vector)], phrases: Seq[String], prefs: Broadcast[Prefs]) {
   predicted.cache()
-  lazy val totalCats = predicted.map(_.iptc.size).sum
+  lazy val totalCats        = predicted.map(_.iptc.size).sum
   lazy val totalPredictions = predicted.map(_.pred.size).sum
 
   val predset = predicted.collect().toSet
-  val cats = training.flatMap(_._1).collect.toSet
+  val cats    = training.flatMap(_._1).collect.toSet
   lazy val labelMetrics = LabelMetrics(predset)
   lazy val exampleBased = ExampleBased(predset, cats)
   lazy val microAverage = MicroAverage(predset, cats)
   lazy val macroAverage = MacroAverage(predset, cats)
 
   // Formatted stats
-  lazy val realCategoryDistribution = predicted.flatMap(_.iptc).map((_, 1)).reduceByKey(_ + _).collect.toMap
+  lazy val realCategoryDistribution      = predicted.flatMap(_.iptc).map((_, 1)).reduceByKey(_ + _).collect.toMap
   lazy val predictedCategoryDistribution = predicted.flatMap(_.pred).map((_, 1)).reduceByKey(_ + _).collect.toMap
-  lazy val catStats = {
+  lazy val catStats                      = {
     macroAverage.labelStats.map(c => {
       Seq[(String, String)](
         "Cat" -> f"${c._1}%45s",
@@ -123,19 +97,15 @@ case class MLStats(predicted: RDD[Article], training: RDD[(Set[String], Vector)]
         "F-score" -> f"${c._2.fscore}%.3f")
     }).toSeq
   }
-  lazy val stats = Seq[(String, String)](
+  lazy val stats                         = Seq[(String, String)](
     "#" -> f"${prefs.value.iteration}%3d",
 
     // Dynamic prefs
     "TFT" -> f"${prefs.value.termFrequencyThreshold}",
 
-    "S-Only" -> f"${prefs.value.salientOnly}",
-    "S-Weight" -> (if (!prefs.value.salientOnly) f"${prefs.value.salience}%.1f" else " "),
-
     "WD-Only" -> f"${prefs.value.wikiDataOnly}",
     "WD-Broad" -> f"${prefs.value.wikiDataIncludeBroad}",
     "WD-BroadO" -> (if (prefs.value.wikiDataIncludeBroad) f"${prefs.value.wikiDataBroadOnly}" else " "),
-    "WD-BroadS" -> (if (prefs.value.wikiDataIncludeBroad) f"${prefs.value.wikiDataBroadSalience}%.1f" else " "),
 
     // Data stats
     "Articles" -> f"${training.count + predicted.count}",
@@ -170,40 +140,40 @@ case class MLStats(predicted: RDD[Article], training: RDD[(Set[String], Vector)]
 }
 
 case class LabelMetrics(predicted: Set[Article]) {
-  lazy val p = predicted.size.toDouble
-  lazy val labelCardinality = predicted.toList.map(_.iptc.size).sum / p
-  lazy val labelDiversity = predicted.map(_.iptc).size / p
+  lazy val p                    = predicted.size.toDouble
+  lazy val labelCardinality     = predicted.toList.map(_.iptc.size).sum / p
+  lazy val labelDiversity       = predicted.map(_.iptc).size / p
   lazy val labelCardinalityPred = predicted.toList.map(_.pred.size).sum / p
-  lazy val labelDiversityPred = predicted.map(_.pred).size / p
+  lazy val labelDiversityPred   = predicted.map(_.pred).size / p
 }
 
 // Example-based metrics
 case class ExampleBased(predicted: Set[Article], cats: Set[String]) {
-  lazy val p = predicted.size.toDouble
+  lazy val p         = predicted.size.toDouble
   lazy val subsetAcc = predicted.toList.count(p => p.pred == p.iptc) / p
-  lazy val hloss = predicted.toList.map(p => (p.iptc.union(p.pred) -- p.iptc.intersect(p.pred)).size.toDouble / p.iptc.union(p.pred).size).sum / p
+  lazy val hloss     = predicted.toList.map(p => (p.iptc.union(p.pred) -- p.iptc.intersect(p.pred)).size.toDouble / p.iptc.union(p.pred).size).sum / p
 
   lazy val precision = predicted.toList.filter(_.pred.nonEmpty).map(p => p.iptc.intersect(p.pred).size.toDouble / p.pred.size).sum / p
-  lazy val recall = predicted.toList.map(p => p.iptc.intersect(p.pred).size.toDouble / p.iptc.size).sum / p
-  lazy val accuracy = predicted.toList.map(p => p.iptc.intersect(p.pred).size.toDouble / p.iptc.union(p.pred).size).sum / p
+  lazy val recall    = predicted.toList.map(p => p.iptc.intersect(p.pred).size.toDouble / p.iptc.size).sum / p
+  lazy val accuracy  = predicted.toList.map(p => p.iptc.intersect(p.pred).size.toDouble / p.iptc.union(p.pred).size).sum / p
 
   lazy val fscore = 2 * (precision * recall) / (precision + recall)
 }
 
 // Label-based metrics
 case class Measure(tp: Int, fp: Int, fn: Int, tn: Int) {
-  val recall = tp.toDouble / (tp + fn)
+  val recall    = tp.toDouble / (tp + fn)
   val precision = tp.toDouble / (tp + fp + 0.00001)
-  val accuracy = (tp + tn).toDouble / (tp + fp + fn + tn)
-  val fscore = (2 * tp).toDouble / (2 * tp + fp + fn)
+  val accuracy  = (tp + tn).toDouble / (tp + fp + fn + tn)
+  val fscore    = (2 * tp).toDouble / (2 * tp + fp + fn)
 }
 
 case class LabelResult(category: String, tp: Int, fp: Int, fn: Int, tn: Int) {
   lazy val m: Measure = Measure(tp = tp, fp = fp, fn = fn, tn = tn)
-  val recall = m.recall
+  val recall    = m.recall
   val precision = m.precision
-  val accuracy = m.accuracy
-  val fscore = m.fscore
+  val accuracy  = m.accuracy
+  val fscore    = m.fscore
 }
 
 case class MicroAverage(predicted: Set[Article], cats: Set[String]) {
@@ -213,10 +183,10 @@ case class MicroAverage(predicted: Set[Article], cats: Set[String]) {
   val tn = cats.toList.map(c => predicted.count(p => !p.iptc.contains(c) && !p.pred.contains(c))).sum
   lazy val m: Measure = Measure(tp = tp, fp = fp, fn = fn, tn = tn)
 
-  val recall = m.recall
+  val recall    = m.recall
   val precision = m.precision
-  val accuracy = m.accuracy
-  val fscore = m.fscore
+  val accuracy  = m.accuracy
+  val fscore    = m.fscore
 }
 
 case class MacroAverage(predicted: Set[Article], cats: Set[String]) {
@@ -233,15 +203,12 @@ case class MacroAverage(predicted: Set[Article], cats: Set[String]) {
   }
 
   def tp(c: String): Int = labelStats(c).tp
-
   def fp(c: String): Int = labelStats(c).fp
-
   def fn(c: String): Int = labelStats(c).fn
-
   def tn(c: String): Int = labelStats(c).tn
 
-  val recall = labelStats.values.map(_.recall).sum / labelStats.size
+  val recall    = labelStats.values.map(_.recall).sum / labelStats.size
   val precision = labelStats.values.map(_.precision).sum / labelStats.size
-  val accuracy = labelStats.values.map(_.accuracy).sum / labelStats.size
-  val fscore = labelStats.values.map(_.fscore).sum / labelStats.size
+  val accuracy  = labelStats.values.map(_.accuracy).sum / labelStats.size
+  val fscore    = labelStats.values.map(_.fscore).sum / labelStats.size
 }
