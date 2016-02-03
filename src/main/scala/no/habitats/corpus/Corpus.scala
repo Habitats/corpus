@@ -4,7 +4,7 @@ import java.io.{File, PrintWriter}
 
 import com.nytlabs.corpus.{NYTCorpusDocument, NYTCorpusDocumentParser}
 import no.habitats.corpus.models.{Annotation, Annotations, Article, ArticleWrapper}
-import no.habitats.corpus.features.FreeBase
+import no.habitats.corpus.features.WikiData
 
 import scala.collection.mutable.ListBuffer
 import scala.io.{Codec, Source}
@@ -61,7 +61,7 @@ object Corpus {
   def toAnnotation(line: String, id: String): Annotation = {
     // the file's a little funky, and they use tabs and spaces as different delimiters
     val arr = line.split("\\t")
-    Annotation(articleId = id, index = arr(0).toInt, mc = arr(2).toInt, phrase = arr(3), offset = arr(4).toInt, fb = arr(6), wd = FreeBase.fbToWikiMapping.getOrElse(arr(6), "NONE"))
+    Annotation(articleId = id, index = arr(0).toInt, mc = arr(2).toInt, phrase = arr(3), offset = arr(4).toInt, fb = arr(6), wd = WikiData.fbToWikiMapping.getOrElse(arr(6), "NONE"))
   }
 
   def toAnnotations(file: File): Seq[Annotations] = {

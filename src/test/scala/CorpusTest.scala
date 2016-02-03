@@ -5,7 +5,7 @@
 import java.io.File
 
 import no.habitats.corpus._
-import no.habitats.corpus.features.FreeBase
+import no.habitats.corpus.features.WikiData
 import no.habitats.corpus.spark.Preprocess._
 import no.habitats.corpus.spark.{Context, Preprocess}
 import org.junit.runner.RunWith
@@ -72,8 +72,8 @@ class CorpusTest extends FunSuite {
 
     val phrases = processed.flatMap(_.ann.keySet).distinct.toSeq.sorted
     println(phrases.map(p => f"$p%-200s").map(_.substring(0, 15)).mkString(f"${"Freebase"}%-15s", "  ", ""))
-    println(phrases.map(p => if (FreeBase.fbToWikiMapping.contains(p)) "Q" + FreeBase.fbToWikiMapping(p) else "").map(p => f"$p%-200s").map(_.substring(0, 15)).mkString(f"${"WikiData"}%-15s", "  ", ""))
-    println(phrases.map(p => if (FreeBase.fbToWikiMapping.contains(p)) FreeBase.wdToString(FreeBase.fbToWikiMapping(p)) else "").map(p => f"${p}%-200s").map(_.substring(0, 15)).mkString(f"${"Phrase"}%-15s", "  ", ""))
+    println(phrases.map(p => if (WikiData.fbToWikiMapping.contains(p)) "Q" + WikiData.fbToWikiMapping(p) else "").map(p => f"$p%-200s").map(_.substring(0, 15)).mkString(f"${"WikiData"}%-15s", "  ", ""))
+    println(phrases.map(p => if (WikiData.fbToWikiMapping.contains(p)) WikiData.wdToString(WikiData.fbToWikiMapping(p)) else "").map(p => f"${p}%-200s").map(_.substring(0, 15)).mkString(f"${"Phrase"}%-15s", "  ", ""))
     processed.map(a => a.toVector(phrases)).map(_.toArray).map(_.map(d => f"$d%.3f").map(p => f"${p}%-15s").mkString(f"${"Article "}%-15s", "  ", "")).foreach(println)
   }
 

@@ -1,6 +1,6 @@
 package no.habitats.corpus.models
 
-import no.habitats.corpus.features.FreeBase
+import no.habitats.corpus.features.WikiData
 
 case class Annotation(articleId: String,
                       index: Int, // index
@@ -16,7 +16,7 @@ case class Annotation(articleId: String,
   lazy val id: String = {
     if (fb == "NONE" && wd == "NONE") phrase
     else if (fb != "NONE") fb
-    else if (FreeBase.wikiToFbMapping.contains(wd)) FreeBase.wikiToFbMapping(wd)
+    else if (WikiData.wikiToFbMapping.contains(wd)) WikiData.wikiToFbMapping(wd)
     else wd
   }
 

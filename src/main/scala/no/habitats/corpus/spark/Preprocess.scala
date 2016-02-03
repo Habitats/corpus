@@ -2,7 +2,7 @@ package no.habitats.corpus.spark
 
 import no.habitats.corpus._
 import no.habitats.corpus.models.{Annotation, Article}
-import no.habitats.corpus.features.{FreeBase, IPTC}
+import no.habitats.corpus.features.{WikiData, IPTC}
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
@@ -15,15 +15,15 @@ object Preprocess {
     var expanded = rdd
     prefs.value.ontology match {
       case "all" =>
-        expanded = expanded.map(a => a.copy(ann = FreeBase.addAnnotations(a.ann, FreeBase.occupations, prefs.value.wikiDataBroadOnly)))
-        expanded = expanded.map(a => a.copy(ann = FreeBase.addAnnotations(a.ann, FreeBase.genders, prefs.value.wikiDataBroadOnly)))
-        expanded = expanded.map(a => a.copy(ann = FreeBase.addAnnotations(a.ann, FreeBase.instanceOf, prefs.value.wikiDataBroadOnly)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.occupations, prefs.value.wikiDataBroadOnly)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.genders, prefs.value.wikiDataBroadOnly)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.instanceOf, prefs.value.wikiDataBroadOnly)))
       case "instanceOf" =>
-        expanded = expanded.map(a => a.copy(ann = FreeBase.addAnnotations(a.ann, FreeBase.instanceOf, prefs.value.wikiDataBroadOnly)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.instanceOf, prefs.value.wikiDataBroadOnly)))
       case "gender" =>
-        expanded = expanded.map(a => a.copy(ann = FreeBase.addAnnotations(a.ann, FreeBase.genders, prefs.value.wikiDataBroadOnly)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.genders, prefs.value.wikiDataBroadOnly)))
       case "occupation" =>
-        expanded = expanded.map(a => a.copy(ann = FreeBase.addAnnotations(a.ann, FreeBase.occupations, prefs.value.wikiDataBroadOnly)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.occupations, prefs.value.wikiDataBroadOnly)))
     }
     if (prefs.value.wikiDataBroadOnly) {
       Log.v(s"${current(expanded)} - Added broader WikiData annotations. Using ONLY these.")

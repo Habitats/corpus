@@ -2,7 +2,7 @@
   * Created by Patrick on 13.11.2015.
   */
 
-import java.io.{PrintWriter, File}
+import java.io.{File, PrintWriter}
 
 import no.habitats.corpus._
 import no.habitats.corpus.models.Article
@@ -10,7 +10,7 @@ import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 
-import scala.io.{Codec, Source}
+import scala.io.Source
 
 
 @RunWith(classOf[JUnitRunner])
@@ -65,21 +65,21 @@ class IOTest extends FunSuite {
     })
   }
 
-  test("binary serialization") {
-    val originalArticles = articles
-    // test binary serialization
-    val start = System.currentTimeMillis
-    val binaryCacheFile = new File(Config.cachePath + testCache + "_binary.cache")
-    binaryCacheFile.delete
-    // serialize
-    IO.cacheBinary(originalArticles, binaryCacheFile)
-    println(s"Binary caching: ${System.currentTimeMillis() - start} ms")
-    // load
-    val binarySerializedArticles = IO.loadBinary(Source.fromFile(binaryCacheFile)(Codec.ISO8859))
-    assert(originalArticles == binarySerializedArticles)
-    binaryCacheFile.delete
-    println(s"Binary loading: ${System.currentTimeMillis() - start} ms")
-  }
+//  test("binary serialization") {
+//    val originalArticles = articles
+//    // test binary serialization
+//    val start = System.currentTimeMillis
+//    val binaryCacheFile = new File(Config.cachePath + testCache + "_binary.cache")
+//    binaryCacheFile.delete
+//    // serialize
+//    IO.cacheBinary(originalArticles, binaryCacheFile)
+//    println(s"Binary caching: ${System.currentTimeMillis() - start} ms")
+//    // load
+//    val binarySerializedArticles = IO.loadBinary(Source.fromFile(binaryCacheFile)(Codec.ISO8859))
+//    assert(originalArticles == binarySerializedArticles)
+//    binaryCacheFile.delete
+//    println(s"Binary loading: ${System.currentTimeMillis() - start} ms")
+//  }
 
 
 }

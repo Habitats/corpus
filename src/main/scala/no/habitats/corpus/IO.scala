@@ -7,7 +7,6 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.io.Source
-import scala.util.Marshal
 
 object IO extends JsonSerializer {
   val rddCacheDir = Config.cachePath + "rdd_" + Config.data
@@ -50,7 +49,6 @@ object IO extends JsonSerializer {
     cache(s"${iteration}annotation_distribution_unique$ontology.txt", annotationsUnique)
   }
 
-
   def cacheRdd(rdd: RDD[Article], cacheDir: String = rddCacheDir) = {
     val dir = new File(cacheDir)
     Log.i(s"Cahing rdd to ${dir.getAbsolutePath} ...")
@@ -90,24 +88,24 @@ object IO extends JsonSerializer {
   }
 
   // Binary cache
-  def cacheBinary(seq: Seq[Article], cacheFile: File) = {
-    val out = new FileOutputStream(cacheFile)
-    out.write(Marshal.dump(seq))
-    out.close()
-  }
-
-  def loadBinary(source: Source): Seq[Article] = {
-    //    Log.v("Loading binary ...")
-    var start = System.currentTimeMillis
-    //    val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
-    val bytes = source.map(_.toByte).toArray
-    source.close
-    //    Log.v(s"Read byes in ${System.currentTimeMillis - start} ms")
-    start = System.currentTimeMillis
-    val seq = Marshal.load[Seq[Article]](bytes)
-    //    Log.v(s"Loaded articles in ${System.currentTimeMillis - start} ms")
-    seq
-  }
+  //  def cacheBinary(seq: Seq[Article], cacheFile: File) = {
+  //    val out = new FileOutputStream(cacheFile)
+  //    out.write(Marshal.dump(seq))
+  //    out.close()
+  //  }
+  //
+  //  def loadBinary(source: Source): Seq[Article] = {
+  //    //    Log.v("Loading binary ...")
+  //    var start = System.currentTimeMillis
+  //    //    val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
+  //    val bytes = source.map(_.toByte).toArray
+  //    source.close
+  //    //    Log.v(s"Read byes in ${System.currentTimeMillis - start} ms")
+  //    start = System.currentTimeMillis
+  //    val seq = Marshal.load[Seq[Article]](bytes)
+  //    //    Log.v(s"Loaded articles in ${System.currentTimeMillis - start} ms")
+  //    seq
+  //  }
 
   // Json cache
   def cacheJson(seq: Seq[Article], cache: File) = {
