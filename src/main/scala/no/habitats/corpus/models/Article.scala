@@ -1,6 +1,9 @@
 package no.habitats.corpus.models
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import com.nytlabs.corpus.NYTCorpusDocument
+import no.habitats.corpus.features.POS
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 
 import scala.collection.JavaConverters._
@@ -52,6 +55,14 @@ case class Article(id: String,
       w = phrases(i) if ann.contains(w) && ann(w).tfIdf > 0
     } yield (i, ann(w).tfIdf)
     Vectors.sparse(phrases.size, values)
+  }
+
+  lazy val names = POS.nameFinderCounts(body)
+
+  def addNames: Article = {
+    val index = new AtomicInteger(ann.size)
+    val updatedAnn = names.map { case (name, (count, kind)) => Annotation(articleId = id, index = index.incrementAndGet(), phrase = kind + "_" + name, mc = count) }
+    copy(ann = updatedAnn.map(t => t.phrase -> t).toMap)
   }
 }
 
