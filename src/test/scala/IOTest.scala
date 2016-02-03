@@ -10,7 +10,7 @@ import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 
-import scala.io.Source
+import scala.io.{Codec, Source}
 
 
 @RunWith(classOf[JUnitRunner])
@@ -75,7 +75,7 @@ class IOTest extends FunSuite {
     IO.cacheBinary(originalArticles, binaryCacheFile)
     println(s"Binary caching: ${System.currentTimeMillis() - start} ms")
     // load
-    val binarySerializedArticles = IO.loadBinary(Source.fromFile(binaryCacheFile, "iso-8859-1"))
+    val binarySerializedArticles = IO.loadBinary(Source.fromFile(binaryCacheFile)(Codec.ISO8859))
     assert(originalArticles == binarySerializedArticles)
     binaryCacheFile.delete
     println(s"Binary loading: ${System.currentTimeMillis() - start} ms")

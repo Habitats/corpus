@@ -1,4 +1,4 @@
-package no.habitats.corpus.sources
+package no.habitats.corpus.features
 
 import java.io.{File, FileOutputStream, PrintWriter}
 import java.util.concurrent.atomic.AtomicInteger
@@ -55,10 +55,9 @@ object FreeBase {
   }
 
   def computeInstanceOf() = loadWdPropPairs("instanceOf", "31")
-
   def computeGender() = loadWdPropPairs("gender", "21")
-
   def computeOccupation() = loadWdPropPairs("occupation", "106")
+  def computeSubclassOf() = loadWdPropPairs("subclassOf", "279")
 
   def loadPairs(name: String): Map[String, Set[String]] = Config.dataFile("wikidata/" + name).getLines().map(line => {
     val v = line.split(" ")
@@ -125,7 +124,7 @@ object FreeBase {
       List(JInt(wb), JString(valueType), JInt(instanceOf)) = triple
     } yield (wb.toString, instanceOf.toString)
     Log.v("Done! Storing ...")
-    val file = new File("wikidata/" + name + ".txt")
+    val file = new File(Config.dataRoot + "wikidata/" + name + ".txt")
     file.createNewFile
     val writer = new PrintWriter(file)
     pairs.groupBy(_._1).foreach(p => writer.println(p._1 + " " + p._2.map(_._2).mkString(",")))

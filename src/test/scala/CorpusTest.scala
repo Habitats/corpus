@@ -5,7 +5,7 @@
 import java.io.File
 
 import no.habitats.corpus._
-import no.habitats.corpus.sources.FreeBase
+import no.habitats.corpus.features.FreeBase
 import no.habitats.corpus.spark.Preprocess._
 import no.habitats.corpus.spark.{Context, Preprocess}
 import org.junit.runner.RunWith

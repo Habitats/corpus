@@ -2,7 +2,7 @@
   * Created by Patrick on 13.11.2015.
   */
 
-import no.habitats.corpus.sources.FreeBase
+import no.habitats.corpus.features.FreeBase
 import FreeBase._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite

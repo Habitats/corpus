@@ -4,7 +4,7 @@ import java.io.{File, PrintWriter}
 
 import com.nytlabs.corpus.{NYTCorpusDocument, NYTCorpusDocumentParser}
 import no.habitats.corpus.models.{Annotation, Annotations, Article, ArticleWrapper}
-import no.habitats.corpus.sources.FreeBase
+import no.habitats.corpus.features.FreeBase
 
 import scala.collection.mutable.ListBuffer
 import scala.io.{Codec, Source}
@@ -36,7 +36,7 @@ object Corpus {
     else Seq(root).distinct
   }
 
-  lazy val nytWalk    = walk(new File(Config.testPath + Config.data), ".xml", relevantArticleIds)
+  lazy val nytWalk    = walk(new File(Config.testPath + Config.data), ".xml")
   lazy val googleWalk = walk(new File(Config.testPath + Config.data), ".txt")
 
   lazy val relevantArticleIds: Set[String] = Try(Config.dataFile("google_annotations/relevant_article_ids.txt").getLines().toSet).getOrElse(Set())

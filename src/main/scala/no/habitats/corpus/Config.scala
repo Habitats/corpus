@@ -2,11 +2,11 @@ package no.habitats.corpus
 
 import java.util.Properties
 
-import scala.io.{BufferedSource, Source}
+import scala.io.{Codec, BufferedSource, Source}
 
 object Config {
   val dataRoot = "data/"
-  def dataFile(s: String): BufferedSource = Source.fromFile(dataRoot + s, "UTF-8")
+  def dataFile(s: String): BufferedSource = Source.fromFile(dataRoot + s)(Codec.ISO8859)
 
   private val conf = new Properties
   conf.load(getClass.getResourceAsStream("/corpus.properties"))
