@@ -2,7 +2,7 @@
   * Created by Patrick on 13.11.2015.
   */
 
-import no.habitats.corpus.features.WikiData
+import no.habitats.corpus.npl.WikiData
 import WikiData._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
@@ -38,11 +38,11 @@ class FreebaseTest extends FunSuite {
 
   test("id to label") {
     val id1 = instanceOf.get("377623").get.head
-    val label = wdToString(id1)
+    val label = wdIdToLabel(id1)
     assert(label == "human")
 
     val ids = Set("1186096", "1184808", "1187303", "1132172", "1184225")
     val labels = Set("Smithfield", "McKean", "Republic", "Fayette City", "Wesleyville")
-    assert(ids.map(wdToString) == labels)
+    assert(ids.map(wdIdToLabel) == labels)
   }
 }

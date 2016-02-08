@@ -29,8 +29,6 @@ case class TC(rdd: RDD[Article]) {
 
   def log(annotation: Annotation): Double = 1 + Math.log(annotation.mc)
 
-  def logDoubleNormalization(annotation: Annotation): Double = 0.5 + (0.5 * annotation.mc) / maxFrequencyInDocument(annotation.articleId)
-
   def inverseFrequency(annotation: Annotation): Double = Math.log(documentCount.toDouble / documentsWithTerm(annotation.id))
 
   def inverseFrequencySmooth(annotation: Annotation): Double = Math.log(1 + (documentCount.toDouble / documentsWithTerm(annotation.id)))

@@ -9,7 +9,6 @@ import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
 object SparkUtil {
-  @transient lazy val log = Logger.getLogger(getClass.getName)
   val cacheDir = "cache"
   lazy val sc = if (Config.standalone) Context.localContext else Context.clusterContext
   var iter = 0
@@ -41,14 +40,6 @@ object SparkUtil {
       case "test" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "preprocess" => Preprocess.preprocess(sc, sc.broadcast(Prefs()), rdd)
       case "train" =>
-        //        Experiments.baseline(sc, rdd)
-        //        Experiments.frequencyExperiment(sc, rdd)
-        Experiments.stats(sc, rdd)
-      //        Experiments.ontologyExperiment(sc, rdd)
-      //        Experiments.everythingExperiment(sc, rdd)
-      //        Experiments.freebaseToWikiDataExperiment(sc, rdd)
-
-      //              Experiments.dataQuantityExperiment(sc, rdd)
       case "load" =>
         HBaseUtil.init()
         Log.i("Loading HBase ...")

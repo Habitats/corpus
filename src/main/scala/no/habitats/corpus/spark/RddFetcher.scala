@@ -20,7 +20,7 @@ object RddFetcher {
       case "local" => localRdd(sc)
     }
     rdd.cache()
-    Preprocess.computeIptc(rdd, Config.broadMatch)
+    rdd.map(_.addIptc(Config.broadMatch))
   }
 
   def localRdd(sc: SparkContext): RDD[Article] = {

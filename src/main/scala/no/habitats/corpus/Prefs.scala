@@ -6,7 +6,6 @@ case class Prefs(iteration: Int = 0,
                  termFrequencyThreshold: Int = Config.phraseSkipThreshold,
                  wikiDataOnly: Boolean = Config.wikiDataOnly,
                  wikiDataIncludeBroad: Boolean = Config.wikiDataIncludeBroad,
-                 wikiDataBroadOnly: Boolean = Config.wikiDataBroadOnly,
                  ontology: String = "occupation"
                   )
 

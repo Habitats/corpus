@@ -60,12 +60,6 @@ object IO extends JsonSerializer {
       })
       dir.delete
     }
-    //    if(Config.cluster){
-    //      Log.i("Deleting old cache ...")
-    //      val hadoopConf = new org.apache.hadoop.conf.Configuration()
-    //      val hdfs = org.apache.hadoop.fs.FileSystem.get(new java.net.URI("hdfs://smartmedia:8020"), hadoopConf)
-    //      try { hdfs.delete(new org.apache.hadoop.fs.Path(cacheDir), true) } catch { case _ : Throwable => {Log.i("Whoops. Didn't work :(") } }
-    //    }
     rdd.saveAsObjectFile("file:///" + cacheDir)
   }
 
@@ -86,26 +80,6 @@ object IO extends JsonSerializer {
     }
     loadJson(source)
   }
-
-  // Binary cache
-  //  def cacheBinary(seq: Seq[Article], cacheFile: File) = {
-  //    val out = new FileOutputStream(cacheFile)
-  //    out.write(Marshal.dump(seq))
-  //    out.close()
-  //  }
-  //
-  //  def loadBinary(source: Source): Seq[Article] = {
-  //    //    Log.v("Loading binary ...")
-  //    var start = System.currentTimeMillis
-  //    //    val bytes = Stream.continually(in.read).takeWhile(-1 !=).map(_.toByte).toArray
-  //    val bytes = source.map(_.toByte).toArray
-  //    source.close
-  //    //    Log.v(s"Read byes in ${System.currentTimeMillis - start} ms")
-  //    start = System.currentTimeMillis
-  //    val seq = Marshal.load[Seq[Article]](bytes)
-  //    //    Log.v(s"Loaded articles in ${System.currentTimeMillis - start} ms")
-  //    seq
-  //  }
 
   // Json cache
   def cacheJson(seq: Seq[Article], cache: File) = {
@@ -135,16 +109,12 @@ class JsonSerializer extends Cache {
   implicit val formats = Serialization.formats(NoTypeHints)
 
   override def toJson(articles: Seq[Article]): String = if (articles.size < 100) writePretty(articles) else write(articles)
-
   override def fromJson(a: String): Seq[Article] = read[Seq[Article]](a)
-
   override def name: String = "LiftJson"
 }
 
 trait Cache {
   def toJson(a: Seq[Article]): String
-
   def fromJson(json: String): Seq[Article]
-
   def name: String
 }

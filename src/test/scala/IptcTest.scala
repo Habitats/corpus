@@ -2,7 +2,7 @@
   * Created by Patrick on 13.11.2015.
   */
 
-import no.habitats.corpus.features.IPTC
+import no.habitats.corpus.npl.IPTC
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner

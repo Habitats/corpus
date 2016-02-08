@@ -1,4 +1,4 @@
-package no.habitats.corpus.features
+package no.habitats.corpus.npl
 
 import no.habitats.corpus.{Config, Log}
 import org.apache.jena.rdf.model.{Model, ModelFactory, Resource}

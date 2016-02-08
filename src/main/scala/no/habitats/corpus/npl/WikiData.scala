@@ -1,10 +1,10 @@
-package no.habitats.corpus.features
+package no.habitats.corpus.npl
 
 import java.io.{File, FileOutputStream, PrintWriter}
 import java.util.concurrent.atomic.AtomicInteger
 
-import no.habitats.corpus.{Config, Log}
 import no.habitats.corpus.models.Annotation
+import no.habitats.corpus.{Config, Log}
 
 import scala.io.Source
 
@@ -54,54 +54,28 @@ object WikiData {
     writer.close
   }
 
-  def computeInstanceOf() = loadWdPropPairs("instanceOf", "31")
   def computeGender() = loadWdPropPairs("gender", "21")
+  def computeInstanceOf() = loadWdPropPairs("instanceOf", "31")
   def computeOccupation() = loadWdPropPairs("occupation", "106")
   def computeSubclassOf() = loadWdPropPairs("subclassOf", "279")
+
+  val instanceOf  = loadPairs("instanceOf.txt")
+  val occupations = loadPairs("occupation.txt")
+  val genders     = loadPairs("gender.txt")
 
   def loadPairs(name: String): Map[String, Set[String]] = Config.dataFile("wikidata/" + name).getLines().map(line => {
     val v = line.split(" ")
     (v(0), v(1).split(",").toSet)
   }).toMap
 
-
-  def addAnnotations(annotationsMap: Map[String, Annotation], pairs: Map[String, Set[String]], broadOnly: Boolean): Map[String, Annotation] = {
-    def annotationFromWd(oldAnnotation: Annotation, wd: String, index: Int): Annotation = {
-      Annotation(
-        index = index,
-        broad = true,
-        offset = oldAnnotation.offset,
-        articleId = oldAnnotation.articleId,
-        wd = wd,
-        phrase = wd + " - " + oldAnnotation.phrase,
-        mc = oldAnnotation.mc
-      )
-    }
-
-    def createNewAnnotations(a: Annotation, oldAnnotation: Annotation): Seq[Annotation] = {
-      val counter = new AtomicInteger(oldAnnotation.index)
-      val newAnnotations = pairs.get(oldAnnotation.wd).map(i => i.map(wd => {
-        // Create annotation from WikiDAta ID
-        val newAnnotation = annotationFromWd(oldAnnotation, wd, counter.getAndIncrement)
-        newAnnotation
-      })).get.toList
-
-      // Decide whether to return old and new, or just the new
-      if (broadOnly) {
-        newAnnotations
-      } else {
-        Seq(a) ++ newAnnotations
-      }
-    }
-
-    val newAnnotations = annotationsMap.flatMap(a => {
+  def addAnnotations(annotationsMap: Map[String, Annotation], pairs: Map[String, Set[String]]): Map[String, Annotation] = {
+    val newAnnotations = annotationsMap.values.flatMap(a => {
       // For all annotations ...
-      val oldAnnotation = a._2
-      if (pairs.contains(oldAnnotation.wd)) {
-        createNewAnnotations(a._2, oldAnnotation)
-      } else {
-        Seq(a._2)
-      }
+      if (pairs.contains(a.wd)) {
+        val counter = new AtomicInteger(a.index)
+        val newAnnotations = pairs.get(a.wd).map(i => i.map(wd => a.fromWd(counter.getAndIncrement, wd))).get.toList
+        Seq(a) ++ newAnnotations
+      } else Seq(a)
     })
     val grouped = newAnnotations.groupBy(_.id).map(anns => {
       val mcSum = anns._2.map(_.mc).sum
@@ -109,10 +83,6 @@ object WikiData {
     })
     grouped
   }
-
-  val instanceOf  = loadPairs("instanceOf.txt")
-  val occupations = loadPairs("occupation.txt")
-  val genders     = loadPairs("gender.txt")
 
   def loadWdPropPairs(name: String, prop: String) = {
     Log.v(s"Loading $name ... Hold on!")
@@ -131,15 +101,9 @@ object WikiData {
     writer.close()
   }
 
-  def instanceOf(id: String): String = {
-    val json = toJson(s"${wmflabs}tree[$id][31]")
-    val JArray(List(JInt(a), JInt(_), JInt(_))) = json \ "items"
-    a.toString
-  }
-
-  def wdToString(wd: String): String = {
-    val json = toJson(s"${wiki}action=wbgetentities&props=labels&ids=Q$wd")
-    val JString(label) = json \ "entities" \ s"Q$wd" \ "labels" \ "en" \ "value"
+  def wdIdToLabel(id: String): String = {
+    val json = toJson(s"${wiki}action=wbgetentities&props=labels&ids=Q$id")
+    val JString(label) = json \ "entities" \ s"Q$id" \ "labels" \ "en" \ "value"
     label
   }
 
@@ -152,5 +116,4 @@ object WikiData {
   }
 
   implicit def toJson(url: String): JValue = parse(Source.fromURL(url).mkString)
-
 }

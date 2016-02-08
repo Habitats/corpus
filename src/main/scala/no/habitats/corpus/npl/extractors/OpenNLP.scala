@@ -1,15 +1,17 @@
-package no.habitats.corpus.features
+package no.habitats.corpus.npl.extractors
 
 import java.io.FileInputStream
 
 import no.habitats.corpus.Config
+import no.habitats.corpus.npl.models.Sentence
 import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
 import opennlp.tools.postag.{POSModel, POSTaggerME}
 import opennlp.tools.sentdetect.{SentenceDetectorME, SentenceModel}
 import opennlp.tools.stemmer.PorterStemmer
 import opennlp.tools.tokenize.{TokenizerME, TokenizerModel}
 
-object POS extends App {
+object OpenNLP extends Extractor {
+
   private lazy val sentenceDetector = {
     val model = new SentenceModel(new FileInputStream(Config.dataRoot + "pos/en-sent.bin"))
     new SentenceDetectorME(model)
@@ -30,12 +32,11 @@ object POS extends App {
     new POSTaggerME(model)
   }
 
-  lazy val test = Config.dataFile("pos/article.txt").getLines().mkString(" ")
-
   private lazy val persons   = nameFinderME("pos/en-ner-person.bin")
   private lazy val orgs      = nameFinderME("pos/en-ner-organization.bin")
   private lazy val locations = nameFinderME("pos/en-ner-location.bin")
   private lazy val money     = nameFinderME("pos/en-ner-money.bin")
+  private lazy val date      = nameFinderME("pos/en-ner-time.bin")
 
   def pair(model: NameFinderME, tokens: Array[String]): Array[(String, String)] = model.find(tokens).map(n => (n.getType, tokens.slice(n.getStart, n.getEnd).map(_.trim).mkString(" ")))
 
@@ -52,7 +53,7 @@ object POS extends App {
   }
 
   def nameFinderCounts(text: String): Map[String, (Int, String)] = {
-    nameFinder(text).groupBy(_._2).map{case (name, list) => (name, (list.length, list(0)._1)) }
+    nameFinder(text).groupBy(_._2).map { case (name, list) => (name, (list.length, list(0)._1)) }
   }
 
   def nameFinderOrdered(text: String): Map[String, Seq[String]] = {
@@ -68,5 +69,53 @@ object POS extends App {
       .map(_.split("/"))
       .filter(w => w(1) == "NN" || w(1) == "NNS" || w(1) == "NNP" || w(1) == "NNPS")
       .map(w => if (w(1) == "NN") w(0) else stemmer.stem(w(0)))
+  }
+
+  def namedEntities(tokens: Array[String]) = {
+    val p = persons.find(tokens)
+    val o = orgs.find(tokens)
+    val l = locations.find(tokens)
+    val m = money.find(tokens)
+    val t = date.find(tokens)
+    var pi, oi, li, mi, ti = 0
+    val ner = tokens.indices.map { i =>
+      val pp = if (p.length > pi && p(pi).getStart == i) {
+        pi += 1
+        Some(p(pi - 1))
+      } else None
+      val oo = if (o.length > oi && o(oi).getStart == i) {
+        oi += 1
+        Some(o(oi - 1))
+      } else None
+      val ll = if (l.length > li && l(li).getStart == i) {
+        li += 1
+        Some(l(li - 1))
+      } else None
+      val mm = if (m.length > mi && m(mi).getStart == i) {
+        mi += 1
+        Some(m(mi - 1))
+      } else None
+      val tt = if (t.length > ti && t(ti).getStart == i) {
+        ti += 1
+        Some(t(ti - 1))
+      } else None
+      val all = Set(pp, oo, ll, mm)
+      val flat = all.flatten
+      val mostProbable = if (flat.nonEmpty) flat.maxBy(_.getProb).getType else "0"
+      mostProbable
+    }
+
+    ner
+  }
+
+  override def extract(text: String): Seq[Sentence] = {
+    val sentences = sentenceDetection(text)
+    sentences.map(sentence => {
+      val tokens = tokenize(sentence)
+      val lemma = tokens.map(stemmer.stem)
+      val pos = posTagger.tag(tokens)
+      val ner = namedEntities(tokens)
+      Sentence(tokens, lemma, pos, ner)
+    })
   }
 }

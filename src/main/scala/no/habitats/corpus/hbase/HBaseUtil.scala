@@ -1,6 +1,5 @@
 package no.habitats.corpus.hbase
 
-import com.google.BigTableHelper
 import no.habitats.corpus.Log
 import no.habitats.corpus.hbase.HBaseConstants._
 import no.habitats.corpus.hbase.Implicits._
@@ -8,19 +7,19 @@ import no.habitats.corpus.models.{Annotation, Article}
 import org.apache.hadoop.conf.Configuration
 import org.apache.hadoop.hbase.client._
 import org.apache.hadoop.hbase.mapreduce.TableInputFormat
-import org.apache.hadoop.hbase.{HColumnDescriptor, HTableDescriptor}
+import org.apache.hadoop.hbase.{HBaseConfiguration, HColumnDescriptor, HTableDescriptor}
 
 import scala.collection.JavaConverters._
 
 object HBaseUtil {
 
   def conf: Configuration = {
-    val conf = BigTableHelper.conf()
+    val conf = HBaseConfiguration.create()
     conf.set(TableInputFormat.INPUT_TABLE, articlesId)
     conf
   }
 
-  def conn: Connection = BigTableHelper.connect(conf)
+  def conn: Connection = ConnectionFactory.createConnection(conf)
 
   def admin: Admin = conn.getAdmin
 

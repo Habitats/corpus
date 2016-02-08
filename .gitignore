@@ -1,3 +1,6 @@
+/libs
+/provided
+/npl
 /stats
 /conf/corpus.properties
 /cache

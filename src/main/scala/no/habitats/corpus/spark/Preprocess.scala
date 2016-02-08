@@ -1,8 +1,8 @@
 package no.habitats.corpus.spark
 
 import no.habitats.corpus._
+import no.habitats.corpus.npl.WikiData
 import no.habitats.corpus.models.{Annotation, Article}
-import no.habitats.corpus.features.{WikiData, IPTC}
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
@@ -15,21 +15,17 @@ object Preprocess {
     var expanded = rdd
     prefs.value.ontology match {
       case "all" =>
-        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.occupations, prefs.value.wikiDataBroadOnly)))
-        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.genders, prefs.value.wikiDataBroadOnly)))
-        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.instanceOf, prefs.value.wikiDataBroadOnly)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.occupations)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.genders)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.instanceOf)))
       case "instanceOf" =>
-        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.instanceOf, prefs.value.wikiDataBroadOnly)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.instanceOf)))
       case "gender" =>
-        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.genders, prefs.value.wikiDataBroadOnly)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.genders)))
       case "occupation" =>
-        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.occupations, prefs.value.wikiDataBroadOnly)))
+        expanded = expanded.map(a => a.copy(ann = WikiData.addAnnotations(a.ann, WikiData.occupations)))
     }
-    if (prefs.value.wikiDataBroadOnly) {
-      Log.v(s"${current(expanded)} - Added broader WikiData annotations. Using ONLY these.")
-    } else {
-      Log.v(s"${current(expanded)} - Added broader WikiData annotations. Using ALL.")
-    }
+    Log.v(s"${current(expanded)} - Added broader WikiData annotations. Using ALL.")
     expanded
   }
 
@@ -75,16 +71,6 @@ object Preprocess {
   def wikiDataFilter(rdd: RDD[Article], prefs: Broadcast[Prefs]): RDD[Article] = {
     val filtered = rdd.map(a => a.copy(ann = a.ann.filter(_._2.wd != "NONE"))).filter(_.ann.nonEmpty)
     Log.v(s"${current(filtered)} - Removed phrases with no WikiData match")
-    filtered
-  }
-
-  def computeIptc(rdd: RDD[Article], broadMatch: Boolean): RDD[Article] = {
-    // compute IPTC, and filter out those with no match
-    val filtered = rdd.map(a => a.copy(iptc = broadMatch match {
-      case true => IPTC.toBroad(a.desc, 0)
-      case false => IPTC.toIptc(a.desc)
-    })).filter(_.iptc.nonEmpty)
-    Log.v(s"${current(filtered)} - Computed IPTC and filtered articles with no match")
     filtered
   }
 

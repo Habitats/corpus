@@ -29,3 +29,22 @@ mv spark-1.6.0/ spark
 cd spark
 ./dev/change-scala-version.sh 2.11
 build/mvn -Pyarn -Phadoop-2.4 -Dscala-2.11 -DskipTests clean package
+
+## Install gradle
+mkdir -p ~/opt/packages/gradle && cd $_
+wget https://services.gradle.org/distributions/gradle-2.10-bin.zip
+unzip gradle-2.10-bin.zip
+ln -s ~/opt/packages/gradle/gradle-2.10/ ~/opt/gradle
+vim ~/.profile
+
+	# Gradle
+	if [ -d "$HOME/opt/gradle" ]; then
+	    export GRADLE_HOME="$HOME/opt/gradle"
+	    PATH="$PATH:$GRADLE_HOME/bin"
+	fi
+
+source ~/.profile
+gradle -version
+
+## CPU Monitor
+sudo apt-get install htop

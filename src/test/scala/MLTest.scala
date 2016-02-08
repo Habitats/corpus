@@ -1,6 +1,6 @@
 /**
-  * Created by Patrick on 13.11.2015.
-  */
+ * Created by Patrick on 13.11.2015.
+ */
 
 import no.habitats.corpus.models.{Annotation, Article}
 import no.habitats.corpus.spark._
@@ -24,20 +24,20 @@ class MLTest extends FunSuite {
   val cats = Set(A, B, C, D)
 
   val abcd = Set(A, B, C, D)
-  val abc = Set(A, B, C)
-  val abd = Set(A, B, D)
-  val acd = Set(A, C, D)
-  val bcd = Set(B, C, D)
-  val ab = Set(A, B)
-  val ac = Set(A, C)
-  val ad = Set(A, D)
-  val bc = Set(B, C)
-  val bd = Set(B, D)
-  val cd = Set(C, D)
-  val a = Set(A)
-  val b = Set(B)
-  val c = Set(C)
-  val d = Set(D)
+  val abc  = Set(A, B, C)
+  val abd  = Set(A, B, D)
+  val acd  = Set(A, C, D)
+  val bcd  = Set(B, C, D)
+  val ab   = Set(A, B)
+  val ac   = Set(A, C)
+  val ad   = Set(A, D)
+  val bc   = Set(B, C)
+  val bd   = Set(B, D)
+  val cd   = Set(C, D)
+  val a    = Set(A)
+  val b    = Set(B)
+  val c    = Set(C)
+  val d    = Set(D)
 
   // T + T = TP
   // T + F = FN
@@ -123,10 +123,10 @@ class MLTest extends FunSuite {
     assert(tc.frequencySumInDocument(a1id) === 6)
     assert(tc.frequencySumInDocument(a2id) === 4)
     assert(tc.frequencySumInDocument(a3id) === 5)
-//    assert(tc.frequencySumInCorpus(A) === 1)
-//    assert(tc.frequencySumInCorpus(B) === 4)
-//    assert(tc.frequencySumInCorpus(C) === 7)
-//    assert(tc.frequencySumInCorpus(D) === 3)
+    //    assert(tc.frequencySumInCorpus(A) === 1)
+    //    assert(tc.frequencySumInCorpus(B) === 4)
+    //    assert(tc.frequencySumInCorpus(C) === 7)
+    //    assert(tc.frequencySumInCorpus(D) === 3)
 
     val tfidfann1 = ann1(0).copy(tfIdf = tc.tfidf(ann1(0)))
     val tfidfann2 = ann1(1).copy(tfIdf = tc.tfidf(ann1(1)))
@@ -141,14 +141,15 @@ class MLTest extends FunSuite {
     assert(tfidfann3.tfIdf === ans3)
 
     val computed = tc.computed.collect
-    val denseVectors = computed.map(a => (a.id, a.toVectorDense(Seq(A,B,C,D))))
-    val sparseVectors = computed.map(a => (a.id, a.toVectorSparse(Seq(A,B,C,D))))
-    for(i <- computed.indices){
+    val denseVectors = computed.map(a => (a.id, a.toVectorDense(Seq(A, B, C, D))))
+    val sparseVectors = computed.map(a => (a.id, a.toVectorSparse(Seq(A, B, C, D))))
+    for (i <- computed.indices) {
       val d = denseVectors(i)._2
       val s = sparseVectors(i)._2
       assert(s === d.toSparse)
       assert(d === s.toDense)
     }
     Log.v("asd")
+    val nice = rdd.collect()
   }
 }

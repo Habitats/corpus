@@ -1,59 +1,82 @@
 plugins {
     id 'scala'
     id 'application'
+    id 'idea'
     id 'com.github.johnrengelman.shadow' version '1.2.2'
 }
 
-sourceCompatibility = 1.8
+tasks.withType(ScalaCompile) {
+    sourceCompatibility = "1.7"
+    targetCompatibility = "1.7"
+}
 
-mainClassName = 'no.habitats.corpus.SparkUtil'
+mainClassName = 'no.habitats.corpus.spark.SparkUtil'
 
 repositories {
     mavenCentral()
+    flatDir(dirs: 'provided')
 }
 
 shadowJar {
     zip64 = true
-    dependencies {
-        exclude(dependency('org.apache.spark:.*'))
-    }
-}
-
-dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.11'
-    testCompile 'org.scalatest:scalatest_2.11:3.0.0-M7'
-    compile 'org.apache.hbase:hbase-client:1.0.1'
-    compile 'org.apache.hbase:hbase-common:1.0.1'
-    compile 'org.apache.hbase:hbase-server:1.0.1'
-    compile 'org.apache.hbase:hbase-protocol:1.0.1'
-    compile 'org.mortbay.jetty.alpn:alpn-boot:8.1.6.v20151105'
-    compile 'com.esotericsoftware:reflectasm:+'
-    compile 'com.esotericsoftware.reflectasm:reflectasm:+'
-    compile 'org.cloudera.htrace:htrace-core:2.02'
-    compile 'com.google.code.gson:gson:2.4'
-    compile 'com.google.cloud.bigtable:bigtable-hbase-1.0:0.2.0'
-    compile 'org.apache.jena:jena-core:3.0.0' // RDF
-    compile 'org.apache.spark:spark-core_2.11:1.5.0'
-    compile 'org.apache.spark:spark-mllib_2.11:1.5.0'
-    // Theese are required for json4s to work. Something imported a depricated version.
-    compile 'com.fasterxml.jackson.core:jackson-core:2.6.3'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.6.3'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.3'
-    compile 'com.fasterxml.jackson.module:jackson-module-scala_2.10:2.6.3'
-    // The main Json library
-    compile 'org.json4s:json4s-native_2.11:3.3.0'
-    compile 'org.json4s:json4s-jackson_2.11:3.3.0'
-    compile files('libs/alpn-boot-8.1.6.v20151105.jar')
-    // DL4J
-    compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.8'
-    compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.8'
-    compile 'org.nd4j:nd4j-x86:0.4-rc3.8'
-
-    compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POST tagging
 }
 
 configurations {
     all {
         exclude group: 'org.mortbay.jetty'
+        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+        exclude group: 'log4j', module: 'log4j'
     }
+    runtime.exclude group: 'org.apache.spark'
+    runtime.exclude group: 'org.apache.hbase'
+    runtime.exclude group: 'org.cloudera.htrace', module: 'htrace-core'
+    runtime.exclude module: 'stanford-corenlp-3.6.0-models'
+    runtime.exclude module: 'reflectasm'
+}
+
+dependencies {
+    testCompile group: 'junit', name: 'junit', version: '4.11'
+    testCompile 'org.scalatest:scalatest_2.10:3.0.0-M7'
+    compile 'org.apache.hbase:hbase-client:1.0.1'
+    compile 'org.apache.hbase:hbase-common:1.0.1'
+    compile 'org.apache.hbase:hbase-server:1.0.1'
+    compile 'org.apache.hbase:hbase-protocol:1.0.1'
+    compile 'com.esotericsoftware:reflectasm:+'
+    compile 'com.esotericsoftware.reflectasm:reflectasm:+'
+    compile 'org.cloudera.htrace:htrace-core:2.02'
+
+    compile 'org.apache.spark:spark-core_2.10:1.6.0'
+    compile 'org.apache.spark:spark-mllib_2.10:1.6.0'
+
+    compile files('corpus.properties')
+
+    // RDF
+    compile('org.apache.jena:jena-core:3.0.0') { exclude group: 'xml-apis' }
+
+    // Theese are required for json4s to work. Something imported a depricated version.
+    compile 'com.fasterxml.jackson.core:jackson-core:2.6.3'
+    compile 'com.fasterxml.jackson.core:jackson-databind:2.6.3'
+    compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.3'
+    compile 'com.fasterxml.jackson.module:jackson-module-scala_2.10:2.6.3'
+
+    // The main Json library
+    compile 'org.json4s:json4s-native_2.10:3.3.0'
+    compile 'org.json4s:json4s-jackson_2.10:3.3.0'
+    compile files('libs/alpn-boot-8.1.6.v20151105.jar')
+
+    // DL4J
+    compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.8'
+    compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.8'
+    compile 'org.nd4j:nd4j-x86:0.4-rc3.8'
+    compile fileTree('data/pos')
+    compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging
+
+    // Standford NPL
+    compile('edu.stanford.nlp:stanford-corenlp:3.6.0') { exclude group: 'xml-apis' }
+    compile ':stanford-corenlp-3.6.0-models@jar'
+    compile 'xml-apis:xml-apis:1.4.01'
+    compile 'com.google.protobuf:protobuf-java:2.6.1'
+
+    // Async HTTP
+    compile 'net.databinder.dispatch:dispatch-core_2.10:0.11.3'
 }
