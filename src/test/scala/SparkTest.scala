@@ -8,7 +8,7 @@ import util.Spark
 class SparkTest extends FunSuite with Spark {
 
   test("does it start?") {
-    sc.setLogLevel("ERROR")
+//    sc.setLogLevel("ERROR")
     assert(sc.parallelize(0 until 10).count === 10)
   }
 

@@ -4,10 +4,11 @@ import java.io.{File, FileOutputStream, PrintWriter}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
-import org.slf4j.LoggerFactory
+import org.apache.spark.Logging
+import org.slf4j.{MarkerFactory, Marker}
 
-object Log {
-  val slf4j = LoggerFactory.getLogger(getClass)
+object Log extends Logging {
+  //  val slf4j = LoggerFactory.getLogger(getClass)
   def resultsFile(name: String) = {
     new File(Config.cachePath + "res/").mkdirs()
     val resultsFile = new File(Config.cachePath + "res/" + Config.data + "_" + name + ".txt")
@@ -70,5 +71,7 @@ object Log {
 
   def e(m: Any) = if (Config.logLevel == "all") log("ERROR: " + m)
 
-  private def log(m: Any) = slf4j.info(m.toString)
+  private def log(m: Any) = {
+    super.log.error(MarkerFactory.getMarker("CORPUS"), m.toString)
+  }
 }

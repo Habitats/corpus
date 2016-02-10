@@ -3,7 +3,7 @@
 
   <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
     <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-      <Pattern>%d{HH:mm:ss.SSS} %-5level- %msg%n
+      <Pattern>%d{HH:mm:ss.SSS} %replace(%marker %-5level){'CORPUS ERROR', 'CORPUS'} - %msg%n
       </Pattern>
     </encoder>
   </appender>
@@ -20,8 +20,13 @@
     </encoder>
   </appender>
 
+  <logger name="org.apache.catalina.core" level="DEBUG" />
+  <logger name="org.deeplearning4j" level="DEBUG" />
+  <logger name="org.nd4j" level="DEBUG" />
+  <logger name="org.eclipse.jetty" level="INFO" />
+  <logger name="opennlp.uima.util" level="OFF" />
 
-  <root level="INFO">
+  <root level="WARN">
     <appender-ref ref="STDOUT" />
     <appender-ref ref="FILE" />
   </root>
