@@ -1,16 +1,23 @@
 package no.habitats.corpus
 
 import java.io._
+import java.nio.file.{FileSystems, Files}
 
 import no.habitats.corpus.models.Article
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
+import scala.collection.JavaConverters._
 import scala.io.Source
 
 object IO extends JsonSerializer {
   val rddCacheDir = Config.cachePath + "rdd_" + Config.data
-  val cacheFile   = Config.cachePath + Config.data + ".cache"
+  val cacheFile = Config.cachePath + Config.data + ".cache"
+
+  def walk(path: String, count: Int = 100, filter: String = ""): Seq[File] = {
+    val dir = FileSystems.getDefault.getPath(path)
+    Files.walk(dir).iterator().asScala.filter(Files.isRegularFile(_)).filter(p => p.toFile.getName.contains(filter)).take(count).map(_.toFile).toSeq
+  }
 
   // General methods
   def cache(seq: Seq[Article], cacheFile: String = cacheFile) = {
@@ -25,7 +32,7 @@ object IO extends JsonSerializer {
 
   def copy(f: File) = {
     val src = f
-    val dir = new File(Config.testPath + "relevant/")
+    val dir = new File(Config.dataPath + "relevant/")
     dir.mkdirs
     val dest = new File(dir, f.getName)
     if (!dest.exists) {
@@ -67,18 +74,10 @@ object IO extends JsonSerializer {
     sc.objectFile[Article]("file:///" + cacheDir)
   }
 
-  def load(cacheFile: String = cacheFile): Seq[Article] = {
+  def load: Seq[Article] = {
     val f = new File(cacheFile)
-    val source = !f.exists match {
-      case true =>
-        val url = Config.bucketUrl + f.getName
-        Log.i(f"Downloading ${f.getName} from $url ...")
-        Source.fromURL(url, "iso-8859-1")
-      case false =>
-        Log.i(f"Using cached file: $f")
-        Source.fromFile(f, "iso-8859-1")
-    }
-    loadJson(source)
+    Log.i(f"Using cached file: $f")
+    loadJson(Source.fromFile(f, "iso-8859-1"))
   }
 
   // Json cache

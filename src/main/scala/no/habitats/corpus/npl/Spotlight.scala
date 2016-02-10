@@ -2,7 +2,8 @@ package no.habitats.corpus.npl
 
 import dispatch.Defaults._
 import dispatch._
-import no.habitats.corpus.{Corpus, Config}
+import no.habitats.corpus.Corpus
+import no.habitats.corpus.models.{Annotation, Article, Entity}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
@@ -17,20 +18,32 @@ object Spotlight {
   val dbpediaSparql = "http://dbpedia.org/sparql?"
 
   def main(args: Array[String]): Unit = {
-    val test2 = Config.dataFile("pos/article.txt").getLines().mkString(" ")
-    val articles = Corpus.articles().find(_.id == "1453144")
+    val articles = Corpus.articles().take(100)
+  }
 
+  def attachWikidata(articles: Seq[Article]): Future[Seq[Article]] = {
+    Future.sequence(articles.map(attachWikidata))
+  }
+
+  def attachWikidata(article: Article): Future[Article] = {
+    extractWikidata(article.body)
+      .map(entities => entities.seq.map(_._2))
+      .map(wdEntities => wdEntities.map(wikidata => Annotation.fromWikidata(article.id, wikidata)))
+      .map(ann => {
+        val mapped = ann.map(_.id).zip(ann).toMap
+        mapped
+      })
+      .map(annotations => article.copy(ann = annotations))
+  }
+
+  def extractWikidata(text: String): Future[Seq[(Entity, Entity)]] = {
     for {
-      article <- articles
-    } yield for {
-      dbPedias <- fetchAnnotations(article.body)
-    } yield for {
-      dbPedia <- dbPedias
-    } yield for {
-      wd <- fetchSameAs(dbPedia)
-    } yield {
-      log.info(article.id + " > " + dbPedia + " -> " + wd)
-    }
+      dbPedia <- fetchAnnotations(text)
+      wd <- Future.sequence(dbPedia.map(fetchSameAs)).recover { case f =>
+        log.error("Couldn't fetch Wikidata ... Using DBPedia. Error: " + f.getMessage)
+        dbPedia
+      }
+    } yield dbPedia.zip(wd)
   }
 
   def fetchSameAs(entity: Entity): Future[Entity] = {
@@ -59,6 +72,7 @@ object Spotlight {
     val request = url(root + "/annotate").POST
       .addHeader("content-type", "application/x-www-form-urlencoded")
       .addHeader("Accept", "application/json")
+      .addParameter("User-agent", Math.random.toString)
       .addParameter("text", text)
       .addParameter("confidence", "0.5")
       .addParameter("types", "Person,Organisation,Location")
@@ -79,4 +93,4 @@ object Spotlight {
   }
 }
 
-case class Entity(id: String, name: String, uri: String)
+

@@ -1,6 +1,6 @@
 ## Install Scala
-sudo wget www.scala-lang.org/files/archive/scala-2.11.7.deb
-sudo dpkg -i scala-2.11.7.deb
+sudo wget www.scala-lang.org/files/archive/scala-2.10.6.deb
+sudo dpkg -i scala-2.10.6.deb
 
 ## Install SBT
 # Required
@@ -36,13 +36,13 @@ wget https://services.gradle.org/distributions/gradle-2.10-bin.zip
 unzip gradle-2.10-bin.zip
 ln -s ~/opt/packages/gradle/gradle-2.10/ ~/opt/gradle
 vim ~/.profile
-
-	# Gradle
+```
+# Gradle
 	if [ -d "$HOME/opt/gradle" ]; then
 	    export GRADLE_HOME="$HOME/opt/gradle"
 	    PATH="$PATH:$GRADLE_HOME/bin"
 	fi
-
+```
 source ~/.profile
 gradle -version
 

@@ -3,29 +3,30 @@
   */
 
 import no.habitats.corpus.Config
-import no.habitats.corpus.npl.Spotlight
 import no.habitats.corpus.npl.extractors.{OpenNLP, SimpleStandfordNER}
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
+import org.slf4j.LoggerFactory
 
 @RunWith(classOf[JUnitRunner])
 class NLPTest extends FunSuite {
 
-  lazy val test = Config.dataFile("pos/article.txt").getLines().mkString(" ")
-  lazy val test2 = Config.dataFile("pos/article_short.txt").getLines().mkString(" ")
+  val log = LoggerFactory.getLogger(getClass)
+  lazy val test = Config.testFile("npl/article.txt").getLines().mkString(" ")
+  lazy val test2 = Config.testFile("npl/article_short.txt").getLines().mkString(" ")
 
   test("extraction") {
     val e1 = OpenNLP.extract(test2)
     val e2 = SimpleStandfordNER.extract(test2)
 
-    println("OpenNLP:")
+    log.info("OpenNLP:")
     e1.foreach(println)
 
-    println("StandfordNER:")
+    log.info("StandfordNER:")
     e2.foreach(println)
 
-    println("Benchmark:")
+    log.info("Benchmark:")
     val num = 10
     val goal = 1800000
     val s = System.currentTimeMillis()
@@ -38,10 +39,6 @@ class NLPTest extends FunSuite {
 
     val c = ((goal / num) * t) / (1000 * 60 * 24)
     val c2 = ((goal / num) * t2) / (1000 * 60 * 24)
-    println(s"OpenNLP: $t ($c) ms > StanfordNER: $t2 ($c2) ms")
-  }
-
-  test("dbpedia spotlight") {
-    val annotated = Spotlight.fetchAnnotations(test)
+    log.info(s"OpenNLP: $t ($c) ms > StanfordNER: $t2 ($c2) ms")
   }
 }

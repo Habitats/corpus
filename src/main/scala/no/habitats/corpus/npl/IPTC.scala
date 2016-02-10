@@ -1,10 +1,11 @@
 package no.habitats.corpus.npl
 
-import no.habitats.corpus.{Config, Log}
+import no.habitats.corpus.Log
 import org.apache.jena.rdf.model.{Model, ModelFactory, Resource}
 import org.apache.jena.vocabulary.SKOS
 
 import scala.collection.JavaConverters._
+import scala.io.Source
 
 object IPTC {
   // Helper methods for IPTC/RDF
@@ -49,7 +50,7 @@ object IPTC {
 
   // [NewYorkTimesDescriptor, MediaTopic] pairs
   lazy val nytToIptc: Map[String, String] = {
-    Config.dataFile("nyt_to_iptc.txt").getLines().map(_.split("\t").toList).filter(_ (3) != "n/a")
+    Source.fromInputStream(getClass.getResourceAsStream("/nyt_to_iptc.txt")).getLines().map(_.split("\t").toList).filter(_ (3) != "n/a")
       // extract [NewYorkTimeDescriptor, MediaTopicID]
       .map(concept => (concept.head.toLowerCase, concept(3).split("/").last)).toMap
   }

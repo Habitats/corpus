@@ -26,9 +26,8 @@ object RddFetcher {
   def localRdd(sc: SparkContext): RDD[Article] = {
     val s = System.currentTimeMillis
     Log.i("Loading local RDD ...")
-    val annotations = Corpus.annotations()
     val articles = Corpus.articles()
-    val annotatedArticles = Corpus.annotatedArticles(articles, annotations)
+    val annotatedArticles = Corpus.annotatedArticles(articles)
     val rdd = sc.parallelize(annotatedArticles)
     Log.i(s"Loaded ${annotatedArticles.size} articles in ${(System.currentTimeMillis - s) / 1000} seconds")
     cache(rdd)
@@ -39,17 +38,9 @@ object RddFetcher {
     val s = System.currentTimeMillis
     val useRdd = new File(IO.rddCacheDir).exists
 
-    Log.i(s"Loading cached RDD from ${
-      useRdd match {
-        case true => "object file"
-        case false => "local cache"
-      }
-    } ...")
+    Log.i(s"Loading cached RDD from ${if (useRdd) "object file" else "local cache"} ...")
     // ### LOADING
-    val rdd = useRdd match {
-      case true => IO.loadRdd(sc).repartition(Config.partitions)
-      case false => sc.parallelize(IO.load())
-    }
+    val rdd = if (useRdd) IO.loadRdd(sc).repartition(Config.partitions) else sc.parallelize(IO.load)
     Log.i(s"Loading completed in ${(System.currentTimeMillis - s) / 1000} seconds")
     try {
       Log.v("Checking integrity ...")
@@ -81,13 +72,14 @@ object RddFetcher {
 
   def cache(rdd: RDD[Article]) = {
     try {
-      if (Config.standalone) {
+      if (Config.local) {
         IO.cacheRdd(rdd)
       } else {
         IO.cache(rdd.collect)
         IO.cacheRdd(rdd)
       }
-    } catch {
+    }
+    catch {
       case e: Exception => Log.e("Could not cache RDD!"); Log.e(e)
     }
   }

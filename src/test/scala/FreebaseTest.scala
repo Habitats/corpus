@@ -2,12 +2,10 @@
   * Created by Patrick on 13.11.2015.
   */
 
-import no.habitats.corpus.npl.WikiData
-import WikiData._
+import no.habitats.corpus.npl.WikiData._
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
-
 
 @RunWith(classOf[JUnitRunner])
 class FreebaseTest extends FunSuite {

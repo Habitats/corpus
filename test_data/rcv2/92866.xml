@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<newsitem date="1997-04-21" id="root" itemid="92866" xml:lang="no">
+<title></title>
+<headline> Norsk Hydro har 1.540 mln etter skatt i 1. kv. </headline>
+<byline></byline>
+<dateline></dateline>
+<text>
+<p>     OSLO, 21 apr (Reuter) - Norsk Hydro melder om følgende </p>
+<p> hovedtall i 1. kvartal (mln kr): </p>
+<p>        1997  Ventet    1996 Driftsinntekter 23.249 22.364   21.380 Driftsresultat   3.145  2.883    3.116  Resultat før skatt    3.202  2.860    3.327 Resultat etter skatt  1.540  1.466    1.868  EPS 1. kv. (kr)   6,70   6,40     8,20 </p>
+<p>     --Redaksjonen: 22 93 69 75. </p>
+<p> (c) Reuters Limited 1997. </p></text>
+<copyright>(c) Reuters Limited 1997 </copyright>
+<metadata>
+<codes class="bip:countries:1.0">
+<code code="EURZ">
+<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
+<code code="NORW">
+<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
+<code code="SCANDZ">
+<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
+<code code="WEURZ">
+<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code></codes>
+<codes class="bip:topics:1.0">
+<code code="NOHYD">
+<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
+<code code="I1">
+<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
+<code code="I13">
+<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
+<code code="C15">
+<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
+<code code="C151">
+<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
+<code code="CCAT">
+<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code></codes>
+<dc element="dc.publisher" value="Reuters Holdings Plc"></dc>
+<dc element="dc.datepublished" value="1997-04-21"></dc>
+<dc element="dc.source" value="Reuters - Nyheter på norsk"></dc>
+<dc element="dc.creator.location" value=""></dc>
+<dc element="dc.creator.location.country.name" value=""></dc></metadata></newsitem>

@@ -110,7 +110,7 @@ class MLTest extends FunSuite {
     )
     val a3 = Article(id = a3id, ann = ann3.map(x => (x.id, x)).toMap)
 
-    val rdd = Context.localContext.parallelize(Seq(a1, a2, a3))
+    val rdd = Context.sc.parallelize(Seq(a1, a2, a3))
     val tc = TC(rdd)
     assert(tc.documentCount === 3)
     assert(tc.documentsWithTerm(A) === 1)
@@ -149,7 +149,5 @@ class MLTest extends FunSuite {
       assert(s === d.toSparse)
       assert(d === s.toDense)
     }
-    Log.v("asd")
-    val nice = rdd.collect()
   }
 }

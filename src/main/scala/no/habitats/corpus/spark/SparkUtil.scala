@@ -3,14 +3,13 @@ package no.habitats.corpus.spark
 import no.habitats.corpus.hbase.HBaseUtil
 import no.habitats.corpus.models.Article
 import no.habitats.corpus.{Config, Log, Prefs}
-import org.apache.log4j.Logger
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
 object SparkUtil {
   val cacheDir = "cache"
-  lazy val sc = if (Config.standalone) Context.localContext else Context.clusterContext
+  lazy val sc = Context.sc
   var iter = 0
 
   def sparkTest() = {
@@ -22,7 +21,7 @@ object SparkUtil {
   def main(args: Array[String]) = {
 
     // args
-    if (args.length > 0) Config.standalone = args(0).toBoolean
+    if (args.length > 0) Config.local = args(0).toBoolean
     if (args.length > 1) Config.rdd = args(1)
     if (args.length > 2) Config.job = args(2)
     if (args.length > 3) Config.data = args(3)

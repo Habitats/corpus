@@ -13,30 +13,30 @@ import opennlp.tools.tokenize.{TokenizerME, TokenizerModel}
 object OpenNLP extends Extractor {
 
   private lazy val sentenceDetector = {
-    val model = new SentenceModel(new FileInputStream(Config.dataRoot + "pos/en-sent.bin"))
+    val model = new SentenceModel(new FileInputStream(Config.dataPath + "opennlp/en-sent.bin"))
     new SentenceDetectorME(model)
   }
 
   private lazy val tokenizer = {
-    val model = new TokenizerModel(new FileInputStream(Config.dataRoot + "pos/en-token.bin"))
+    val model = new TokenizerModel(new FileInputStream(Config.dataPath + "opennlp/en-token.bin"))
     new TokenizerME(model)
   }
 
   private def nameFinderME(model: String): NameFinderME = {
-    val m = new TokenNameFinderModel(new FileInputStream(Config.dataRoot + model))
+    val m = new TokenNameFinderModel(new FileInputStream(Config.dataPath + model))
     new NameFinderME(m)
   }
 
   private lazy val posTagger = {
-    val model = new POSModel(new FileInputStream(Config.dataRoot + "pos/en-pos-maxent.bin"))
+    val model = new POSModel(new FileInputStream(Config.dataPath + "opennlp/en-pos-maxent.bin"))
     new POSTaggerME(model)
   }
 
-  private lazy val persons   = nameFinderME("pos/en-ner-person.bin")
-  private lazy val orgs      = nameFinderME("pos/en-ner-organization.bin")
-  private lazy val locations = nameFinderME("pos/en-ner-location.bin")
-  private lazy val money     = nameFinderME("pos/en-ner-money.bin")
-  private lazy val date      = nameFinderME("pos/en-ner-time.bin")
+  private lazy val persons = nameFinderME("opennlp/en-ner-person.bin")
+  private lazy val orgs = nameFinderME("opennlp/en-ner-organization.bin")
+  private lazy val locations = nameFinderME("opennlp/en-ner-location.bin")
+  private lazy val money = nameFinderME("opennlp/en-ner-money.bin")
+  private lazy val date = nameFinderME("opennlp/en-ner-time.bin")
 
   def pair(model: NameFinderME, tokens: Array[String]): Array[(String, String)] = model.find(tokens).map(n => (n.getType, tokens.slice(n.getStart, n.getEnd).map(_.trim).mkString(" ")))
 

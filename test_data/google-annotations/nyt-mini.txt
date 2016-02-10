@@ -1,0 +1,31 @@
+1818253	Britain Signals Plans to Reduce, Not Increase, Troop Levels in Iraq
+0	1	16	Britain	12	19	/m/07ssc
+1	0	10	America	36	43	/m/09c7w0
+2	1	9	Iraq	78	82	/m/0d05q4
+3	0	3	Basra	370	375	/m/0ft0s
+4	0	6	Baghdad	431	438	/m/01fqm
+5	0	1	The Daily Telegraph	516	535	/m/0179qd
+
+1821747	Bush Defends Moving Against Iranians Who Help Shiites Attack U.S.-Led Forces in Iraq
+0	1	23	Bush	22	26	/m/09b6zr
+1	0	12	American	68	76	/m/09c7w0
+2	1	29	Iranian	93	100	/m/03shp
+3	1	16	Iraq	119	123	/m/0d05q4
+4	1	4	Tehran	216	222	/m/0ftlx
+5	1	4	Shiites	264	271	/m/06pq6
+
+1822395	Shell Hits Baghdad Girls' School, Killing 5 Students, in Latest Attack on Education in Iraq
+0	0	7	Sunni	120	125	/m/078tg
+1	1	6	Baghdad	145	152	/m/01fqm
+2	0	3	Iraqi	308	313	/m/0d05q4
+3	0	1	Najaf	1050	1055	/m/01ch26
+4	0	2	United States	1065	1078	/m/09c7w0
+5	0	1	Interior Ministry	1599	1616	/m/01zqgj
+
+1818263	Shiite Radicalism Could Fuel Wider Violence, Official Warns
+0	1	13	Iraq	96	100	/m/0d05q4
+1	1	10	Iran	113	117	/m/03shp
+2	1	3	Middle East	138	149	/m/04wsz
+3	1	2	Islamic	182	189	/m/0flw86
+4	1	7	Shiite	175	181	/m/06pq6
+5	1	21	John D. Negroponte	418	436	/m/0208bk

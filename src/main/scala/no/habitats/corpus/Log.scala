@@ -4,11 +4,10 @@ import java.io.{File, FileOutputStream, PrintWriter}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+import org.slf4j.LoggerFactory
 
-/**
- * Created by mail on 10.11.2015.
- */
 object Log {
+  val slf4j = LoggerFactory.getLogger(getClass)
   def resultsFile(name: String) = {
     new File(Config.cachePath + "res/").mkdirs()
     val resultsFile = new File(Config.cachePath + "res/" + Config.data + "_" + name + ".txt")
@@ -22,6 +21,12 @@ object Log {
   def writeLine(m: String, file: File) = {
     val writer = new PrintWriter(new FileOutputStream(file, true))
     writer.println(m)
+    writer.close()
+  }
+
+  def writeLines(m: Seq[String], file: File) = {
+    val writer = new PrintWriter(new FileOutputStream(file, true))
+    m.foreach(writer.println)
     writer.close()
   }
 
@@ -43,8 +48,17 @@ object Log {
     writeLine(f(m), resultsFile(Config.resultsCatsFileName))
   }
 
-  def toFile(m: Any, name: String) = {
-    val resultsFile = new File("stats/" + name + ".txt")
+  def toFile(m: String, fileName: String) = {
+    val resultsFile = new File(Config.dataPath + f"/$fileName")
+    if (!resultsFile.exists) {
+      Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
+      resultsFile.createNewFile
+    }
+    writeLine(m.toString, resultsFile)
+  }
+
+  def toFile(m: Traversable[String], fileName: String) = {
+    val resultsFile = new File(Config.dataPath + f"/$fileName")
     if (!resultsFile.exists) {
       Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
       resultsFile.createNewFile
@@ -56,5 +70,5 @@ object Log {
 
   def e(m: Any) = if (Config.logLevel == "all") log("ERROR: " + m)
 
-  private def log(m: Any) = println(f(m))
+  private def log(m: Any) = slf4j.info(m.toString)
 }

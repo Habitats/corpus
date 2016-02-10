@@ -17,7 +17,7 @@ case class Annotation(articleId: String,
                       fb: String = "NONE", // Freebase ID
                       wd: String = "NONE", // WikiData ID
                       tfIdf: Double = -1 // term frequency, inverse document frequency
-                       ) {
+                     ) {
 
   lazy val id: String = {
     if (fb == "NONE" && wd == "NONE") phrase
@@ -51,13 +51,17 @@ object Annotation {
     )
   }
 
+  def fromWikidata(articleId: String, wd: Entity): Annotation = {
+    new Annotation(articleId = articleId, index = nextId.incrementAndGet(), phrase = wd.name, mc = 1, wd = wd.id)
+  }
+
   // from POS name
   def fromName(articleId: String, index: Int, name: String, count: Int, kind: String): Annotation = {
     new Annotation(articleId = articleId, index = index, phrase = name, mc = count)
   }
 
   // google annotations raw lines format
-  def fromGoogle(file: File = new File(Config.dataRoot + "google-annotations/nyt-ann-all.txt")): Map[String, Seq[Annotation]] = {
+  def fromGoogle(file: File = new File(Config.dataPath + "google-annotations/nyt-ann-all.txt")): Map[String, Seq[Annotation]] = {
     val source: BufferedSource = Source.fromFile(file)(Codec.ISO8859)
     val reader = source.bufferedReader()
     val chunks = ListBuffer[Seq[String]]()

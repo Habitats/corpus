@@ -7,6 +7,6 @@ case class Prefs(iteration: Int = 0,
                  wikiDataOnly: Boolean = Config.wikiDataOnly,
                  wikiDataIncludeBroad: Boolean = Config.wikiDataIncludeBroad,
                  ontology: String = "occupation"
-                  )
+                )
 
 

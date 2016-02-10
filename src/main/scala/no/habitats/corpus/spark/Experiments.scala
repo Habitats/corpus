@@ -21,12 +21,12 @@ object Experiments {
     val a = Preprocess.preprocess(sc, sc.broadcast(Prefs()), rdd)
     val prefs = sc.broadcast(Prefs(iteration = iter))
     val annCounts = a.flatMap(a => a.iptc.map(c => (c, a.ann.size))).reduceByKey(_ + _).collectAsMap
-    Log.toFile(annCounts.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "annotation_pr_iptc")
+    Log.toFile(annCounts.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "stats/annotation_pr_iptc.txt")
     val artByAnn = a.flatMap(a => a.iptc.map(c => (c, 1))).reduceByKey(_ + _).collectAsMap
-    Log.toFile(artByAnn.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "articles_pr_iptc")
+    Log.toFile(artByAnn.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "stats/articles_pr_iptc.txt")
     val iptc = a.flatMap(_.iptc).distinct.collect
     val avgAnnIptc = iptc.map(c => (c, annCounts(c).toDouble / artByAnn(c))).toMap
-    Log.toFile(avgAnnIptc.map(c => f"${c._1}%30s ${c._2}%10.0f").mkString("\n"), "average_ann_pr_iptc")
+    Log.toFile(avgAnnIptc.map(c => f"${c._1}%30s ${c._2}%10.0f").mkString("\n"), "stats/average_ann_pr_iptc.txt")
   }
 
   def frequencyExperiment(sc: SparkContext, rdd: RDD[Article]) = {

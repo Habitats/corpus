@@ -1,8 +1,8 @@
 package no.habitats.corpus.spark
 
 import no.habitats.corpus._
-import no.habitats.corpus.npl.WikiData
 import no.habitats.corpus.models.{Annotation, Article}
+import no.habitats.corpus.npl.WikiData
 import org.apache.spark.SparkContext
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD

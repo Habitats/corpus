@@ -1,8 +1,8 @@
 package no.habitats.corpus.npl.models
 
 /**
- * Created by mail on 04.02.2016.
- */
+  * Created by mail on 04.02.2016.
+  */
 case class Sentence(words: Seq[Word]) {
   override def toString = {
     Seq(
@@ -10,7 +10,7 @@ case class Sentence(words: Seq[Word]) {
       words.map(w => f"${w.lemma}%12s").mkString(" "),
       words.map(w => f"${w.tag}%12s").mkString(" "),
       words.map(w => f"${w.ner}%12s").mkString(" ")
-    ).mkString("", "\n" , "\n")
+    ).mkString("", "\n", "\n")
   }
 }
 

@@ -1,26 +1,18 @@
 package no.habitats.corpus.spark
 
+import no.habitats.corpus.models.{Annotation, Article, Entity}
 import no.habitats.corpus.{Config, Log}
 import org.apache.spark.{SparkConf, SparkContext}
 
-object Context {
-  lazy val clusterContext = {
-    Log.i("Attempting to use cluster context ...")
-    Config.standalone = true
-    val conf = new SparkConf().setAppName("Corpus")
-    val sc = conf.getOption("spark.master") match {
-      case Some(_) => new SparkContext(conf)
-      case _ => localContext
-    }
-    sc.setLogLevel("ERROR")
-    sc
-  }
+import scala.collection.JavaConverters._
 
-  lazy val localContext = {
-    Log.i("Using local context!")
-    Config.standalone = false
+object Context {
+
+  lazy val sc = {
     System.setProperty("hadoop.home.dir", "C:\\hadoop\\")
-    val conf = new SparkConf().setMaster("local[8]").setAppName("Corpus")
+    val conf = new SparkConf()
+      .setAll(Config.sparkProps.asScala)
+      .registerKryoClasses(Array(classOf[Article], classOf[Entity], classOf[Annotation]))
     val sc = new SparkContext(conf)
     sc.setLogLevel("ERROR")
     sc

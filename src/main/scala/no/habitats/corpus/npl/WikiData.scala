@@ -5,26 +5,26 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import no.habitats.corpus.models.Annotation
 import no.habitats.corpus.{Config, Log}
+import org.json4s._
+import org.json4s.jackson.JsonMethods._
+import org.json4s.jackson.Serialization
 
 import scala.io.Source
 
 object WikiData {
-
-  import org.json4s._
-  import org.json4s.jackson.JsonMethods._
-  import org.json4s.jackson.Serialization
-
   implicit val formats = Serialization.formats(NoTypeHints)
+  implicit def toJson(url: String): JValue = parse(Source.fromURL(url).mkString)
 
   val pairsFile = "wikidata/fb_to_wd_all.txt"
   // API roots
-  val wmflabs   = "http://wdq.wmflabs.org/api?q="
-  val wiki      = "https://www.wikidata.org/w/api.php?format=json&language=en&"
+  val wmflabs = "http://wdq.wmflabs.org/api?q="
+  val wiki = "https://www.wikidata.org/w/api.php?format=json&language=en&"
 
-  lazy val fbToWikiMapping: Map[String, String] = {
-    Config.dataFile(pairsFile).getLines().map(_.split(",")).map(p => (p(0), p(1))).toMap
-  }
+  lazy val instanceOf = loadPairs("instanceOf.txt")
+  lazy val occupations = loadPairs("occupation.txt")
+  lazy val genders = loadPairs("gender.txt")
 
+  lazy val fbToWikiMapping: Map[String, String] = Config.dataFile(pairsFile).getLines().map(_.split(",")).map(p => (p(0), p(1))).toMap
   lazy val wikiToFbMapping: Map[String, String] = fbToWikiMapping.map(p => (p._2, p._1))
 
   // Perform a single Freebase -> WikiData translation
@@ -47,7 +47,7 @@ object WikiData {
       List(JInt(wb), JString(valueType), JString(fb)) = triple
     } yield (fb.toString, wb.toString)
     Log.v("Done! Storing ...")
-    val file = new File(Config.dataRoot + pairsFile)
+    val file = new File(Config.dataPath + pairsFile)
     file.createNewFile
     val writer = new PrintWriter(file)
     pairs.foreach(p => writer.println(p._1 + "," + p._2))
@@ -59,14 +59,12 @@ object WikiData {
   def computeOccupation() = loadWdPropPairs("occupation", "106")
   def computeSubclassOf() = loadWdPropPairs("subclassOf", "279")
 
-  val instanceOf  = loadPairs("instanceOf.txt")
-  val occupations = loadPairs("occupation.txt")
-  val genders     = loadPairs("gender.txt")
-
-  def loadPairs(name: String): Map[String, Set[String]] = Config.dataFile("wikidata/" + name).getLines().map(line => {
-    val v = line.split(" ")
-    (v(0), v(1).split(",").toSet)
-  }).toMap
+  def loadPairs(name: String): Map[String, Set[String]] = {
+    Config.dataFile("wikidata/" + name).getLines().map(line => {
+      val v = line.split(" ")
+      (v(0), v(1).split(",").toSet)
+    }).toMap
+  }
 
   def addAnnotations(annotationsMap: Map[String, Annotation], pairs: Map[String, Set[String]]): Map[String, Annotation] = {
     val newAnnotations = annotationsMap.values.flatMap(a => {
@@ -94,7 +92,7 @@ object WikiData {
       List(JInt(wb), JString(valueType), JInt(instanceOf)) = triple
     } yield (wb.toString, instanceOf.toString)
     Log.v("Done! Storing ...")
-    val file = new File(Config.dataRoot + "wikidata/" + name + ".txt")
+    val file = new File(Config.dataPath + "wikidata/" + name + ".txt")
     file.createNewFile
     val writer = new PrintWriter(file)
     pairs.groupBy(_._1).foreach(p => writer.println(p._1 + " " + p._2.map(_._2).mkString(",")))
@@ -115,5 +113,4 @@ object WikiData {
     }
   }
 
-  implicit def toJson(url: String): JValue = parse(Source.fromURL(url).mkString)
 }

@@ -14,7 +14,7 @@ mainClassName = 'no.habitats.corpus.spark.SparkUtil'
 
 repositories {
     mavenCentral()
-    flatDir(dirs: 'provided')
+    flatDir(dirs: 'models')
 }
 
 shadowJar {
@@ -37,6 +37,9 @@ configurations {
 dependencies {
     testCompile group: 'junit', name: 'junit', version: '4.11'
     testCompile 'org.scalatest:scalatest_2.10:3.0.0-M7'
+    compile "org.scala-lang:scala-library:2.10.6"
+    compile "org.scala-lang:scala-compiler:2.10.6"
+
     compile 'org.apache.hbase:hbase-client:1.0.1'
     compile 'org.apache.hbase:hbase-common:1.0.1'
     compile 'org.apache.hbase:hbase-server:1.0.1'
@@ -47,8 +50,6 @@ dependencies {
 
     compile 'org.apache.spark:spark-core_2.10:1.6.0'
     compile 'org.apache.spark:spark-mllib_2.10:1.6.0'
-
-    compile files('corpus.properties')
 
     // RDF
     compile('org.apache.jena:jena-core:3.0.0') { exclude group: 'xml-apis' }
@@ -68,7 +69,7 @@ dependencies {
     compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.8'
     compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.8'
     compile 'org.nd4j:nd4j-x86:0.4-rc3.8'
-    compile fileTree('data/pos')
+    compile fileTree('models/binary')
     compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging
 
     // Standford NPL

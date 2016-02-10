@@ -59,7 +59,7 @@ case class Article(id: String,
 
   def addNames: Article = {
     val index = new AtomicInteger(ann.size)
-    val updatedAnn = names.map { case (name, (count, kind)) => Annotation.fromName(id, index.incrementAndGet(), name, count, kind)}
+    val updatedAnn = names.map { case (name, (count, kind)) => Annotation.fromName(id, index.incrementAndGet(), name, count, kind) }
     copy(ann = updatedAnn.map(t => t.phrase -> t).toMap)
   }
 
@@ -69,6 +69,7 @@ case class Article(id: String,
 }
 
 object Article {
+
   import scala.collection.JavaConverters._
 
   implicit def stringToOption(s: String): Option[String] = Option(s)
