@@ -9,6 +9,8 @@ import org.slf4j.{MarkerFactory, Marker}
 
 object Log extends Logging {
   //  val slf4j = LoggerFactory.getLogger(getClass)
+  val marker = MarkerFactory.getMarker("CORPUS")
+
   def resultsFile(name: String) = {
     new File(Config.cachePath + "res/").mkdirs()
     val resultsFile = new File(Config.cachePath + "res/" + Config.data + "_" + name + ".txt")
@@ -72,6 +74,6 @@ object Log extends Logging {
   def e(m: Any) = if (Config.logLevel == "all") log("ERROR: " + m)
 
   private def log(m: Any) = {
-    super.log.error(MarkerFactory.getMarker("CORPUS"), m.toString)
+    super.log.error(marker, m.toString)
   }
 }

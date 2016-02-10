@@ -14,7 +14,7 @@ object Context {
       .setAll(Config.sparkProps.asScala)
       .registerKryoClasses(Array(classOf[Article], classOf[Entity], classOf[Annotation]))
     val sc = new SparkContext(conf)
-//    sc.setLogLevel("ERROR")
+    sc.setLogLevel("ERROR")
     sc
   }
 }
