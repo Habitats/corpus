@@ -20,7 +20,6 @@ object RddFetcher {
       case "local" => localRdd(sc)
     }
     rdd.cache()
-    rdd.map(_.addIptc(Config.broadMatch))
   }
 
   def localRdd(sc: SparkContext): RDD[Article] = {
@@ -32,6 +31,16 @@ object RddFetcher {
     Log.i(s"Loaded ${annotatedArticles.size} articles in ${(System.currentTimeMillis - s) / 1000} seconds")
     cache(rdd)
     rdd
+  }
+
+  def pipeline(sc: SparkContext, count: Int): RDD[Article] = {
+    val s = System.currentTimeMillis
+    Log.i("Loading pipelined RDD ...")
+    sc.parallelize(IO.walk(Config.dataPath + "/nyt/complete", count = count, filter = ".xml"))
+      .map(Corpus.toNYT)
+      .map(Corpus.toArticle)
+      .map(Corpus.toAnnotated)
+      .map(Corpus.toIPTC)
   }
 
   def cachedRdd(sc: SparkContext): RDD[Article] = {

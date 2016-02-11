@@ -48,3 +48,11 @@ gradle -version
 
 ## CPU Monitor
 sudo apt-get install htop
+
+## Add SSH key 
+# Generate key
+ssh-keygen -t rsa
+# On Ubuntu
+ssh-copy-id -i user@hostname
+# Manual for cygwin
+cat ~/.ssh/id_rsa.pub | ssh user@hostname 'cat >> .ssh/authorized_keys'

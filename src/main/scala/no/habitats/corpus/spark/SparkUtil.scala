@@ -21,11 +21,15 @@ object SparkUtil {
   def main(args: Array[String]) = {
 
     // args
-    if (args.length > 0) Config.local = args(0).toBoolean
-    if (args.length > 1) Config.rdd = args(1)
-    if (args.length > 2) Config.job = args(2)
-    if (args.length > 3) Config.data = args(3)
-    if (args.length > 4) Config.partitions = args(4).toInt
+    val props: Map[String, String] = args.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
+    Log.v("ARGUMENTS: " + props.mkString(", "))
+    props.foreach {
+      case ("partitions", v) => Config.partitions = v.toInt
+      case ("rdd", v) => Config.rdd = v
+      case ("job", v) => Config.job = v
+      case ("local", v) => Config.local = v.toBoolean
+      case (k, _) => Log.v("ILLEGAL ARGUMENT: " + k); System.exit(0)
+    }
 
     Log.init()
     Log.r("Starting Corpus job ...")
@@ -39,6 +43,8 @@ object SparkUtil {
       case "test" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "preprocess" => Preprocess.preprocess(sc, sc.broadcast(Prefs()), rdd)
       case "train" =>
+      case "stats" => stats(rdd)
+      case "pipeline" => RddFetcher.pipeline(sc, 2)
       case "load" =>
         HBaseUtil.init()
         Log.i("Loading HBase ...")
