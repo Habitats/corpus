@@ -27,11 +27,11 @@ configurations {
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
         exclude group: 'log4j', module: 'log4j'
     }
-    runtime.exclude group: 'org.apache.spark'
-    runtime.exclude group: 'org.apache.hbase'
-    runtime.exclude group: 'org.cloudera.htrace', module: 'htrace-core'
-    runtime.exclude module: 'stanford-corenlp-3.6.0-models'
-    runtime.exclude module: 'reflectasm'
+//    runtime.exclude group: 'org.apache.spark'
+//    runtime.exclude group: 'org.apache.hbase'
+//    runtime.exclude group: 'org.cloudera.htrace', module: 'htrace-core'
+//    runtime.exclude module: 'stanford-corenlp-3.6.0-models'
+//    runtime.exclude module: 'reflectasm'
 }
 
 dependencies {
@@ -54,7 +54,7 @@ dependencies {
     // RDF
     compile('org.apache.jena:jena-core:3.0.0') { exclude group: 'xml-apis' }
 
-    // Theese are required for json4s to work. Something imported a depricated version.
+    // These are required for json4s to work. Something imported a deprecated version.
     compile 'com.fasterxml.jackson.core:jackson-core:2.6.3'
     compile 'com.fasterxml.jackson.core:jackson-databind:2.6.3'
     compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.3'
