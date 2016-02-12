@@ -10,7 +10,7 @@
 
 
   <appender name="FILE" class="ch.qos.logback.core.FileAppender">
-    <file>testFile6.log</file>
+    <file>corpus.log</file>
     <append>true</append>
     <!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder
       by default -->

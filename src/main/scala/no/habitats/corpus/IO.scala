@@ -9,6 +9,7 @@ import org.apache.spark.rdd.RDD
 
 import scala.collection.JavaConverters._
 import scala.io.Source
+import scala.util.Try
 
 object IO extends JsonSerializer {
   val rddCacheDir = Config.cachePath + "rdd_" + Config.count
@@ -57,17 +58,17 @@ object IO extends JsonSerializer {
   }
 
   def cacheRdd(rdd: RDD[Article], cacheDir: String = rddCacheDir) = {
-    val dir = new File(cacheDir)
-    Log.i(s"Cahing rdd to ${dir.getAbsolutePath} ...")
-    // rdd cache
-    if (dir.exists) {
-      dir.listFiles().foreach(f => {
-        if (f.isDirectory) f.listFiles().foreach(_.delete)
-        f.delete
-      })
-      dir.delete
-    }
-    rdd.saveAsObjectFile("file:///" + cacheDir)
+      val dir = new File(cacheDir)
+      Log.i(s"Caching rdd to ${dir.getAbsolutePath} ...")
+      // rdd cache
+      if (dir.exists) {
+        dir.listFiles().foreach(f => {
+          if (f.isDirectory) f.listFiles().foreach(_.delete)
+          f.delete
+        })
+        dir.delete
+      }
+      rdd.saveAsObjectFile("file:///" + cacheDir)
   }
 
   def loadRdd(sc: SparkContext, cacheDir: String = rddCacheDir): RDD[Article] = {
