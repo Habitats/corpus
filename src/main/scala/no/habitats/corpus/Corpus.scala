@@ -4,9 +4,6 @@ import java.io.File
 
 import com.nytlabs.corpus.{NYTCorpusDocument, NYTCorpusDocumentParser}
 import no.habitats.corpus.models.{Annotation, Article}
-import org.apache.spark
-import org.apache.spark.rdd
-import spire.std.map
 
 import scala.util.Try
 
@@ -46,7 +43,7 @@ object Corpus {
   def toIPTC(article: Article) = article.addIptc(Config.broadMatch)
   def toNYT(file: File): NYTCorpusDocument = rawNYTParser.parseNYTCorpusDocumentFromFile(file, false)
   def toArticle(nyt: NYTCorpusDocument): Article = Article(nyt)
-  def toAnnotated(a: Article ): Article = {
+  def toAnnotated(a: Article): Article = {
     annotations.get(a.id) match {
       case Some(v) => a.copy(ann = v.map(k => k.id -> k).toMap)
       case None => a

@@ -19,20 +19,11 @@ object SparkUtil {
   lazy val rdd: RDD[Article] = RddFetcher.rdd(sc)
 
   def main(args: Array[String]) = {
-    val props: Map[String, String] = args.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
-    props.foreach {
-      case ("partitions", v) => Config.partitions = v.toInt
-      case ("rdd", v) => Config.rdd = v
-      case ("job", v) => Config.job = v
-      case ("local", v) => Config.local = v.toBoolean
-      case ("count",v) => Config.count = v.toInt
-      case (k, _) => Log.v("ILLEGAL ARGUMENT: " + k); System.exit(0)
-    }
+    Config.setArgs(args)
 
     Log.init()
     Log.r("Starting Corpus job ...")
     val s = System.currentTimeMillis
-    Log.v("ARGUMENTS: " + props.mkString(", "))
 
     Log.i(f"Loading articles ...")
 

@@ -5,7 +5,7 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
 import org.apache.spark.Logging
-import org.slf4j.{MarkerFactory, Marker}
+import org.slf4j.MarkerFactory
 
 object Log extends Logging {
   //  val slf4j = LoggerFactory.getLogger(getClass)
@@ -69,9 +69,9 @@ object Log extends Logging {
     writeLine(m.toString, resultsFile)
   }
 
-  def v(m: Any) = if (Config.logLevel == "all") log(m)
+  def v(m: Any) = log(m)
 
-  def e(m: Any) = if (Config.logLevel == "all") log("ERROR: " + m)
+  def e(m: Any) = log("ERROR: " + m)
 
   private def log(m: Any) = {
     super.log.error(marker, m.toString)

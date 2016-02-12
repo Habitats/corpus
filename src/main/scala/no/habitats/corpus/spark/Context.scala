@@ -1,7 +1,7 @@
 package no.habitats.corpus.spark
 
+import no.habitats.corpus.Config
 import no.habitats.corpus.models.{Annotation, Article, Entity}
-import no.habitats.corpus.{Config, Log}
 import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.JavaConverters._

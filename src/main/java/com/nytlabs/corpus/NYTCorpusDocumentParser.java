@@ -403,8 +403,8 @@ public class NYTCorpusDocumentParser {
     Document document = null;
     try {
       document = loadNonValidating(file);
-    NYTCorpusDocument nytCorpusDocument = parseNYTCorpusDocumentFromDOMDocument(file, document);
-    return nytCorpusDocument;
+      NYTCorpusDocument nytCorpusDocument = parseNYTCorpusDocumentFromDOMDocument(file, document);
+      return nytCorpusDocument;
     } catch (Exception e) {
       System.out.println("Coundn't parse: " + file);
     }
