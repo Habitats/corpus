@@ -74,7 +74,7 @@ object Config {
   var resultsCatsFileName = "results_cats.txt"
 
   // args
-  def rdd = args.local.getOrElse(conf.getProperty("rdd"))
+  def rdd = args.rdd.getOrElse(conf.getProperty("rdd"))
   def partitions = args.partitions.getOrElse(conf.getProperty("partitions").toInt)
   def count = args.count.getOrElse(conf.getProperty("count").toInt)
   def job = args.job.getOrElse(conf.getProperty("job"))
