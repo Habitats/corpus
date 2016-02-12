@@ -11,8 +11,8 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 
 object IO extends JsonSerializer {
-  val rddCacheDir = Config.cachePath + "rdd_" + Config.data
-  val cacheFile = Config.cachePath + Config.data + ".cache"
+  val rddCacheDir = Config.cachePath + "rdd_" + Config.count
+  val cacheFile = Config.cachePath + Config.count + ".cache"
 
   def walk(path: String, count: Int = 100, filter: String = ""): Seq[File] = {
     val dir = FileSystems.getDefault.getPath(path)

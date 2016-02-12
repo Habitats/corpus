@@ -1,6 +1,6 @@
 package no.habitats.corpus
 
-import java.io.{File, FileNotFoundException}
+import java.io.FileNotFoundException
 import java.util.Properties
 
 import org.slf4j.LoggerFactory
@@ -63,7 +63,7 @@ object Config {
   // args
   var rdd = conf.getProperty("rdd")
   var partitions = conf.getProperty("partitions").toInt
-  var data = conf.getProperty("data")
+  var count = conf.getProperty("count").toInt
   var job = conf.getProperty("job")
   val logLevel = conf.getProperty("log_level")
 }

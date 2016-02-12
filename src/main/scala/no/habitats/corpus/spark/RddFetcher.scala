@@ -69,14 +69,9 @@ object RddFetcher {
     val hbase = new NewHadoopRDD(sc, classOf[TableInputFormat], classOf[ImmutableBytesWritable], classOf[Result], HBaseUtil.conf)
       .map(a => HBaseUtil.toArticle(a._2))
       .filter(_.iptc.nonEmpty)
-    val rdd = Config.data match {
-      case "test_tiny" => sc.parallelize(hbase.take(1122))
-      case "test" => sc.parallelize(hbase.take(9360))
-      case "test_medium" => sc.parallelize(hbase.take(26087))
-      case "test_big" => hbase.repartition(Config.partitions)
-    }
+      .take(Config.count)
     Log.i("Loading completed in " + ((System.currentTimeMillis - s) / 1000) + " seconds")
-    rdd
+    sc.parallelize(hbase)
   }
 
   def cache(rdd: RDD[Article]) = {
