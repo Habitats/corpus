@@ -13,7 +13,8 @@ object Log extends Logging {
 
   def resultsFile(name: String) = {
     new File(Config.cachePath + "res/").mkdirs()
-    val resultsFile = new File(Config.cachePath + "res/" + Config.count + "_" + name + ".txt")
+    val resultsFile = new File(Config.cachePath + "res/" + Config.count + "_" + name)
+    resultsFile.getParentFile.mkdirs
     if (!resultsFile.exists) {
       Log.i(s"Creating results file at ${resultsFile.getAbsolutePath} ...")
       resultsFile.createNewFile

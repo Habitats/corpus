@@ -15,7 +15,7 @@ import util.Samples
 class CorpusTest extends FunSuite with Samples {
 
   test("fetch NYT articles") {
-    val raw1 = Corpus.articles(Config.testPath + "/nyt")
+    val raw1 = Corpus.articles(Config.testPath + "/nyt/")
     assert(raw1.size == 4)
   }
 }

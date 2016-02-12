@@ -22,7 +22,7 @@ class SparkTest extends FunSuite with Spark {
 
   test("load some articles the new way") {
     val limit = 1000
-    val rdd = sc.parallelize(IO.walk(Config.dataPath + "/nyt/complete", count = limit, filter = ".xml"))
+    val rdd = sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = limit, filter = ".xml"))
       .map(Corpus.toNYT)
       .map(Corpus.toArticle)
       .map(Corpus.toAnnotated)

@@ -20,11 +20,11 @@ object Corpus {
   }
 
   // all at once
-  def rawArticles(path: String = Config.dataPath + "/nyt/complete/", count: Int = Config.count): Seq[NYTCorpusDocument] = {
+  def rawArticles(path: String = Config.dataPath + "/nyt/", count: Int = Config.count): Seq[NYTCorpusDocument] = {
     IO.walk(path, count, ".xml").map(f => rawNYTParser.parseNYTCorpusDocumentFromFile(f, false))
   }
 
-  def articles(path: String = Config.dataPath + "/nyt/complete/", count: Int = Config.count): Seq[Article] = {
+  def articles(path: String = Config.dataPath + "/nyt/", count: Int = Config.count): Seq[Article] = {
     val p = new NYTCorpusDocumentParser
     Log.v(f"Loading $count articles ...")
     val articles = for {

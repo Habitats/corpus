@@ -36,7 +36,7 @@ object RddFetcher {
   def pipeline(sc: SparkContext, count: Int): RDD[Article] = {
     val s = System.currentTimeMillis
     Log.i("Loading pipelined RDD ...")
-    sc.parallelize(IO.walk(Config.dataPath + "/nyt/complete", count = count, filter = ".xml"))
+    sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = count, filter = ".xml"))
       .map(Corpus.toNYT)
       .map(Corpus.toArticle)
       .map(Corpus.toAnnotated)
