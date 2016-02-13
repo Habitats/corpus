@@ -18,7 +18,7 @@ class CorpusTest extends FunSuite with Samples {
   }
 
   test("print some headlines") {
-    val hl = Corpus.articles(count = 1000)
+    val hl = Corpus.articles(count = 10)
       .filter(_.hl != null)
       .sortBy(_.hl)
       .map(Corpus.toIPTC)
