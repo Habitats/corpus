@@ -52,7 +52,7 @@ object Config {
   lazy val conf = {
     if (corpusConfig == null) {
       Log.v("NO CORPUS CONFIG, USING DEFAULT. THIS SHOULD ONLY HAPPEN DURING TESTING.")
-      corpusConfig = "/corpus_local.properties"
+      corpusConfig = if (System.getProperty("os.name").startsWith("Windows")) "/corpus_local.properties" else "/corpus_cluster.properties"
     }
     val conf = new Properties
     conf.load(Source.fromInputStream(getClass.getResourceAsStream(corpusConfig))(Codec.UTF8).bufferedReader())
@@ -78,7 +78,7 @@ object Config {
   def partitions = args.partitions.getOrElse(conf.getProperty("partitions").toInt)
   def count = args.count.getOrElse(conf.getProperty("count").toInt)
   def job = args.job.getOrElse(conf.getProperty("job"))
-  def local = args.local.getOrElse(System.getProperty("os.name").startsWith("Windows"))
+  def local = args.local.getOrElse(true)
 
   case class Arguments(
                         local: Option[Boolean] = None,
