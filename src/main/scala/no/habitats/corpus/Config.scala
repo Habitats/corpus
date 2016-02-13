@@ -78,7 +78,7 @@ object Config {
   def partitions = args.partitions.getOrElse(conf.getProperty("partitions").toInt)
   def count = args.count.getOrElse(conf.getProperty("count").toInt)
   def job = args.job.getOrElse(conf.getProperty("job"))
-  def local = args.local.getOrElse(true)
+  def local = args.local.getOrElse(System.getProperty("os.name").startsWith("Windows"))
 
   case class Arguments(
                         local: Option[Boolean] = None,
