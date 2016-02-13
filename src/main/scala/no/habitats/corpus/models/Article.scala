@@ -3,6 +3,7 @@ package no.habitats.corpus.models
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.nytlabs.corpus.NYTCorpusDocument
+import no.habitats.corpus.Log
 import no.habitats.corpus.npl.IPTC
 import no.habitats.corpus.npl.extractors.OpenNLP
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
@@ -83,6 +84,7 @@ object Article {
   }
 
   def apply(a: NYTCorpusDocument): Article = {
+    Log.v("NYT: " + a)
     new Article(
       id = a.getGuid.toString,
       hl = (a.getHeadline, a.getOnlineHeadline),

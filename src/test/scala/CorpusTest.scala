@@ -18,12 +18,12 @@ class CorpusTest extends FunSuite with Samples {
   }
 
   test("print some headlines") {
-    val hl = Corpus.articles(count = 10)
-      .filter(_.hl != null)
-      .sortBy(_.hl)
-      .map(Corpus.toIPTC)
-      .map(_.toString)
 //      .map(a => a.id + " > " + a.hl + " > " + a.iptc.mkString(", ") + " > " + a.url.get)
+val hl = Corpus.articles(count = 10)
+  .filter(_.hl != null)
+  .sortBy(_.hl)
+  .map(Corpus.toIPTC)
+  .map(_.toString)
     Log.v(hl.mkString("\n"))
     Log.v(hl.size + " headlines.")
   }
