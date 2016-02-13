@@ -31,11 +31,7 @@ cd spark
 build/mvn -Pyarn -Phadoop-2.4 -Dscala-2.11 -DskipTests clean package
 
 ## Install gradle
-mkdir -p ~/opt/packages/gradle && cd $_
-wget https://services.gradle.org/distributions/gradle-2.10-bin.zip
-unzip gradle-2.10-bin.zip
-ln -s ~/opt/packages/gradle/gradle-2.10/ ~/opt/gradle
-vim ~/.profile
+mkdir -p ~/opt/packages/gradle && cd $_ && wget https://services.gradle.org/distributions/gradle-2.10-bin.zip && unzip gradle-2.10-bin.zip && ln -s ~/opt/packages/gradle/gradle-2.10/ ~/opt/gradle && vim ~/.profile
 ```
 # Gradle
 	if [ -d "$HOME/opt/gradle" ]; then
@@ -43,16 +39,25 @@ vim ~/.profile
 	    PATH="$PATH:$GRADLE_HOME/bin"
 	fi
 ```
-source ~/.profile
-gradle -version
+source ~/.profile && gradle -version
 
 ## CPU Monitor
 sudo apt-get install htop
 
+
 ## Add SSH key 
-# Generate key
+# Generate key, name keys id_rsa for automatic ssh
 ssh-keygen -t rsa
+
 # On Ubuntu
 ssh-copy-id -i user@hostname
+
 # Manual for cygwin
 cat ~/.ssh/id_rsa.pub | ssh user@hostname 'cat >> .ssh/authorized_keys'
+
+# Add to ssh-agent
+eval $(ssh-agent -s) && ssh-add ~/.ssh/id_rsa
+
+# Permissions on .ssh
+chown -R mail:users ~/.ssh/
+chmod -R 600 ~/.ssh/

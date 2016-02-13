@@ -1,8 +1,8 @@
 package no.habitats.corpus.spark
 
+import no.habitats.corpus._
 import no.habitats.corpus.hbase.HBaseUtil
 import no.habitats.corpus.models.Article
-import no.habitats.corpus.{Config, Log, Prefs}
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
@@ -31,8 +31,10 @@ object SparkUtil {
       case "test" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "preprocess" => Preprocess.preprocess(sc, sc.broadcast(Prefs()), rdd)
       case "train" =>
+      case "print" => printArticles(Config.count)
       case "stats" => stats(rdd)
       case "pipeline" => RddFetcher.pipeline(sc, 2)
+      case "iptcDistribution" => calculateIPTCDistribution(Config.count)
       case "load" =>
         HBaseUtil.init()
         Log.i("Loading HBase ...")
@@ -43,6 +45,25 @@ object SparkUtil {
     }
     Log.r("Job completed in " + ((System.currentTimeMillis - s) / 1000) + " seconds")
     sc.stop
+  }
+
+  def printArticles(count: Int) = {
+    val rdd = sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = count, filter = ".xml"))
+      .map(Corpus.toNYT)
+      .flatMap(Corpus.toArticle)
+    Log.v(rdd.collect().map(_.toString).mkString("SIMPLE PRINT\n", "\n", ""))
+  }
+
+  def calculateIPTCDistribution(count: Int) = {
+    val rdd = sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = count, filter = ".xml"))
+      .map(Corpus.toNYT)
+      .flatMap(Corpus.toArticle)
+      .map(Corpus.toIPTC)
+      .flatMap(_.iptc.toSeq)
+      .map(c => (c, 1))
+      .reduceByKey(_ + _)
+      .sortBy(_._2)
+    Log.v(rdd.collect.map(c => f"${c._2}%-10s - ${c._1}").mkString("IPTC CATEGORY DISTRIBUTION\n", "\n" ,""))
   }
 
   /////////////////////

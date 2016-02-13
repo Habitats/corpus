@@ -48,8 +48,8 @@ dependencies {
     compile 'com.esotericsoftware.reflectasm:reflectasm:+'
     compile 'org.cloudera.htrace:htrace-core:2.02'
 
-    compile 'org.apache.spark:spark-core_2.10:1.6.0'
-    compile 'org.apache.spark:spark-mllib_2.10:1.6.0'
+    compile 'org.apache.spark:spark-core_2.10:1.5.2'
+    compile 'org.apache.spark:spark-mllib_2.10:1.5.2'
 
     // RDF
     compile('org.apache.jena:jena-core:3.0.0') { exclude group: 'xml-apis' }

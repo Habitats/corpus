@@ -61,8 +61,8 @@ object IPTC {
     if (nytToIptc.contains(d)) {
       val id = nytToIptc.get(d).get
       allMediaTopics.get(id) match {
-        case Some(topic) if topic != "travel" => Some(topic)
-        case _ => Log.v(s"ID: $id missing in IPTC ..."); None
+        case Some(topic) if topic != "xxtravel" => Some(topic)
+        case _ => Log.v(s"$id/$d not in IPTC ..."); None
       }
     }
     // Is it defined in the official MediaTopics?
