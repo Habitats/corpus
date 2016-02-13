@@ -17,6 +17,7 @@ object IO extends JsonSerializer {
 
   def walk(path: String, count: Int = 100, filter: String = ""): Seq[File] = {
     val dir = FileSystems.getDefault.getPath(path)
+    Log.v("Walking directory ...")
     Files.walk(dir).iterator().asScala.filter(Files.isRegularFile(_)).filter(p => p.toFile.getName.contains(filter)).take(count).map(_.toFile).toSeq
   }
 

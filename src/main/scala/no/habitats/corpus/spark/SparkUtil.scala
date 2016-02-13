@@ -48,22 +48,26 @@ object SparkUtil {
   }
 
   def printArticles(count: Int) = {
-    val rdd = sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = count, filter = ".xml"))
+    val rddNYT = sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = count, filter = ".xml"))
       .map(Corpus.toNYT)
-      .flatMap(Corpus.toArticle)
-    Log.v(rdd.collect().map(_.toString).mkString("SIMPLE PRINT\n", "\n", ""))
+    Log.v("FIRST SIZE: " + rddNYT.count)
+    Log.v("Article: " + Article("asd"))
+    Log.v(rddNYT.collect().map(_.toString).mkString(f"SIMPLE PRINT (${rddNYT.count} artiles)\n", "\n", ""))
+    val rdd = rddNYT
+      .map(Corpus.toArticle)
+    Log.v(rdd.collect().map(_.toString).mkString(f"SIMPLE PRINT (${rdd.count} artiles)\n", "\n", ""))
   }
 
   def calculateIPTCDistribution(count: Int) = {
     val rdd = sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = count, filter = ".xml"))
       .map(Corpus.toNYT)
-      .flatMap(Corpus.toArticle)
+      .map(Corpus.toArticle)
       .map(Corpus.toIPTC)
       .flatMap(_.iptc.toSeq)
       .map(c => (c, 1))
       .reduceByKey(_ + _)
       .sortBy(_._2)
-    Log.v(rdd.collect.map(c => f"${c._2}%-10s - ${c._1}").mkString("IPTC CATEGORY DISTRIBUTION\n", "\n" ,""))
+    Log.v(rdd.collect.map(c => f"${c._2}%-10s - ${c._1}").mkString("IPTC CATEGORY DISTRIBUTION\n", "\n", ""))
   }
 
   /////////////////////

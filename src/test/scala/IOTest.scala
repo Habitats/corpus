@@ -6,6 +6,7 @@ import java.io.{File, PrintWriter}
 
 import no.habitats.corpus._
 import no.habitats.corpus.models.Article
+import org.apache.ivy.osgi.updatesite.xml.Archive
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -65,7 +66,7 @@ class IOTest extends FunSuite with Samples {
 
   test("walking") {
     val limit = 3000
-    val files = IO.walk("d:/Archive/corpus/nyt/complete", count = limit, filter = "1")
+    val files = IO.walk(Config.dataPath + "/nyt/", count = limit, filter = "1")
     log.info("Numfiles: " + files.size)
     assert(files.size === limit)
     //    files.map(_.getName).foreach(log.info)

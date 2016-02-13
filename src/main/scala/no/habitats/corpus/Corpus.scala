@@ -42,7 +42,7 @@ object Corpus {
   // transformations
   def toIPTC(article: Article) = article.addIptc(Config.broadMatch)
   def toNYT(file: File): NYTCorpusDocument = rawNYTParser.parseNYTCorpusDocumentFromFile(file, false)
-  def toArticle(nyt: NYTCorpusDocument): Option[Article] = Try(Some(Article(nyt))).getOrElse(None)
+  def toArticle(nyt: NYTCorpusDocument): Article = Article(nyt)
   def toAnnotated(a: Article): Article = {
     annotations.get(a.id) match {
       case Some(v) => a.copy(ann = v.map(k => k.id -> k).toMap)

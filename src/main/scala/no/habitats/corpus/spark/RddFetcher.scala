@@ -38,7 +38,7 @@ object RddFetcher {
     Log.i("Loading pipelined RDD ...")
     sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = count, filter = ".xml"))
       .map(Corpus.toNYT)
-      .flatMap(Corpus.toArticle)
+      .map(Corpus.toArticle)
       .map(Corpus.toAnnotated)
       .map(Corpus.toIPTC)
   }
