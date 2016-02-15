@@ -17,6 +17,7 @@
 package com.nytlabs.corpus;
 
 import java.io.File;
+import java.io.Serializable;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
@@ -28,7 +29,7 @@ import java.util.List;
  *
  * @author Evan Sandhaus
  */
-public class NYTCorpusDocument {
+public class NYTCorpusDocument implements Serializable {
 
   /**
    * This field specifies the location on nytimes.com of the article. When present, this URL is preferred to the URL field on articles

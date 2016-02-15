@@ -3,14 +3,14 @@ package no.habitats.corpus.models
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.nytlabs.corpus.NYTCorpusDocument
-import no.habitats.corpus.Log
+import dispatch.url
 import no.habitats.corpus.npl.IPTC
 import no.habitats.corpus.npl.extractors.OpenNLP
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 
 case class Article(id: String,
-                   hl: String = "",
-                   body: String = "NONE",
+                   hl: String = null,
+                   body: String = null,
                    wc: Int = -1,
                    date: Option[String] = None,
                    iptc: Set[String] = Set(),
@@ -84,12 +84,11 @@ object Article {
   }
 
   def apply(a: NYTCorpusDocument): Article = {
-    Log.v("NYT: " + a)
     new Article(
       id = a.getGuid.toString,
       hl = (a.getHeadline, a.getOnlineHeadline),
-      body = if (a.getBody == null) "NONE" else a.getBody,
-      wc = if (a.getWordCount != null) a.getWordCount else a.getBody.split("\\s+").length,
+      body = a.getBody,
+      wc = if (a.getWordCount != null) a.getWordCount else if (a.getBody != null) a.getBody.split("\\s+").length else 0,
       desc = allDescriptors(a),
       date = a.getPublicationDate.getTime.toString,
       url = a.getUrl.toString

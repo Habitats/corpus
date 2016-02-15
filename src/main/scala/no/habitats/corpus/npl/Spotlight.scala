@@ -18,7 +18,7 @@ object Spotlight {
   val dbpediaSparql = "http://dbpedia.org/sparql?"
 
   def main(args: Array[String]): Unit = {
-    val articles = Corpus.articles().take(100)
+    val articles = Corpus.articles(count  = 100)
   }
 
   def attachWikidata(articles: Seq[Article]): Future[Seq[Article]] = {

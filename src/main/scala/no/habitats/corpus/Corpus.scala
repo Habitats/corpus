@@ -40,7 +40,6 @@ object Corpus {
   }
 
   // transformations
-  def toIPTC(article: Article) = article.addIptc(Config.broadMatch)
   def toNYT(file: File): NYTCorpusDocument = rawNYTParser.parseNYTCorpusDocumentFromFile(file, false)
   def toArticle(nyt: NYTCorpusDocument): Article = Article(nyt)
   def toAnnotated(a: Article): Article = {
@@ -49,6 +48,7 @@ object Corpus {
       case None => a
     }
   }
+  def toIPTC(article: Article): Article = article.addIptc(Config.broadMatch)
 }
 
 

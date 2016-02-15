@@ -13,11 +13,18 @@ import org.apache.spark.{SparkContext, SparkException}
 
 object RddFetcher {
 
+  def jsonRdd(sc: SparkContext): RDD[Article] = {
+    val rdd = sc.parallelize(JsonSingle.load(Config.count))
+    cache(rdd)
+    rdd
+  }
+
   def rdd(sc: SparkContext): RDD[Article] = {
     val rdd = Config.rdd match {
       case "hbase" => hbaseRdd(sc)
       case "cache" => cachedRdd(sc)
       case "local" => localRdd(sc)
+      case "json" => jsonRdd(sc)
     }
     rdd.cache()
   }

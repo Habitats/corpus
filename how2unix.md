@@ -44,6 +44,9 @@ source ~/.profile && gradle -version
 ## CPU Monitor
 sudo apt-get install htop
 
+## RAR
+sudo apt-get install unrar-free
+
 
 ## Add SSH key 
 # Generate key, name keys id_rsa for automatic ssh

@@ -5,8 +5,6 @@
 import java.io.{File, PrintWriter}
 
 import no.habitats.corpus._
-import no.habitats.corpus.models.Article
-import org.apache.ivy.osgi.updatesite.xml.Archive
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -31,6 +29,16 @@ class IOTest extends FunSuite with Samples {
     assert(a1.ann.map(_._2.phrase).toSet.intersect(Set("Sunni", "Baghdad", "Iraqi")).size == 3)
     assert(a1.ann.size == 12)
     assert(a1.ann.map(_._2.id).toSet.intersect(Set("/m/078tg", "/m/01fqm", "/m/0d05q4")).size == 3)
+  }
+
+  test("cache json NYT corpus") {
+    val limit = 1000
+    val articles = Corpus.articles(count = limit).sortBy(_.id)
+    JsonSingle.cache(articles)
+    val cached = JsonSingle.load(limit).sortBy(_.id)
+    for (a <- articles.indices) {
+      assert(articles(a) == cached(a))
+    }
   }
 
   test("serializing test") {

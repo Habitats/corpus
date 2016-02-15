@@ -30,7 +30,8 @@ object SparkUtil {
     Config.job match {
       case "test" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "preprocess" => Preprocess.preprocess(sc, sc.broadcast(Prefs()), rdd)
-      case "train" =>
+      case "cacheNYT" => JsonSingle.cache(Config.count)
+      case "loadNYT" => Log.v(f"Loaded ${JsonSingle.load(Config.count).size} articles")
       case "print" => printArticles(Config.count)
       case "stats" => stats(rdd)
       case "pipeline" => RddFetcher.pipeline(sc, 2)
@@ -52,16 +53,13 @@ object SparkUtil {
       .map(Corpus.toNYT)
     Log.v("FIRST SIZE: " + rddNYT.count)
     Log.v("Article: " + Article("asd"))
-    Log.v(rddNYT.collect().map(_.toString).mkString(f"SIMPLE PRINT (${rddNYT.count} artiles)\n", "\n", ""))
-    val rdd = rddNYT
-      .map(Corpus.toArticle)
-    Log.v(rdd.collect().map(_.toString).mkString(f"SIMPLE PRINT (${rdd.count} artiles)\n", "\n", ""))
+    Log.v(rddNYT.collect().map(_.toString).mkString(f"SIMPLE PRINT (${rddNYT.count} articles)\n", "\n", ""))
+    val rdd = rddNYT.map(Corpus.toArticle)
+    Log.v(rdd.collect().map(_.toString).mkString(f"SIMPLE PRINT (${rdd.count} articles)\n", "\n", ""))
   }
 
   def calculateIPTCDistribution(count: Int) = {
-    val rdd = sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = count, filter = ".xml"))
-      .map(Corpus.toNYT)
-      .map(Corpus.toArticle)
+    val rdd = sc.parallelize(JsonSingle.load(count))
       .map(Corpus.toIPTC)
       .flatMap(_.iptc.toSeq)
       .map(c => (c, 1))

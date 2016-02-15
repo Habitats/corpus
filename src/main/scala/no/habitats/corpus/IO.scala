@@ -8,8 +8,7 @@ import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 
 import scala.collection.JavaConverters._
-import scala.io.Source
-import scala.util.Try
+import scala.io.{Codec, Source}
 
 object IO extends JsonSerializer {
   val rddCacheDir = Config.cachePath + "rdd_" + Config.count
@@ -59,17 +58,17 @@ object IO extends JsonSerializer {
   }
 
   def cacheRdd(rdd: RDD[Article], cacheDir: String = rddCacheDir) = {
-      val dir = new File(cacheDir)
-      Log.i(s"Caching rdd to ${dir.getAbsolutePath} ...")
-      // rdd cache
-      if (dir.exists) {
-        dir.listFiles().foreach(f => {
-          if (f.isDirectory) f.listFiles().foreach(_.delete)
-          f.delete
-        })
-        dir.delete
-      }
-      rdd.saveAsObjectFile("file:///" + cacheDir)
+    val dir = new File(cacheDir)
+    Log.i(s"Caching rdd to ${dir.getAbsolutePath} ...")
+    // rdd cache
+    if (dir.exists) {
+      dir.listFiles().foreach(f => {
+        if (f.isDirectory) f.listFiles().foreach(_.delete)
+        f.delete
+      })
+      dir.delete
+    }
+    rdd.saveAsObjectFile("file:///" + cacheDir)
   }
 
   def loadRdd(sc: SparkContext, cacheDir: String = rddCacheDir): RDD[Article] = {
@@ -96,6 +95,45 @@ object IO extends JsonSerializer {
     val articles = fromJson(lines)
     Log.i("Parsing complete!")
     articles
+  }
+}
+
+object JsonSingle {
+
+  import org.json4s._
+  import org.json4s.jackson.Serialization
+  import org.json4s.jackson.Serialization._
+
+  implicit val formats = Serialization.formats(NoTypeHints)
+
+  def cache(count: Int) = {
+    val f = new File(Config.dataPath + "/nyt/nyt_corpus.json")
+    f.delete
+    f.createNewFile
+    val p = new PrintWriter(f, "ISO-8859-1")
+    IO.walk(Config.dataPath + "/nyt/", count = Config.count, filter = ".xml")
+      .map(Corpus.toNYT)
+      .map(Corpus.toArticle)
+      .map(Corpus.toIPTC)
+      .map(JsonSingle.toSingleJson)
+      .foreach(p.println)
+    p.close
+  }
+
+  def load(count: Int = -1): Seq[Article] = {
+    val f = new File(Config.dataPath + "/nyt/nyt_corpus.json")
+    val source = Source.fromFile(f)(Codec.ISO8859)
+    val articles = source.getLines().take(count).map(f => fromSingleJson(f)).toList
+    source.close
+    articles
+  }
+
+  def toSingleJson(article: Article): String = {
+    write(article)
+  }
+
+  def fromSingleJson(string: String): Article = {
+    read[Article](string)
   }
 }
 

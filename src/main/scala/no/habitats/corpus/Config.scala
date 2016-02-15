@@ -76,7 +76,9 @@ object Config {
   // args
   def rdd = args.rdd.getOrElse(conf.getProperty("rdd"))
   def partitions = args.partitions.getOrElse(conf.getProperty("partitions").toInt)
-  def count = args.count.getOrElse(conf.getProperty("count").toInt)
+  def count: Int = args.count.getOrElse(conf.getProperty("count").toInt) match {
+    case i => if (i == -1) Integer.MAX_VALUE else i
+  }
   def job = args.job.getOrElse(conf.getProperty("job"))
   def local = args.local.getOrElse(true)
 
