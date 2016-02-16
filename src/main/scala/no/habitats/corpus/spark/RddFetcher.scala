@@ -20,7 +20,7 @@ object RddFetcher {
 
   def localRdd(sc: SparkContext): RDD[Article] = {
     val rdd = sc.textFile("file:///" + JsonSingle.jsonFile.getAbsolutePath, Config.partitions).map(JsonSingle.fromSingleJson)
-    if (Config.count > 0) sc.parallelize(rdd.take(Config.count)) else rdd
+    if (Config.count == Integer.MAX_VALUE) rdd else sc.parallelize(rdd.take(Config.count))
   }
 
   def cachedRdd(sc: SparkContext): RDD[Article] = {
