@@ -41,37 +41,6 @@ class IOTest extends FunSuite with Samples {
     }
   }
 
-  test("serializing test") {
-    // add the json serializer
-    val json = Set[Cache](new JsonSerializer)
-    // get the test articles
-    val cache = Config.cachePath
-    // create actual articles
-    val originalArticles = articles
-    log.info(s"Loaded ${originalArticles.size} articles! Starting serialization testing ...")
-    json.foreach(j => {
-      val start = System.currentTimeMillis
-      // convert to json
-      val json = j.toJson(originalArticles)
-      val s = cache + ".cache"
-      val file = new File(s)
-      file.delete
-      file.createNewFile
-      // write to file
-      val writer = new PrintWriter(s, "iso-8859-1")
-      writer.println(json)
-      log.info(s"${j.name} caching: ${System.currentTimeMillis() - start} ms")
-      writer.close()
-      val source = Source.fromFile(s, "iso-8859-1")
-      // read from file
-      val serializedArticles = j.fromJson(source.mkString)
-      source.close
-      file.delete
-      log.info(s"${j.name} loading: ${System.currentTimeMillis() - start} ms")
-      assert(originalArticles == serializedArticles)
-    })
-  }
-
   test("walking") {
     val limit = 3000
     val files = IO.walk(Config.dataPath + "/nyt/", count = limit, filter = "1")

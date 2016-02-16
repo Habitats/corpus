@@ -1,16 +1,31 @@
 package no.habitats.corpus.npl
 
-import dispatch.Defaults._
+import java.io.{File, PrintWriter}
+import java.util.concurrent.Executors
+import java.util.concurrent.atomic.AtomicInteger
+
 import dispatch._
-import no.habitats.corpus.Corpus
 import no.habitats.corpus.models.{Annotation, Article, Entity}
+import no.habitats.corpus.{Config, Corpus, DBPediaAnnotation, Log}
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 import org.slf4j.LoggerFactory
 
+import scala.concurrent.{ExecutionContext, Future}
+
 object Spotlight {
+
   implicit val formats = Serialization.formats(NoTypeHints)
+  implicit val ec = new ExecutionContext {
+    val threadPool = Executors.newFixedThreadPool(10);
+
+    def execute(runnable: Runnable) {
+      threadPool.submit(runnable)
+    }
+
+    def reportFailure(t: Throwable) {}
+  }
 
   val log = LoggerFactory.getLogger(getClass)
 
@@ -18,7 +33,8 @@ object Spotlight {
   val dbpediaSparql = "http://dbpedia.org/sparql?"
 
   def main(args: Array[String]): Unit = {
-    val articles = Corpus.articles(count  = 100)
+    //    val articles = Corpus.articles(count = 100)
+    cache()
   }
 
   def attachWikidata(articles: Seq[Article]): Future[Seq[Article]] = {
@@ -90,6 +106,41 @@ object Spotlight {
 
       entities
     }
+  }
+
+  def cache() = {
+    val f = new File(Config.dataPath + "/nyt/dbpedia.json")
+    val start = System.currentTimeMillis()
+    val count = new AtomicInteger(0)
+    val p = new PrintWriter(f, "iso-8859-1")
+    val allf = Corpus.articles(count = Config.count).map { e =>
+      if (count.get % 100 == 0) {
+        val delta = (System.currentTimeMillis() - start).toDouble
+        val perSecond = count.get / delta
+        val timesLeft = ((perSecond.toDouble * (Config.count - count.get)) / 1000).toInt
+        Log.v(f"$count%10s - $timesLeft%10d - $perSecond%10f")
+      }
+      count.incrementAndGet()
+      Spotlight.extractAndCache(e, p)
+    }
+    Future.sequence(allf).onComplete { case _ => p.close }
+
+  }
+
+  def extractAndCache(article: Article, p: PrintWriter): Future[Seq[DBPediaAnnotation]] = {
+    val f = for {
+      entities <- fetchAnnotations(article.hl + " " + article.body)
+    } yield for {
+      entity <- entities
+    } yield {
+      val db = new DBPediaAnnotation(article.id, entity)
+      val json = DBPediaAnnotation.toSingleJson(db)
+      Log.v(json)
+      p.println(json)
+      db
+    }
+
+    f
   }
 }
 

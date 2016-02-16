@@ -3,14 +3,20 @@ package no.habitats.corpus
 import java.io._
 import java.nio.file.{FileSystems, Files}
 
-import no.habitats.corpus.models.Article
+import no.habitats.corpus.models.{Article, Entity}
+import no.habitats.corpus.npl.Spotlight
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization._
 
 import scala.collection.JavaConverters._
+import scala.concurrent.Future
 import scala.io.{Codec, Source}
 
-object IO extends JsonSerializer {
+
+object IO {
   val rddCacheDir = Config.cachePath + "rdd_" + Config.count
   val cacheFile = Config.cachePath + Config.count + ".cache"
 
@@ -18,17 +24,6 @@ object IO extends JsonSerializer {
     val dir = FileSystems.getDefault.getPath(path)
     Log.v("Walking directory ...")
     Files.walk(dir).iterator().asScala.filter(Files.isRegularFile(_)).filter(p => p.toFile.getName.contains(filter)).take(count).map(_.toFile).toSeq
-  }
-
-  // General methods
-  def cache(seq: Seq[Article], cacheFile: String = cacheFile) = {
-    val f = new File(cacheFile)
-    Log.i(s"Caching to ${f.getAbsolutePath} ...")
-    if (f.exists) {
-      f.delete
-    }
-    f.createNewFile
-    cacheJson(seq, f)
   }
 
   def copy(f: File) = {
@@ -75,37 +70,10 @@ object IO extends JsonSerializer {
     sc.objectFile[Article]("file:///" + cacheDir)
   }
 
-  def load: Seq[Article] = {
-    val f = new File(cacheFile)
-    Log.i(f"Using cached file: $f")
-    loadJson(Source.fromFile(f, "iso-8859-1"))
-  }
-
-  // Json cache
-  def cacheJson(seq: Seq[Article], cache: File) = {
-    val writer = new PrintWriter(cache)
-    val json = toJson(seq)
-    writer.print(json)
-    writer.close()
-  }
-
-  def loadJson(source: Source): Seq[Article] = {
-    // do not store cache if cluster
-    val lines = try source.mkString finally source.close
-    val articles = fromJson(lines)
-    Log.i("Parsing complete!")
-    articles
-  }
 }
 
 object JsonSingle {
-
-  import org.json4s._
-  import org.json4s.jackson.Serialization
-  import org.json4s.jackson.Serialization._
-
   implicit val formats = Serialization.formats(NoTypeHints)
-
   lazy val jsonFile = new File(Config.dataPath + "/nyt/nyt_corpus.json")
 
   def cache(count: Int, articles: Seq[Article] = Nil) = {
@@ -134,23 +102,15 @@ object JsonSingle {
   }
 }
 
-class JsonSerializer extends Cache {
-
-  case class JsonWrapper(articles: Seq[Article])
-
-  import org.json4s._
-  import org.json4s.jackson.Serialization
-  import org.json4s.jackson.Serialization._
-
+object DBPediaAnnotation {
   implicit val formats = Serialization.formats(NoTypeHints)
 
-  override def toJson(articles: Seq[Article]): String = if (articles.size < 100) writePretty(articles) else write(articles)
-  override def fromJson(a: String): Seq[Article] = read[Seq[Article]](a)
-  override def name: String = "LiftJson"
-}
+  def toSingleJson(dBPediaAnnotation: DBPediaAnnotation): String = {
+    write(dBPediaAnnotation)
+  }
 
-trait Cache {
-  def toJson(a: Seq[Article]): String
-  def fromJson(json: String): Seq[Article]
-  def name: String
+  def fromSingleJson(string: String): DBPediaAnnotation = {
+    read[DBPediaAnnotation](string)
+  }
 }
+case class DBPediaAnnotation(articleId: String, entity: Entity)

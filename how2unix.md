@@ -88,7 +88,7 @@ mv models corpus/
 
 # Gradle
 mkdir -p ~/opt/packages/gradle && cd $_ && wget https://services.gradle.org/distributions/gradle-2.10-bin.zip && unzip gradle-2.10-bin.zip && ln -s ~/opt/packages/gradle/gradle-2.10/ ~/opt/gradle 
-echo "if [ -d \"$HOME/opt/gradle\" ]; then\"
+echo "if [ -d \"$HOME/opt/gradle\" ]; then
     export GRADLE_HOME=\"$HOME/opt/gradle\"
     PATH=\"$PATH:$GRADLE_HOME/bin\"
 fi" >> ~/.profile

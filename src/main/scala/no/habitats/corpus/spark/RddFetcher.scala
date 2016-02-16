@@ -29,7 +29,7 @@ object RddFetcher {
 
     Log.i(s"Loading cached RDD from ${if (useRdd) "object file" else "local cache"} ...")
     // ### LOADING
-    val rdd = if (useRdd) IO.loadRdd(sc).repartition(Config.partitions) else sc.parallelize(IO.load)
+    val rdd = IO.loadRdd(sc).repartition(Config.partitions)
     Log.i(s"Loading completed in ${(System.currentTimeMillis - s) / 1000} seconds")
     try {
       Log.v("Checking integrity ...")
