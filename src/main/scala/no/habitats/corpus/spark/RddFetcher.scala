@@ -9,40 +9,18 @@ import org.apache.spark.{SparkContext, SparkException}
 
 object RddFetcher {
 
-  def jsonRdd(sc: SparkContext): RDD[Article] = {
-    val rdd = sc.parallelize(JsonSingle.load(Config.count))
-    cache(rdd)
-    rdd
-  }
+  var size: Double = 1855658L
 
   def rdd(sc: SparkContext): RDD[Article] = {
-    val rdd = Config.rdd match {
+    Config.rdd match {
       case "cache" => cachedRdd(sc)
       case "local" => localRdd(sc)
-      case "json" => jsonRdd(sc)
     }
-    rdd.cache()
   }
 
   def localRdd(sc: SparkContext): RDD[Article] = {
-    val s = System.currentTimeMillis
-    Log.i("Loading local RDD ...")
-    val articles = Corpus.articles()
-    val annotatedArticles = Corpus.annotatedArticles(articles)
-    val rdd = sc.parallelize(annotatedArticles)
-    Log.i(s"Loaded ${annotatedArticles.size} articles in ${(System.currentTimeMillis - s) / 1000} seconds")
-    cache(rdd)
-    rdd
-  }
-
-  def pipeline(sc: SparkContext, count: Int): RDD[Article] = {
-    val s = System.currentTimeMillis
-    Log.i("Loading pipelined RDD ...")
-    sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = count, filter = ".xml"))
-      .map(Corpus.toNYT)
-      .map(Corpus.toArticle)
-      .map(Corpus.toAnnotated)
-      .map(Corpus.toIPTC)
+    val rdd = sc.textFile("file:///" + JsonSingle.jsonFile.getAbsolutePath, Config.partitions).map(JsonSingle.fromSingleJson)
+    if (Config.count > 0) sc.parallelize(rdd.take(Config.count)) else rdd
   }
 
   def cachedRdd(sc: SparkContext): RDD[Article] = {

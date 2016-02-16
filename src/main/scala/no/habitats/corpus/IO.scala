@@ -106,23 +106,20 @@ object JsonSingle {
 
   implicit val formats = Serialization.formats(NoTypeHints)
 
-  def cache(count: Int) = {
-    val f = new File(Config.dataPath + "/nyt/nyt_corpus.json")
-    f.delete
-    f.createNewFile
-    val p = new PrintWriter(f, "ISO-8859-1")
-    IO.walk(Config.dataPath + "/nyt/", count = Config.count, filter = ".xml")
-      .map(Corpus.toNYT)
-      .map(Corpus.toArticle)
-      .map(Corpus.toIPTC)
+  lazy val jsonFile = new File(Config.dataPath + "/nyt/nyt_corpus.json")
+
+  def cache(count: Int, articles: Seq[Article] = Nil) = {
+    jsonFile.delete
+    jsonFile.createNewFile
+    val p = new PrintWriter(jsonFile, "ISO-8859-1")
+    (if (articles == Nil) Corpus.articles(count = count) else articles)
       .map(JsonSingle.toSingleJson)
       .foreach(p.println)
     p.close
   }
 
   def load(count: Int = -1): Seq[Article] = {
-    val f = new File(Config.dataPath + "/nyt/nyt_corpus.json")
-    val source = Source.fromFile(f)(Codec.ISO8859)
+    val source = Source.fromFile(jsonFile)(Codec.ISO8859)
     val articles = source.getLines().take(count).map(f => fromSingleJson(f)).toList
     source.close
     articles

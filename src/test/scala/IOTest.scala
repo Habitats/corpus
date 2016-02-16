@@ -34,7 +34,7 @@ class IOTest extends FunSuite with Samples {
   test("cache json NYT corpus") {
     val limit = 1000
     val articles = Corpus.articles(count = limit).sortBy(_.id)
-    JsonSingle.cache(articles)
+    JsonSingle.cache(limit)
     val cached = JsonSingle.load(limit).sortBy(_.id)
     for (a <- articles.indices) {
       assert(articles(a) == cached(a))

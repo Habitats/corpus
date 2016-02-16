@@ -33,7 +33,6 @@ object SparkUtil {
       case "loadNYT" => Log.v(f"Loaded ${JsonSingle.load(Config.count).size} articles")
       case "print" => printArticles(Config.count)
       case "stats" => stats(rdd)
-      case "pipeline" => RddFetcher.pipeline(sc, 2)
       case "iptcDistribution" => calculateIPTCDistribution(Config.count)
       case "count" => Log.r(s"Counting job: ${rdd.count} articles ...")
       case _ => Log.r("No job ... Exiting!")
@@ -53,8 +52,7 @@ object SparkUtil {
   }
 
   def calculateIPTCDistribution(count: Int) = {
-    val rdd = sc.parallelize(JsonSingle.load(count))
-      .map(Corpus.toIPTC)
+    val rdd = RddFetcher.rdd(sc)
       .flatMap(_.iptc.toSeq)
       .map(c => (c, 1))
       .reduceByKey(_ + _)
@@ -96,6 +94,15 @@ object SparkUtil {
       (l, accuracy)
     }
     res
+  }
+
+  //////////
+  // DL4J //
+  //////////
+
+  def dl4j = {
+    //    val conf = setSetup.getConf()
+    //    val trainLayer = new SparkDl4jMultiLayer(sc, conf)
   }
 
   ///////////////////////////////////////////////////////

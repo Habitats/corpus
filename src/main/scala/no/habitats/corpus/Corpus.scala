@@ -25,14 +25,11 @@ object Corpus {
   }
 
   def articles(path: String = Config.dataPath + "/nyt/", count: Int = Config.count): Seq[Article] = {
-    val p = new NYTCorpusDocumentParser
     Log.v(f"Loading $count articles ...")
-    val articles = for {
-      f <- IO.walk(path, count, ".xml").take(count)
-      doc = p.parseNYTCorpusDocumentFromFile(f, false) if doc != null
-    } yield Article(doc)
-    Log.v("Generated " + articles.size + " articles")
-    articles
+    IO.walk(path, count, filter = ".xml")
+      .map(Corpus.toNYT)
+      .map(Corpus.toArticle)
+      .map(Corpus.toIPTC)
   }
 
   def annotatedArticles(articles: Seq[Article] = Corpus.articles()): Seq[Article] = {

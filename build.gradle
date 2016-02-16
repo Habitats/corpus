@@ -40,8 +40,7 @@ dependencies {
     compile "org.scala-lang:scala-library:2.10.6"
     compile "org.scala-lang:scala-compiler:2.10.6"
 
-
-    compile 'org.apache.spark:spark-core_2.10:1.5.2'
+    compile('org.apache.spark:spark-core_2.10:1.5.2') { exclude group: 'com.google.guava' }
     compile 'org.apache.spark:spark-mllib_2.10:1.5.2'
 
     // RDF
@@ -61,6 +60,7 @@ dependencies {
     // DL4J
     compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.8'
     compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.8'
+    compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.8'
     compile 'org.nd4j:nd4j-x86:0.4-rc3.8'
     compile fileTree('models/binary')
     compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging
@@ -70,6 +70,7 @@ dependencies {
     compile ':stanford-corenlp-3.6.0-models@jar'
     compile 'xml-apis:xml-apis:1.4.01'
     compile 'com.google.protobuf:protobuf-java:2.6.1'
+    compile 'com.google.guava:guava:19.0'
 
     // Async HTTP
     compile 'net.databinder.dispatch:dispatch-core_2.10:0.11.3'

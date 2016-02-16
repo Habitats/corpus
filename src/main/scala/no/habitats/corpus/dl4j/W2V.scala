@@ -43,19 +43,19 @@ object W2V extends App {
     val layerSize = 300
 
     val vec = new Builder()
-      .batchSize(batchSize) // words per minibatch
+      .batchSize(batchSize) // # words processed at a time
       .sampling(1e-5) // negative sampling
-      .minWordFrequency(5)
-      .useAdaGrad(false)
-      .layerSize(layerSize) // word feature size
+      .minWordFrequency(5) // TFT - term frequency threshold
+      .useAdaGrad(false) // Adagard creates a different gradient for each feature
+      .layerSize(layerSize) // dimension of feature vector
       .iterations(iterations) // iterations to train
-      .learningRate(0.025)
-      .minLearningRate(1e-2) // learning rate deays wrt # words
+      .learningRate(0.025) // the step size for each update of the coefficients
+      .minLearningRate(1e-2) // learning rate decays wrt # words
       .negativeSample(10) // sample size 10
       .iterate(iter)
       .tokenizerFactory(tokenizer)
       .build()
-    vec.fit
+    vec.fit // begin training
 
     log.info("Evaluating model ...")
     val sim = vec.similarity("people", "money")
