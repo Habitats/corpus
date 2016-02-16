@@ -1,7 +1,6 @@
 package no.habitats.corpus.spark
 
 import no.habitats.corpus._
-import no.habitats.corpus.hbase.HBaseUtil
 import no.habitats.corpus.models.Article
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.mllib.regression.LabeledPoint
@@ -36,11 +35,6 @@ object SparkUtil {
       case "stats" => stats(rdd)
       case "pipeline" => RddFetcher.pipeline(sc, 2)
       case "iptcDistribution" => calculateIPTCDistribution(Config.count)
-      case "load" =>
-        HBaseUtil.init()
-        Log.i("Loading HBase ...")
-        HBaseUtil.add(rdd.collect)
-        Log.i("HBase loading complete!")
       case "count" => Log.r(s"Counting job: ${rdd.count} articles ...")
       case _ => Log.r("No job ... Exiting!")
     }

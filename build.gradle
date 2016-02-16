@@ -40,13 +40,6 @@ dependencies {
     compile "org.scala-lang:scala-library:2.10.6"
     compile "org.scala-lang:scala-compiler:2.10.6"
 
-    compile 'org.apache.hbase:hbase-client:1.0.1'
-    compile 'org.apache.hbase:hbase-common:1.0.1'
-    compile 'org.apache.hbase:hbase-server:1.0.1'
-    compile 'org.apache.hbase:hbase-protocol:1.0.1'
-    compile 'com.esotericsoftware:reflectasm:+'
-    compile 'com.esotericsoftware.reflectasm:reflectasm:+'
-    compile 'org.cloudera.htrace:htrace-core:2.02'
 
     compile 'org.apache.spark:spark-core_2.10:1.5.2'
     compile 'org.apache.spark:spark-mllib_2.10:1.5.2'
