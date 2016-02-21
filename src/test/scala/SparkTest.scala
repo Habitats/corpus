@@ -26,6 +26,7 @@ class SparkTest extends FunSuite with Spark {
       .map(Corpus.toNYT)
       .map(Corpus.toArticle)
       .map(Corpus.toAnnotated)
+      .map(Corpus.toDBPedia)
     assert(rdd.count === limit)
   }
 }

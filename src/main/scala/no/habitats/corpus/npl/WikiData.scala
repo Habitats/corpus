@@ -5,6 +5,8 @@ import java.util.concurrent.atomic.AtomicInteger
 
 import no.habitats.corpus.models.Annotation
 import no.habitats.corpus.{Config, Log}
+import org.apache.spark.SparkContext
+import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
@@ -113,4 +115,38 @@ object WikiData {
     }
   }
 
+  def extractFbFromWikiDump(sc: SparkContext) = {
+    //    sc.parallelize(
+    sc.textFile("e:/wikidata-simple-statements.nt")
+      //        .take(1000)
+      //    )
+      .map(_.split(" ").toList.take(3))
+      .filter(a => a(1) == "<http://www.wikidata.org/entity/P646c>")
+      .map { case a :: b :: c :: Nil => (a.substring(a.lastIndexOf("/") + 1, a.length - 1), c.substring(1, c.length - 1)) }
+      .map { case (wikiId, fbId) => wikiId + " " + fbId }
+      .coalesce(1, shuffle = true)
+      .saveAsTextFile(Config.cachePath + "wiki_to_fb_" + DateTime.now.secondOfDay.get)
+  }
+
+  def extractWdFromDbpediaPropsDump(sc: SparkContext) = {
+    sc.textFile("e:/infobox-properties_en.nt")
+      .map(_.split(" ").toList.take(3))
+      .filter(a => a(1) == "<http://dbpedia.org/property/d>")
+      .map { case a :: b :: c :: Nil => (resToId(a), c.substring(1, c.length - 4)) }
+      .map { case (dbpediaId, wikiId) => wikiId + " " + dbpediaId }
+      .coalesce(1, shuffle = true)
+      .saveAsTextFile(Config.cachePath + "dbpedia_to_wiki_" + DateTime.now.secondOfDay.get)
+  }
+
+  def resToId(res: String): String = res.substring(res.lastIndexOf("/") + 1, res.length - 1)
+
+  def extractWdFromDbpediaSameAsDump(sc: SparkContext) = {
+    sc.textFile("e:/wikidatawiki-20150330-sameas-all-wikis.ttl")
+      .map(_.split(" ").toList.take(3))
+      .filter(a => a(2).startsWith("<http://dbpedia.org"))
+      .map { case a :: b :: c :: Nil => (resToId(a), resToId(c)) }
+      .map { case (wikiId, dbpediaId) => wikiId + " " + dbpediaId }
+      .coalesce(1, shuffle = true)
+      .saveAsTextFile(Config.cachePath + "dbpedia_to_wiki_" + DateTime.now.secondOfDay.get)
+  }
 }

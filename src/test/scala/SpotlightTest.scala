@@ -28,7 +28,7 @@ class SpotlightTest extends FunSuite with Samples {
 
   test("fetch annotations") {
     val test2 = Config.testFile("npl/article.txt").getLines().mkString(" ")
-    Spotlight.fetchAnnotations(test2).onComplete {
+    Spotlight.fetchAnnotationsAsync(test2).onComplete {
       case Success(s) => log.info(s.toString)
       case Failure(ex) => log.error(ex.getMessage, ex)
     }

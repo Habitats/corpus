@@ -34,6 +34,7 @@ case class Annotation(articleId: String,
 
 object Annotation {
 
+
   val nextId = new AtomicInteger((System.currentTimeMillis() / 100000).toInt)
 
   // from google annotations
@@ -85,6 +86,16 @@ object Annotation {
       val ann = lines.slice(1, lines.length).map(l => Annotation(l, articleId))
       (articleId, ann)
     }).toMap
+  }
+
+  def fromDbpedia(dbpedia: DBPediaAnnotation): Annotation = {
+    new Annotation(
+      articleId = dbpedia.articleId,
+      index = nextId.incrementAndGet(),
+      phrase = dbpedia.entity.name,
+      mc = dbpedia.mc,
+      offset = dbpedia.entity.offset
+    )
   }
 }
 

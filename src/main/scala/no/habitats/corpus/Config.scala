@@ -8,6 +8,7 @@ import scala.io.{BufferedSource, Codec, Source}
 import scala.util.{Failure, Success, Try}
 
 object Config {
+
   private var args: Arguments = Arguments()
   private var sparkConfig: String = null
   private var corpusConfig: String = null
@@ -63,6 +64,7 @@ object Config {
   lazy val testPath: String = conf.getProperty("test_path").replace("~", System.getProperty("user.home"))
   lazy val dataPath: String = conf.getProperty("data_path").replace("~", System.getProperty("user.home"))
   lazy val cachePath: String = conf.getProperty("cache_path").replace("~", System.getProperty("user.home"))
+  lazy val dbpedia: String = conf.getProperty("dbpedia")
   lazy val broadMatch: Boolean = conf.getProperty("broad_match").toBoolean
   lazy val wikiDataOnly: Boolean = conf.getProperty("wikidata_only").toBoolean
   lazy val wikiDataIncludeBroad: Boolean = conf.getProperty("wikidata_include_broad").toBoolean

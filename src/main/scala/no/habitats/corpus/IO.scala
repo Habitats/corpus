@@ -4,7 +4,6 @@ import java.io._
 import java.nio.file.{FileSystems, Files}
 
 import no.habitats.corpus.models.{Article, Entity}
-import no.habitats.corpus.npl.Spotlight
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.json4s.NoTypeHints
@@ -12,7 +11,6 @@ import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization._
 
 import scala.collection.JavaConverters._
-import scala.concurrent.Future
 import scala.io.{Codec, Source}
 
 
@@ -102,15 +100,3 @@ object JsonSingle {
   }
 }
 
-object DBPediaAnnotation {
-  implicit val formats = Serialization.formats(NoTypeHints)
-
-  def toSingleJson(dBPediaAnnotation: DBPediaAnnotation): String = {
-    write(dBPediaAnnotation)
-  }
-
-  def fromSingleJson(string: String): DBPediaAnnotation = {
-    read[DBPediaAnnotation](string)
-  }
-}
-case class DBPediaAnnotation(articleId: String, entity: Entity)

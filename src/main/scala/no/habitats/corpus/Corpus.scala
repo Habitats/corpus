@@ -3,7 +3,7 @@ package no.habitats.corpus
 import java.io.File
 
 import com.nytlabs.corpus.{NYTCorpusDocument, NYTCorpusDocumentParser}
-import no.habitats.corpus.models.{Annotation, Article}
+import no.habitats.corpus.models.{Annotation, Article, DBPediaAnnotation}
 
 import scala.util.Try
 
@@ -19,6 +19,13 @@ object Corpus {
     annotations
   }
 
+  lazy val dbpediaAnnotations: Map[String, Seq[Annotation]] = {
+    Config.dataFile("nyt/" + Config.dbpedia).getLines()
+      .map(DBPediaAnnotation.fromSingleJson)
+      .map(Annotation.fromDbpedia)
+      .toSeq.groupBy(_.articleId)
+  }
+
   // all at once
   def rawArticles(path: String = Config.dataPath + "/nyt/", count: Int = Config.count): Seq[NYTCorpusDocument] = {
     IO.walk(path, count, ".xml").map(f => rawNYTParser.parseNYTCorpusDocumentFromFile(f, false))
@@ -27,9 +34,10 @@ object Corpus {
   def articles(path: String = Config.dataPath + "/nyt/", count: Int = Config.count): Seq[Article] = {
     Log.v(f"Loading $count articles ...")
     IO.walk(path, count, filter = ".xml")
-      .map(Corpus.toNYT)
-      .map(Corpus.toArticle)
-      .map(Corpus.toIPTC)
+      .map(toNYT)
+      .map(toArticle)
+      .map(toIPTC)
+      .map(toDBPedia)
   }
 
   def annotatedArticles(articles: Seq[Article] = Corpus.articles()): Seq[Article] = {
@@ -46,6 +54,9 @@ object Corpus {
     }
   }
   def toIPTC(article: Article): Article = article.addIptc(Config.broadMatch)
+  def toDBPedia(article: Article): Article = {
+    article.copy(ann = dbpediaAnnotations(article.id).map(a => (a.id, a)).toMap)
+  }
 }
 
 

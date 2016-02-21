@@ -2,6 +2,7 @@ package no.habitats.corpus.spark
 
 import no.habitats.corpus._
 import no.habitats.corpus.models.Article
+import no.habitats.corpus.npl.{WikiData, Spotlight}
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
@@ -32,13 +33,24 @@ object SparkUtil {
       case "cacheNYT" => JsonSingle.cache(Config.count)
       case "loadNYT" => Log.v(f"Loaded ${JsonSingle.load(Config.count).size} articles")
       case "print" => printArticles(Config.count)
+      case "dbpedia" => computeDbAnnotations()
+      case "dbpediaIds" => Spotlight.cacheDbpediaIds(RddFetcher.dbpedia(sc))
+      case "wdToFbFromDump" => WikiData.extractFbFromWikiDump(sc)
+      case "dbpediaToWikiFromDump" => WikiData.extractWdFromDbpediaSameAsDump(sc)
+      case "combineIds" => Spotlight.combineIds(sc)
       case "stats" => stats(rdd)
-      case "iptcDistribution" => calculateIPTCDistribution(Config.count)
+      case "iptcDistribution" => calculateIPTCDistribution
       case "count" => Log.r(s"Counting job: ${rdd.count} articles ...")
       case _ => Log.r("No job ... Exiting!")
     }
     Log.r("Job completed in " + ((System.currentTimeMillis - s) / 1000) + " seconds")
     sc.stop
+  }
+
+  def computeDbAnnotations() = {
+    Spotlight.cacheDbpedia(RddFetcher.rdd(sc), 0.5)
+    Spotlight.cacheDbpedia(RddFetcher.rdd(sc), 0.75)
+    Spotlight.cacheDbpedia(RddFetcher.rdd(sc), 0.40)
   }
 
   def printArticles(count: Int) = {
@@ -51,7 +63,7 @@ object SparkUtil {
     Log.v(rdd.collect().map(_.toString).mkString(f"SIMPLE PRINT (${rdd.count} articles)\n", "\n", ""))
   }
 
-  def calculateIPTCDistribution(count: Int) = {
+  def calculateIPTCDistribution() = {
     val rdd = RddFetcher.rdd(sc)
       .flatMap(_.iptc.toSeq)
       .map(c => (c, 1))
