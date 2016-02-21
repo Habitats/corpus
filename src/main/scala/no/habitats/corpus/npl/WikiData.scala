@@ -72,8 +72,7 @@ object WikiData {
     val newAnnotations = annotationsMap.values.flatMap(a => {
       // For all annotations ...
       if (pairs.contains(a.wd)) {
-        val counter = new AtomicInteger(a.index)
-        val newAnnotations = pairs.get(a.wd).map(i => i.map(wd => a.fromWd(counter.getAndIncrement, wd))).get.toList
+        val newAnnotations = pairs.get(a.wd).map(i => i.map(wd => a.fromWd(wd))).get.toList
         Seq(a) ++ newAnnotations
       } else Seq(a)
     })

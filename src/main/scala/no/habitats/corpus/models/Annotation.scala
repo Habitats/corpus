@@ -1,7 +1,6 @@
 package no.habitats.corpus.models
 
 import java.io.File
-import java.util.concurrent.atomic.AtomicInteger
 
 import no.habitats.corpus.Config
 import no.habitats.corpus.npl.WikiData
@@ -10,7 +9,6 @@ import scala.collection.mutable.ListBuffer
 import scala.io.{BufferedSource, Codec, Source}
 
 case class Annotation(articleId: String,
-                      index: Int, // index
                       phrase: String, // phrase
                       mc: Int, // mention count
                       offset: Int = -1,
@@ -27,15 +25,12 @@ case class Annotation(articleId: String,
   }
 
   // Create annotation from WikiDAta ID
-  def fromWd(index: Int, phrase: String): Annotation = copy(index = index, phrase = wd + " - " + phrase)
+  def fromWd(phrase: String): Annotation = copy(phrase = wd + " - " + phrase)
 
   override def toString: String = f"id: $id%20s > fb: $fb%10s > wb: $wd%10s > offset: $offset%5d > phrase: $phrase%50s > mc: $mc%3d > TF-IDF: $tfIdf%.10f"
 }
 
 object Annotation {
-
-
-  val nextId = new AtomicInteger((System.currentTimeMillis() / 100000).toInt)
 
   // from google annotations
   def apply(line: String, id: String): Annotation = {
@@ -43,7 +38,6 @@ object Annotation {
     val arr = line.split("\\t")
     new Annotation(
       articleId = id,
-      index = arr(0).toInt,
       phrase = arr(3),
       mc = arr(2).toInt,
       offset = arr(4).toInt,
@@ -53,12 +47,12 @@ object Annotation {
   }
 
   def fromWikidata(articleId: String, wd: Entity): Annotation = {
-    new Annotation(articleId = articleId, index = nextId.incrementAndGet(), phrase = wd.name, mc = 1, wd = wd.id)
+    new Annotation(articleId = articleId, phrase = wd.name, mc = 1, wd = wd.id)
   }
 
   // from POS name
   def fromName(articleId: String, index: Int, name: String, count: Int, kind: String): Annotation = {
-    new Annotation(articleId = articleId, index = index, phrase = name, mc = count)
+    new Annotation(articleId = articleId, phrase = name, mc = count)
   }
 
   // google annotations raw lines format
@@ -91,7 +85,6 @@ object Annotation {
   def fromDbpedia(dbpedia: DBPediaAnnotation): Annotation = {
     new Annotation(
       articleId = dbpedia.articleId,
-      index = nextId.incrementAndGet(),
       phrase = dbpedia.entity.name,
       mc = dbpedia.mc,
       offset = dbpedia.entity.offset
