@@ -2,10 +2,11 @@ package no.habitats.corpus.dl4j
 
 import java.io.File
 
+import no.habitats.corpus.Config
 import org.canova.api.util.ClassPathResource
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors
-import org.deeplearning4j.models.word2vec.Word2Vec.Builder
+import org.deeplearning4j.models.word2vec.Word2Vec
 import org.deeplearning4j.plot.BarnesHutTsne
 import org.deeplearning4j.text.sentenceiterator.{LineSentenceIterator, SentencePreProcessor}
 import org.deeplearning4j.text.tokenization.tokenizer.TokenPreProcess
@@ -15,13 +16,12 @@ import org.slf4j.LoggerFactory
 
 import scala.collection.JavaConverters._
 
-object W2V extends App {
+object W2V  {
   val log = LoggerFactory.getLogger(W2V.getClass)
 
-  def example = {
+  def main(args: Array[String]) = {
     log.info("Loading data ...")
-    val resource = new ClassPathResource("raw_sentences.txt")
-    val iter = new LineSentenceIterator(resource.getFile)
+    val iter = new LineSentenceIterator(new File(Config.dataPath +"w2v/raw_sentences.txt"))
     iter.setPreProcessor(new SentencePreProcessor {
       override def preProcess(sentence: String): String = sentence.toLowerCase
     })
@@ -39,14 +39,14 @@ object W2V extends App {
 
     log.info("Training model ...")
     val batchSize = 1000
-    val iterations = 30
+    val iterations = 1
     val layerSize = 300
 
-    val vec = new Builder()
+    val vec = new Word2Vec.Builder()
       .batchSize(batchSize) // # words processed at a time
       .sampling(1e-5) // negative sampling
       .minWordFrequency(5) // TFT - term frequency threshold
-      .useAdaGrad(false) // Adagard creates a different gradient for each feature
+      .useAdaGrad(false) // Adaptive gradients -- creates a different gradient for each feature
       .layerSize(layerSize) // dimension of feature vector
       .iterations(iterations) // iterations to train
       .learningRate(0.025) // the step size for each update of the coefficients
@@ -77,13 +77,13 @@ object W2V extends App {
     vec.lookupTable().plotVocab(tsne)
 
     log.info("Save vectors ...")
-    WordVectorSerializer.writeWordVectors(vec, "words.txt")
+    WordVectorSerializer.writeWordVectors(vec, Config.cachePath + "words.txt")
 
     // king + woman - queen
     val kingslist = vec.wordsNearest(Seq("king", "woman").asJava, Seq("queen").asJava, 10)
 
     // reload
-    val wordVectors: WordVectors = WordVectorSerializer.loadTxtVectors(new File("words.txt"))
+    val wordVectors: WordVectors = WordVectorSerializer.loadTxtVectors(new File(Config.cachePath + "words.txt"))
 
     val weightLookupTable = wordVectors.lookupTable()
     val vectors = weightLookupTable.vectors()
@@ -92,6 +92,6 @@ object W2V extends App {
   }
 
   // load google
-  val gModel = new File("D:/Archive/w2v/freebase-vectors-skipgram1000-en.bin")
-  val gVec = WordVectorSerializer.loadGoogleModel(gModel, true)
+  lazy val gModel = new File(Config.dataPath + "w2v/freebase-vectors-skipgram1000-en.bin")
+  lazy val gVec = WordVectorSerializer.loadGoogleModel(gModel, true)
 }
