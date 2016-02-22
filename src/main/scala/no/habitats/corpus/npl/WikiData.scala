@@ -1,9 +1,11 @@
 package no.habitats.corpus.npl
 
 import java.io.{File, FileOutputStream, PrintWriter}
-import java.util.concurrent.atomic.AtomicInteger
 
+import breeze.linalg.shuffle
 import no.habitats.corpus.models.Annotation
+import no.habitats.corpus.spark.CorpusContext
+import no.habitats.corpus.spark.CorpusContext._
 import no.habitats.corpus.{Config, Log}
 import org.apache.spark.SparkContext
 import org.joda.time.DateTime
@@ -26,17 +28,9 @@ object WikiData {
   lazy val occupations = loadPairs("occupation.txt")
   lazy val genders = loadPairs("gender.txt")
 
-  lazy val fbToWikiMapping: Map[String, String] = Config.dataFile(pairsFile).getLines().map(_.split(",")).map(p => (p(0), p(1))).toMap
-  lazy val wikiToFbMapping: Map[String, String] = fbToWikiMapping.map(p => (p._2, p._1))
-
-  // Perform a single Freebase -> WikiData translation
-  def fbToWiki(freeBaseId: String): Option[String] = {
-    val json = toJson(s"${wmflabs}string[646:$freeBaseId]")
-    val items = render(json \ "items").children
-    val wd = if (items.nonEmpty) Some("Q" + items.head.extract[Int]) else None
-    Log.v(f"FB -> WD: $freeBaseId%-10s -> ${wd.getOrElse("NONE")}")
-    wd
-  }
+  lazy val fbToWd: Map[String, String] = Config.dataFile(pairsFile).getLines().map(_.split(",")).map(p => (p(0), p(1))).toMap
+  lazy val wdToFb: Map[String, String] = Config.dataFile("wikidata/fb_to_wd_all.txt").getLines().map(_.split(" ")).map(a => (a(0), a(1))).toMap
+  lazy val dbToWd: Map[String, String] = Config.dataFile("wikidata/dbpedia_to_wikidata.txt").getLines().map(_.split(" ")).filter(_.length == 2).map(a => (a(1), a(0))).toMap
 
   // Download ALL FreeBase -> WikiData pairs in the entire WikiData db (1.5M~)
   def computeFreeBaseWikiDataPairs() = {
@@ -106,40 +100,20 @@ object WikiData {
     label
   }
 
-  def writeLine(m: String, file: File) = {
-    synchronized {
-      val writer = new PrintWriter(new FileOutputStream(file, true))
-      writer.println(m)
-      writer.close()
-    }
-  }
+  def resToId(res: String): String = res.substring(res.lastIndexOf("/") + 1, res.length - 1)
 
-  def extractFbFromWikiDump(sc: SparkContext) = {
-    //    sc.parallelize(
+  def extractFbFromWikiDump() = {
     sc.textFile("e:/wikidata-simple-statements.nt")
-      //        .take(1000)
-      //    )
       .map(_.split(" ").toList.take(3))
       .filter(a => a(1) == "<http://www.wikidata.org/entity/P646c>")
-      .map { case a :: b :: c :: Nil => (a.substring(a.lastIndexOf("/") + 1, a.length - 1), c.substring(1, c.length - 1)) }
+      .map { case a :: b :: c :: Nil => (resToId(a), c.substring(1, c.length - 1)) }
       .map { case (wikiId, fbId) => wikiId + " " + fbId }
       .coalesce(1, shuffle = true)
       .saveAsTextFile(Config.cachePath + "wiki_to_fb_" + DateTime.now.secondOfDay.get)
   }
 
-  def extractWdFromDbpediaPropsDump(sc: SparkContext) = {
-    sc.textFile("e:/infobox-properties_en.nt")
-      .map(_.split(" ").toList.take(3))
-      .filter(a => a(1) == "<http://dbpedia.org/property/d>")
-      .map { case a :: b :: c :: Nil => (resToId(a), c.substring(1, c.length - 4)) }
-      .map { case (dbpediaId, wikiId) => wikiId + " " + dbpediaId }
-      .coalesce(1, shuffle = true)
-      .saveAsTextFile(Config.cachePath + "dbpedia_to_wiki_" + DateTime.now.secondOfDay.get)
-  }
 
-  def resToId(res: String): String = res.substring(res.lastIndexOf("/") + 1, res.length - 1)
-
-  def extractWdFromDbpediaSameAsDump(sc: SparkContext) = {
+  def extractWdFromDbpediaSameAsDump() = {
     sc.textFile("e:/wikidatawiki-20150330-sameas-all-wikis.ttl")
       .map(_.split(" ").toList.take(3))
       .filter(a => a(2).startsWith("<http://dbpedia.org"))

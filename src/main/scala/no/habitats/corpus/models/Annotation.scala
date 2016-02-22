@@ -3,6 +3,7 @@ package no.habitats.corpus.models
 import java.io.File
 
 import no.habitats.corpus.Config
+import no.habitats.corpus.models.Annotation.NONE
 import no.habitats.corpus.npl.WikiData
 
 import scala.collection.mutable.ListBuffer
@@ -12,15 +13,16 @@ case class Annotation(articleId: String,
                       phrase: String, // phrase
                       mc: Int, // mention count
                       offset: Int = -1,
-                      fb: String = "NONE", // Freebase ID
-                      wd: String = "NONE", // WikiData ID
+                      fb: String = NONE, // Freebase ID
+                      wd: String = NONE, // WikiData ID
+                      db: String = NONE,
                       tfIdf: Double = -1 // term frequency, inverse document frequency
                      ) {
 
   lazy val id: String = {
-    if (fb == "NONE" && wd == "NONE") phrase
-    else if (fb != "NONE") fb
-    else if (WikiData.wikiToFbMapping.contains(wd)) WikiData.wikiToFbMapping(wd)
+    if (fb == NONE && wd == NONE) phrase
+    else if (fb != NONE) fb
+    else if (WikiData.wdToFb.contains(wd)) WikiData.wdToFb(wd)
     else wd
   }
 
@@ -31,20 +33,7 @@ case class Annotation(articleId: String,
 }
 
 object Annotation {
-
-  // from google annotations
-  def apply(line: String, id: String): Annotation = {
-    // the file's a little funky, and they use tabs and spaces as different delimiters
-    val arr = line.split("\\t")
-    new Annotation(
-      articleId = id,
-      phrase = arr(3),
-      mc = arr(2).toInt,
-      offset = arr(4).toInt,
-      fb = arr(6),
-      wd = WikiData.fbToWikiMapping.getOrElse(arr(6), "NONE")
-    )
-  }
+  val NONE = "NONE"
 
   def fromWikidata(articleId: String, wd: Entity): Annotation = {
     new Annotation(articleId = articleId, phrase = wd.name, mc = 1, wd = wd.id)
@@ -77,16 +66,31 @@ object Annotation {
     chunks.map(lines => {
       val first = lines.head.split("\\t")
       val articleId = first(0)
-      val ann = lines.slice(1, lines.length).map(l => Annotation(l, articleId))
+      val ann = lines.slice(1, lines.length).map(l => {
+        val arr = l.split("\\t")
+        new Annotation(
+          articleId = articleId,
+          phrase = arr(3),
+          mc = arr(2).toInt,
+          offset = arr(4).toInt,
+          fb = arr(6),
+          wd = WikiData.fbToWd.getOrElse(arr(6), NONE)
+        )
+      })
       (articleId, ann)
     }).toMap
   }
 
   def fromDbpedia(dbpedia: DBPediaAnnotation): Annotation = {
+    val wd = WikiData.dbToWd.getOrElse(dbpedia.entity.id, NONE)
+    val fb = WikiData.wdToFb.getOrElse(wd, NONE)
     new Annotation(
       articleId = dbpedia.articleId,
       phrase = dbpedia.entity.name,
       mc = dbpedia.mc,
+      db = dbpedia.entity.id,
+      wd = wd,
+      fb = fb,
       offset = dbpedia.entity.offset
     )
   }

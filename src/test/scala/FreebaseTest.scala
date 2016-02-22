@@ -16,10 +16,10 @@ class FreebaseTest extends FunSuite {
     val fb3 = "/m/04wsz" //   Middle East - https://www.freebase.com/m/04wsz - https://www.wikidata.org/wiki/Q7204
     val fb4 = "herpaderpa" // None
 
-    val wd1 = fbToWiki(fb1)
-    val wd2 = fbToWiki(fb2)
-    val wd3 = fbToWiki(fb3)
-    val wd4 = fbToWiki(fb4)
+    val wd1 = fbToWd(fb1)
+    val wd2 = fbToWd(fb2)
+    val wd3 = fbToWd(fb3)
+    val wd4 = fbToWd(fb4)
 
     assert(wd1 == Some("Q377623"))
     assert(wd2 == Some("Q43196"))

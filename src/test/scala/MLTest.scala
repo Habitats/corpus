@@ -110,7 +110,7 @@ class MLTest extends FunSuite {
     )
     val a3 = Article(id = a3id, ann = ann3.map(x => (x.id, x)).toMap)
 
-    val rdd = Context.sc.parallelize(Seq(a1, a2, a3))
+    val rdd = CorpusContext.sc.parallelize(Seq(a1, a2, a3))
     val tc = TC(rdd)
     assert(tc.documentCount === 3)
     assert(tc.documentsWithTerm(A) === 1)

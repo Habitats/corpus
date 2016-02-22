@@ -2,14 +2,15 @@ package no.habitats.corpus.spark
 
 import no.habitats.corpus._
 import no.habitats.corpus.models.Article
-import no.habitats.corpus.npl.{WikiData, Spotlight}
-import org.apache.spark.mllib.classification.NaiveBayesModel
-import org.apache.spark.mllib.regression.LabeledPoint
+import no.habitats.corpus.npl.{Spotlight, WikiData}
+import no.habitats.corpus.spark.CorpusContext._
 import org.apache.spark.rdd.RDD
+import org.joda.time.DateTime
+
+import scala.collection._
 
 object SparkUtil {
   val cacheDir = "cache"
-  lazy val sc = Context.sc
   var iter = 0
 
   def sparkTest() = {
@@ -34,12 +35,16 @@ object SparkUtil {
       case "loadNYT" => Log.v(f"Loaded ${JsonSingle.load(Config.count).size} articles")
       case "print" => printArticles(Config.count)
       case "dbpedia" => computeDbAnnotations()
-      case "dbpediaIds" => Spotlight.cacheDbpediaIds(RddFetcher.dbpedia(sc))
-      case "wdToFbFromDump" => WikiData.extractFbFromWikiDump(sc)
-      case "dbpediaToWikiFromDump" => WikiData.extractWdFromDbpediaSameAsDump(sc)
-      case "combineIds" => Spotlight.combineIds(sc)
-      case "stats" => stats(rdd)
+      case "wdToFbFromDump" => WikiData.extractFbFromWikiDump()
+      case "dbpediaToWikiFromDump" => WikiData.extractWdFromDbpediaSameAsDump()
+      case "combineIds" => Spotlight.combineAndCacheIds()
       case "iptcDistribution" => calculateIPTCDistribution
+      case "fullCache" =>
+        RddFetcher.rdd(sc)
+          .map(Corpus.toDBPedia)
+          .map(JsonSingle.toSingleJson)
+          .coalesce(1, shuffle = true)
+          .saveAsTextFile(Config.cachePath + "nyt_with_all_" + DateTime.now.secondOfDay.get)
       case "count" => Log.r(s"Counting job: ${rdd.count} articles ...")
       case _ => Log.r("No job ... Exiting!")
     }
@@ -97,37 +102,6 @@ object SparkUtil {
       a.ann.values.foreach(Log.v)
       Log.v("")
     })
-  }
-
-  def multiLabelTest(rdd: RDD[Article], test: RDD[LabeledPoint], models: Seq[(NaiveBayesModel, String)]): Seq[(String, Double)] = {
-    val res = for ((m, l) <- models) yield {
-      val predictionAndLabel = test.map(p => (m.predict(p.features), p.label))
-      val accuracy = 1.0 * predictionAndLabel.filter(x => x._1 == x._2).count() / test.count()
-      (l, accuracy)
-    }
-    res
-  }
-
-  //////////
-  // DL4J //
-  //////////
-
-  def dl4j = {
-    //    val conf = setSetup.getConf()
-    //    val trainLayer = new SparkDl4jMultiLayer(sc, conf)
-  }
-
-  ///////////////////////////////////////////////////////
-  // helper methods retrieve an RDD -- local or remote //
-  ///////////////////////////////////////////////////////
-
-  def stats(rdd: RDD[Article]) = {
-    val lines = rdd.count
-    val partitions = rdd.partitions.length
-    val storageLevel = rdd.getStorageLevel.description
-    val sample = rdd.sample(false, Math.min(1.0, 5.0 / lines)).collect
-    Log.i(s"ID: ${rdd.id} - Lines: $lines - Partitions: $partitions - Storage Level: $storageLevel")
-    sample.foreach(Log.v)
   }
 }
 

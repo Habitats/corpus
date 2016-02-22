@@ -7,7 +7,7 @@ import org.apache.spark.{SparkConf, SparkContext}
 
 import scala.collection.JavaConverters._
 
-object Context {
+object CorpusContext {
 
   lazy val sc = {
     System.setProperty("hadoop.home.dir", "C:\\hadoop\\")

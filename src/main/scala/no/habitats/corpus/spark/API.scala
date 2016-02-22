@@ -1,6 +1,6 @@
 package no.habitats.corpus.spark
 
-import no.habitats.corpus.spark.SparkUtil.sc
+import no.habitats.corpus.spark.CorpusContext._
 import org.apache.spark.mllib.classification.SVMWithSGD
 import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, MultilabelMetrics}
 import org.apache.spark.mllib.feature._

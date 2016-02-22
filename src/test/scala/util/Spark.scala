@@ -1,7 +1,7 @@
 package util
 
-import no.habitats.corpus.spark.Context
+import no.habitats.corpus.spark.CorpusContext
 
 trait Spark {
-  lazy val sc = Context.sc
+  lazy val sc = CorpusContext.sc
 }

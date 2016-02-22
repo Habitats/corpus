@@ -1,4 +1,5 @@
-import no.habitats.corpus.{Config, Corpus, IO}
+import no.habitats.corpus.spark.RddFetcher
+import no.habitats.corpus.{Config, Corpus}
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -8,7 +9,7 @@ import util.Spark
 class SparkTest extends FunSuite with Spark {
 
   test("does it start?") {
-//    sc.setLogLevel("ERROR")
+    //    sc.setLogLevel("ERROR")
     assert(sc.parallelize(0 until 10).count === 10)
   }
 
@@ -22,11 +23,12 @@ class SparkTest extends FunSuite with Spark {
 
   test("load some articles the new way") {
     val limit = 1000
-    val rdd = sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = limit, filter = ".xml"))
-      .map(Corpus.toNYT)
-      .map(Corpus.toArticle)
-      .map(Corpus.toAnnotated)
+    //    sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = limit, filter = ".xml"))
+    sc.parallelize(
+      RddFetcher.rdd(sc)
+        .take(limit)
+    )
       .map(Corpus.toDBPedia)
-    assert(rdd.count === limit)
+      .saveAsTextFile(Config.cachePath + "nyt_with_all")
   }
 }

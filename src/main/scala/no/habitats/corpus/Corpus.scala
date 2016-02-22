@@ -23,7 +23,7 @@ object Corpus {
     Config.dataFile("nyt/" + Config.dbpedia).getLines()
       .map(DBPediaAnnotation.fromSingleJson)
       .map(Annotation.fromDbpedia)
-      .toSeq.groupBy(_.articleId)
+      .toList.groupBy(_.articleId)
   }
 
   // all at once
@@ -55,7 +55,11 @@ object Corpus {
   }
   def toIPTC(article: Article): Article = article.addIptc(Config.broadMatch)
   def toDBPedia(article: Article): Article = {
-    article.copy(ann = dbpediaAnnotations(article.id).map(a => (a.id, a)).toMap)
+    val ann = dbpediaAnnotations.get(article.id) match {
+      case Some(ann) => ann.map(a => (a.id, a)).toMap
+      case None => /**Log.v("NO DBPEDIA: " + article.id);*/ Map[String, Annotation]()
+    }
+    article.copy(ann = ann)
   }
 }
 
