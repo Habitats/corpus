@@ -74,7 +74,7 @@ object JsonSingle {
   implicit val formats = Serialization.formats(NoTypeHints)
   lazy val jsonFile = new File(Config.dataPath + "/nyt/nyt_corpus_annotated_0.5.json")
 
-  def cache(count: Int, articles: Seq[Article] = Nil) = {
+  def cacheRawNYTtoJson(count: Int = Config.count, articles: Seq[Article] = Nil) = {
     jsonFile.delete
     jsonFile.createNewFile
     val p = new PrintWriter(jsonFile, "ISO-8859-1")

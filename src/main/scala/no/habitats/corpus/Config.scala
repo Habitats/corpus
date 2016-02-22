@@ -20,6 +20,7 @@ object Config {
       partitions = props.get("partitions").map(_.toInt),
       rdd = props.get("rdd"),
       job = props.get("job"),
+      iptcFilter = props.get("iptcFilter").map(_.split(",").toSet),
       count = props.get("count").map(_.toInt)
     )
 
@@ -69,6 +70,7 @@ object Config {
   lazy val wikiDataOnly: Boolean = conf.getProperty("wikidata_only").toBoolean
   lazy val wikiDataIncludeBroad: Boolean = conf.getProperty("wikidata_include_broad").toBoolean
   lazy val phraseSkipThreshold: Int = conf.getProperty("term_frequency_threshold").toInt
+  lazy val iptcFilter: Set[String] = conf.getProperty("iptc_filter").split(",").toSet
 
   // Dynamic variables for file caching
   // TODO: this shouldn't be here. really.
@@ -89,6 +91,7 @@ object Config {
                         partitions: Option[Int] = None,
                         rdd: Option[String] = None,
                         job: Option[String] = None,
-                        count: Option[Int] = None
+                        count: Option[Int] = None,
+                        iptcFilter: Option[Set[String]] = None
                       )
 }

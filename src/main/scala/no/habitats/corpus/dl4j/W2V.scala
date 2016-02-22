@@ -36,7 +36,6 @@ object W2V  {
       }
     })
 
-
     log.info("Training model ...")
     val batchSize = 1000
     val iterations = 1
@@ -91,7 +90,5 @@ object W2V  {
     val wordVector2 = wordVectors.getWordVector("myword")
   }
 
-  // load google
-  lazy val gModel = new File(Config.dataPath + "w2v/freebase-vectors-skipgram1000-en.bin")
-  lazy val gVec = WordVectorSerializer.loadGoogleModel(gModel, true)
+
 }

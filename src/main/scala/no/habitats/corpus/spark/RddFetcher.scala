@@ -3,7 +3,7 @@ package no.habitats.corpus.spark
 import java.io.File
 
 import no.habitats.corpus._
-import no.habitats.corpus.models.{DBPediaAnnotation, Article}
+import no.habitats.corpus.models.{Article, DBPediaAnnotation}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkContext, SparkException}
 
@@ -12,11 +12,13 @@ object RddFetcher {
   var size: Double = 1855658L
 
   def rdd(sc: SparkContext): RDD[Article] = {
-    val rdd = Config.rdd match {
+    var rdd = Config.rdd match {
       case "cache" => cachedRdd(sc)
       case "local" => localRdd(sc)
     }
-    if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(Config.count)) else rdd
+    rdd = if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(Config.count)) else rdd
+    rdd = if (Config.iptcFilter.nonEmpty) rdd.filter(a => a.iptc.intersect(Config.iptcFilter).nonEmpty) else rdd
+    rdd
   }
 
   def dbpedia(sc: SparkContext, name: String = "/nyt/" + Config.dbpedia): RDD[DBPediaAnnotation] = {
@@ -25,9 +27,7 @@ object RddFetcher {
   }
 
   def localRdd(sc: SparkContext): RDD[Article] = {
-    val rdd = sc.textFile("file:///" + JsonSingle.jsonFile.getAbsolutePath, Config.partitions).map(JsonSingle.fromSingleJson)
-    if (Config.count == Integer.MAX_VALUE) rdd
-    else sc.parallelize(rdd.take(Config.count))
+    sc.textFile("file:///" + JsonSingle.jsonFile.getAbsolutePath, Config.partitions).map(JsonSingle.fromSingleJson)
   }
 
   def cachedRdd(sc: SparkContext): RDD[Article] = {

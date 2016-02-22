@@ -102,7 +102,7 @@ object WikiData {
 
   def resToId(res: String): String = res.substring(res.lastIndexOf("/") + 1, res.length - 1)
 
-  def extractFbFromWikiDump() = {
+  def extractFreebaseFromWikiDump() = {
     sc.textFile("e:/wikidata-simple-statements.nt")
       .map(_.split(" ").toList.take(3))
       .filter(a => a(1) == "<http://www.wikidata.org/entity/P646c>")
@@ -112,8 +112,7 @@ object WikiData {
       .saveAsTextFile(Config.cachePath + "wiki_to_fb_" + DateTime.now.secondOfDay.get)
   }
 
-
-  def extractWdFromDbpediaSameAsDump() = {
+  def extractWikiIDFromDbpediaDump() = {
     sc.textFile("e:/wikidatawiki-20150330-sameas-all-wikis.ttl")
       .map(_.split(" ").toList.take(3))
       .filter(a => a(2).startsWith("<http://dbpedia.org"))

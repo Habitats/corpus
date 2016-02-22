@@ -29,7 +29,7 @@ object ML {
   }
 
   def trainModelsNaiveBayedMultiNominal(training: RDD[(Set[String], Vector)]): Map[String, ClassificationModel] = {
-    val cats = training.flatMap(_._1).collect.toSet
+    val cats = if(Config.iptcFilter.nonEmpty) Config.iptcFilter else training.flatMap(_._1).collect.toSet
     cats.map(c => {
       Log.v(s"Training ... $c ...")
       val labeledTraining = training
