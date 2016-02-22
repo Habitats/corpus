@@ -48,9 +48,9 @@ object ML {
   }
 
   def evaluate(rdd: RDD[Article], predicted: RDD[Article], training: RDD[(Set[String], Vector)], phrases: Seq[String], prefs: Broadcast[Prefs]) = {
-    val sampleResult = predicted.take(1000).map(_.toResult).mkString("\n")
+    val sampleResult = predicted.map(_.toResult).reduce(_ + "\n" + _)
     Log.toFile(sampleResult, s"stats/sample_result_${Config.count}.txt")
-    val labelCardinalityDistribution = predicted.take(2000).map(p => f"${p.iptc.size}%2d ${p.pred.size}%2d").mkString("\n")
+    val labelCardinalityDistribution = predicted.map(p => f"${p.iptc.size}%2d ${p.pred.size}%2d").reduce(_ + "\n" + _)
     Log.toFile(labelCardinalityDistribution, s"stats/label_cardinality_distribution_${Config.count}.txt")
 
     val stats = MLStats(predicted, training, phrases, prefs)

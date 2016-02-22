@@ -13,13 +13,13 @@ import util.Samples
 class CorpusTest extends FunSuite with Samples {
 
   test("fetch NYT articles") {
-    val raw1 = Corpus.articles(Config.testPath + "/nyt/")
+    val raw1 = Corpus.articlesFromXML(Config.testPath + "/nyt/")
     assert(raw1.size == 4)
   }
 
   test("print some headlines") {
 //      .map(a => a.id + " > " + a.hl + " > " + a.iptc.mkString(", ") + " > " + a.url.get)
-val hl = Corpus.articles(count = 10)
+val hl = Corpus.articlesFromXML(count = 10)
   .filter(_.hl != null)
   .sortBy(_.hl)
   .map(Corpus.toIPTC)

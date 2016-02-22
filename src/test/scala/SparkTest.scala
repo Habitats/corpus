@@ -15,9 +15,8 @@ class SparkTest extends FunSuite with Spark {
 
   test("load some articles the old way") {
     val limit = 1000
-    val articles = Corpus.articles(count = limit)
-    val annotated = Corpus.annotatedArticles(articles)
-    val rdd = sc.parallelize(annotated)
+    val articles = Corpus.articlesFromXML(count = limit)
+    val rdd = sc.parallelize(articles)
     assert(rdd.count === limit)
   }
 
@@ -28,7 +27,7 @@ class SparkTest extends FunSuite with Spark {
       RddFetcher.rdd(sc)
         .take(limit)
     )
-      .map(Corpus.toDBPedia)
+      .map(Corpus.toDBPediaAnnotated)
       .saveAsTextFile(Config.cachePath + "nyt_with_all")
   }
 }

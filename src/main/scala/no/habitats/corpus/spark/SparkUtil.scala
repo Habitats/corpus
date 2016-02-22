@@ -19,6 +19,13 @@ object SparkUtil {
 
   lazy val rdd: RDD[Article] = RddFetcher.rdd(sc)
 
+  def trainNaiveBayes() = {
+    val prefs = Prefs(termFrequencyThreshold = 30, wikiDataIncludeBroad = false, wikiDataOnly = false)
+    val rdd = Preprocess.computeTfIdf(RddFetcher.rdd(sc).filter(_.ann.nonEmpty).filter(_.iptc.nonEmpty))
+    ML.multiLabelClassification(sc.broadcast[Prefs](prefs), rdd)
+  }
+
+
   def main(args: Array[String]) = {
     Config.setArgs(args)
 
@@ -33,29 +40,35 @@ object SparkUtil {
       case "preprocess" => Preprocess.preprocess(sc, sc.broadcast(Prefs()), rdd)
       case "cacheNYT" => JsonSingle.cache(Config.count)
       case "loadNYT" => Log.v(f"Loaded ${JsonSingle.load(Config.count).size} articles")
-      case "print" => printArticles(Config.count)
-      case "dbpedia" => computeDbAnnotations()
+      case "printArticles" => printArticles(Config.count)
+      case "computeDbAnnotations" => computeDbAnnotations()
+      case "trainNaiveBayes" => trainNaiveBayes()
       case "wdToFbFromDump" => WikiData.extractFbFromWikiDump()
       case "dbpediaToWikiFromDump" => WikiData.extractWdFromDbpediaSameAsDump()
       case "combineIds" => Spotlight.combineAndCacheIds()
       case "iptcDistribution" => calculateIPTCDistribution
-      case "fullCache" =>
-        RddFetcher.rdd(sc)
-          .map(Corpus.toDBPedia)
-          .map(JsonSingle.toSingleJson)
-          .coalesce(1, shuffle = true)
-          .saveAsTextFile(Config.cachePath + "nyt_with_all_" + DateTime.now.secondOfDay.get)
+      case "fullCache" => fullCache()
       case "count" => Log.r(s"Counting job: ${rdd.count} articles ...")
       case _ => Log.r("No job ... Exiting!")
     }
     Log.r("Job completed in " + ((System.currentTimeMillis - s) / 1000) + " seconds")
-    sc.stop
+    Thread.sleep(Long.MaxValue)
+    //    sc.stop
+  }
+
+  /** Fetch json RDD and compute IPTC and annotations */
+  def fullCache() = {
+    RddFetcher.rdd(sc)
+      .map(Corpus.toIPTC)
+      .map(Corpus.toDBPediaAnnotated)
+      .map(JsonSingle.toSingleJson)
+      .coalesce(1, shuffle = true)
+      .saveAsTextFile(Config.cachePath + "nyt_with_all_" + DateTime.now.secondOfDay.get)
   }
 
   def computeDbAnnotations() = {
     Spotlight.cacheDbpedia(RddFetcher.rdd(sc), 0.5)
     Spotlight.cacheDbpedia(RddFetcher.rdd(sc), 0.75)
-    Spotlight.cacheDbpedia(RddFetcher.rdd(sc), 0.40)
   }
 
   def printArticles(count: Int) = {

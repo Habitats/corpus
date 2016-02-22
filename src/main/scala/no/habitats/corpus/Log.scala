@@ -56,7 +56,8 @@ object Log extends Logging {
     val resultsFile = new File(Config.dataPath + f"/$fileName")
     if (!resultsFile.exists) {
       Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
-      resultsFile.createNewFile
+      resultsFile.getParentFile.mkdirs()
+      resultsFile.createNewFile()
     }
     writeLine(m.toString, resultsFile)
   }

@@ -9,4 +9,3 @@ case class Prefs(iteration: Int = 0,
                  ontology: String = "occupation"
                 )
 
-

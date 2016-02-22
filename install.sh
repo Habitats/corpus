@@ -11,9 +11,9 @@ echo "alias submit2='cd ~/corpus/ && git pull && gradle shadowJar && spark-submi
 echo "alias submit='spark-submit --class no.habitats.corpus.spark.SparkUtil --jars ~/corpus/build/libs/corpus-all.jar ~/corpus.jar local=false rdd=local '" >> ~/.bashrc
 
 # Git
+mv ~/.ssh/github_rsa ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
 chmod 600 ~/.ssh/google_compute_engine
-mv ~/.ssh/github_rsa ~/.ssh/id_rsa
 eval $(ssh-agent -s) && ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa; yes | git clone http://github.com/Habitats/corpus.git'
 rm corpus-archive.*
 wget --progress=bar:force:noscroll https://www.dropbox.com/s/n0750x98l0hsrhp/corpus-archive.zip
@@ -44,6 +44,3 @@ scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispa
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@spark-w-1:~/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@spark-w-2:~/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@spark-w-3:~/
-scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@spark-w-4:~/
-scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@spark-w-5:~/
-scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@spark-w-6:~/

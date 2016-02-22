@@ -44,7 +44,7 @@ object Annotation {
     new Annotation(articleId = articleId, phrase = name, mc = count)
   }
 
-  // google annotations raw lines format
+  /** Google annotations raw lines format */
   def fromGoogle(file: File = new File(Config.dataPath + "google-annotations/nyt-ann-all.txt")): Map[String, Seq[Annotation]] = {
     val source: BufferedSource = Source.fromFile(file)(Codec.ISO8859)
     val reader = source.bufferedReader()

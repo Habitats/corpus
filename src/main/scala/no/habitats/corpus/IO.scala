@@ -72,13 +72,13 @@ object IO {
 
 object JsonSingle {
   implicit val formats = Serialization.formats(NoTypeHints)
-  lazy val jsonFile = new File(Config.dataPath + "/nyt/nyt_corpus.json")
+  lazy val jsonFile = new File(Config.dataPath + "/nyt/nyt_corpus_annotated_0.5.json")
 
   def cache(count: Int, articles: Seq[Article] = Nil) = {
     jsonFile.delete
     jsonFile.createNewFile
     val p = new PrintWriter(jsonFile, "ISO-8859-1")
-    (if (articles == Nil) Corpus.articles(count = count) else articles)
+    (if (articles == Nil) Corpus.articlesFromXML(count = count) else articles)
       .map(JsonSingle.toSingleJson)
       .foreach(p.println)
     p.close
