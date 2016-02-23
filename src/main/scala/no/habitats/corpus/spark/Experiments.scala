@@ -13,12 +13,12 @@ object Experiments {
     Config.resultsFileName = "res_baseline"
     Config.resultsCatsFileName = "res_baseline_cats"
     val prefs = sc.broadcast(Prefs())
-    ML.multiLabelClassification(prefs, Preprocess.preprocess(sc, prefs, rdd))
+    ML.multiLabelClassification(prefs, Preprocess.preprocess(prefs, rdd))
     iter += 1
   }
 
   def stats(sc: SparkContext, rdd: RDD[Article]) = {
-    val a = Preprocess.preprocess(sc, sc.broadcast(Prefs()), rdd)
+    val a = Preprocess.preprocess(sc.broadcast(Prefs()), rdd)
     val prefs = sc.broadcast(Prefs(iteration = iter))
     val annCounts = a.flatMap(a => a.iptc.map(c => (c, a.ann.size))).reduceByKey(_ + _).collectAsMap
     Log.toFile(annCounts.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "stats/annotation_pr_iptc.txt")
@@ -39,7 +39,7 @@ object Experiments {
 
       ))
       //      if (iter > 44)
-      ML.multiLabelClassification(prefs, Preprocess.preprocess(sc, prefs, rdd))
+      ML.multiLabelClassification(prefs, Preprocess.preprocess(prefs, rdd))
       iter += 1
     }
   }

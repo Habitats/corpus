@@ -29,18 +29,16 @@ object Preprocess {
     expanded
   }
 
-  def preprocess(sc: SparkContext, prefs: Broadcast[Prefs], raw: RDD[Article]) = {
+  def preprocess(prefs: Broadcast[Prefs], raw: RDD[Article]) = {
     var rdd = raw
     Log.v(s"${current(rdd)} - Running preprocessing ...")
 
     // Filterings ...
-    if (prefs.value.wikiDataOnly) {
-      rdd = wikiDataFilter(rdd, prefs)
-    }
     if (prefs.value.wikiDataIncludeBroad) {
       rdd = wikiDataAnnotations(rdd, prefs)
     }
     rdd = phraseSkipFilter(rdd, prefs)
+    rdd = rdd.filter(_.iptc.nonEmpty).filter(_.ann.nonEmpty)
 
     // Computations ...
     rdd = computeTfIdf(rdd)

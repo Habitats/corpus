@@ -20,9 +20,9 @@ object SparkUtil {
   lazy val rdd: RDD[Article] = RddFetcher.rdd(sc)
 
   def trainNaiveBayes() = {
-    val prefs = Prefs(termFrequencyThreshold = 5, wikiDataIncludeBroad = false, wikiDataOnly = false)
-    val rdd = Preprocess.computeTfIdf(RddFetcher.rdd(sc).filter(_.ann.nonEmpty).filter(_.iptc.nonEmpty))
-    ML.multiLabelClassification(sc.broadcast[Prefs](prefs), rdd)
+    val prefs = sc.broadcast[Prefs](Prefs(termFrequencyThreshold = 5, wikiDataIncludeBroad = false, wikiDataOnly = false))
+    val rdd = Preprocess.preprocess(prefs, RddFetcher.rdd(sc))
+    ML.multiLabelClassification(prefs, rdd)
   }
 
   def main(args: Array[String]) = {
@@ -39,7 +39,7 @@ object SparkUtil {
       case "test" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "count" => Log.r(s"Counting job: ${rdd.count} articles ...")
-      case "preprocess" => Preprocess.preprocess(sc, sc.broadcast(Prefs()), rdd)
+      case "preprocess" => Preprocess.preprocess(sc.broadcast(Prefs()), rdd)
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()

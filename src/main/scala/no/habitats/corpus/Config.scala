@@ -3,6 +3,8 @@ package no.habitats.corpus
 import java.io.FileNotFoundException
 import java.util.Properties
 
+import breeze.linalg.split
+
 import scala.collection.JavaConverters._
 import scala.io.{BufferedSource, Codec, Source}
 import scala.util.{Failure, Success, Try}
@@ -62,15 +64,15 @@ object Config {
   }
 
   // static
-  lazy val testPath: String = conf.getProperty("test_path").replace("~", System.getProperty("user.home"))
-  lazy val dataPath: String = conf.getProperty("data_path").replace("~", System.getProperty("user.home"))
-  lazy val cachePath: String = conf.getProperty("cache_path").replace("~", System.getProperty("user.home"))
-  lazy val dbpedia: String = conf.getProperty("dbpedia")
-  lazy val broadMatch: Boolean = conf.getProperty("broad_match").toBoolean
-  lazy val wikiDataOnly: Boolean = conf.getProperty("wikidata_only").toBoolean
-  lazy val wikiDataIncludeBroad: Boolean = conf.getProperty("wikidata_include_broad").toBoolean
-  lazy val phraseSkipThreshold: Int = conf.getProperty("term_frequency_threshold").toInt
-  lazy val iptcFilter: Set[String] = conf.getProperty("iptc_filter").split(",").toSet
+  val testPath: String = conf.getProperty("test_path").replace("~", System.getProperty("user.home"))
+  val dataPath: String = conf.getProperty("data_path").replace("~", System.getProperty("user.home"))
+  val cachePath: String = conf.getProperty("cache_path").replace("~", System.getProperty("user.home"))
+  val dbpedia: String = conf.getProperty("dbpedia")
+  val broadMatch: Boolean = conf.getProperty("broad_match").toBoolean
+  val wikiDataOnly: Boolean = conf.getProperty("wikidata_only").toBoolean
+  val wikiDataIncludeBroad: Boolean = conf.getProperty("wikidata_include_broad").toBoolean
+  val phraseSkipThreshold: Int = conf.getProperty("term_frequency_threshold").toInt
+  val iptcFilter: Set[String] = Some(conf.getProperty("iptc_filter")).map(e => if (e.length > 0) e.split(",").toSet else Set[String]()).get
 
   // Dynamic variables for file caching
   // TODO: this shouldn't be here. really.
