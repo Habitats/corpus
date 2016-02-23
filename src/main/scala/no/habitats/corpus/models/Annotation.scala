@@ -20,10 +20,10 @@ case class Annotation(articleId: String,
                      ) {
 
   lazy val id: String = {
-    if (fb == NONE && wd == NONE) phrase
-    else if (fb != NONE) fb
-    else if (WikiData.wdToFb.contains(wd)) WikiData.wdToFb(wd)
-    else wd
+    if (fb != NONE) fb
+    else if (wd != NONE) wd
+    else if (db != NONE) db
+    else phrase
   }
 
   // Create annotation from WikiDAta ID
