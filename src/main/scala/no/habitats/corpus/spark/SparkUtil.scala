@@ -1,6 +1,7 @@
 package no.habitats.corpus.spark
 
 import no.habitats.corpus._
+import no.habitats.corpus.dl4j.FreebaseW2V
 import no.habitats.corpus.models.Article
 import no.habitats.corpus.npl.{Spotlight, WikiData}
 import no.habitats.corpus.spark.CorpusContext._
@@ -40,6 +41,7 @@ object SparkUtil {
       case "printArticles" => printArticles(Config.count)
       case "count" => Log.r(s"Counting job: ${rdd.count} articles ...")
       case "preprocess" => Preprocess.preprocess(sc.broadcast(Prefs()), rdd)
+      case "fbw2vLoad" => FreebaseW2V.loadVectors()
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
@@ -48,12 +50,15 @@ object SparkUtil {
       case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
       case "combineIds" => Spotlight.combineAndCacheIds()
       case "fullCache" => annotateAndCacheEverything()
+      case "fbw2v" => FreebaseW2V.cacheWordVectors()
 
       // Display stats
       case "iptcDistribution" => calculateIPTCDistribution()
 
       // Modelling
       case "trainNaiveBayes" => trainNaiveBayes()
+      case "trainRNN" => FreebaseW2V.trainRNN()
+      case "trainSparkRNN" => FreebaseW2V.trainSparkRNN()
 
       case _ => Log.r("No job ... Exiting!")
     }

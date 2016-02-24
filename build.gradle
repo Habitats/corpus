@@ -14,6 +14,7 @@ mainClassName = 'no.habitats.corpus.spark.SparkUtil'
 
 repositories {
     mavenCentral()
+    maven {url "https://oss.sonatype.org/content/repositories/snapshots"}
     flatDir(dirs: 'models')
 }
 

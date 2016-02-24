@@ -3,7 +3,6 @@ package no.habitats.corpus.dl4j
 import java.io.File
 
 import no.habitats.corpus.Config
-import org.canova.api.util.ClassPathResource
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors
 import org.deeplearning4j.models.word2vec.Word2Vec
@@ -13,6 +12,7 @@ import org.deeplearning4j.text.tokenization.tokenizer.TokenPreProcess
 import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.EndingPreProcessor
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory
 import org.slf4j.LoggerFactory
+
 
 import scala.collection.JavaConverters._
 
@@ -89,6 +89,4 @@ object W2V  {
     val wordVector = wordVectors.getWordVectorMatrix("myword")
     val wordVector2 = wordVectors.getWordVector("myword")
   }
-
-
 }

@@ -4,12 +4,15 @@ import java.io.File
 
 import no.habitats.corpus._
 import no.habitats.corpus.models.{Article, DBPediaAnnotation}
+import no.habitats.corpus.spark.CorpusContext._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkContext, SparkException}
 
 object RddFetcher {
 
   var size: Double = 1855658L
+
+  def rdd: RDD[Article] = rdd(sc)
 
   def rdd(sc: SparkContext): RDD[Article] = {
     var rdd = Config.rdd match {
