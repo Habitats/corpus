@@ -2,8 +2,6 @@ package no.habitats.corpus.dl4j
 
 import java.util
 
-import no.habitats.corpus.models.Article
-import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
@@ -12,15 +10,27 @@ import org.nd4j.linalg.factory.Nd4j
 import scala.collection.JavaConverters._
 import scala.util.Random
 
-class MockIterator(rdd: RDD[Article]) extends DataSetIterator {
+object Main extends App {
+  println("This runs fine ...")
+  val data: List[DataSet] = new MockIterator(1L).asScala.toList
+  DataSet.merge(data.asJava)
+
+  println("\nThis will crash ...")
+  val data2: List[DataSet] = new MockIterator(2L).asScala.toList
+  DataSet.merge(data2.asJava)
+}
+
+class MockIterator(seed: Long) extends DataSetIterator {
   val batchSize = 50
   var counter = 0
   val dataSetSize = 698
   val featureSize = 1000
-  val labelSize = 18
+  val labelSize = 3
+  val r = new Random(seed)
 
   override def next(num: Int): DataSet = {
-    val maxNumberOfFeatures = Random.nextInt(100) + 1
+    val maxNumberOfFeatures = r.nextInt(100) + 1
+    print(maxNumberOfFeatures + " ")
 
     // [miniBatchSize, inputSize, timeSeriesLength]
     val features = Nd4j.create(num, featureSize, maxNumberOfFeatures)
@@ -32,7 +42,7 @@ class MockIterator(rdd: RDD[Article]) extends DataSetIterator {
     counter += num
     new DataSet(features, labels, featureMask, labelsMask)
   }
-  override def batch(): Int = Math.min(batchSize, dataSetSize - counter)
+  override def batch(): Int = Math.min(batchSize, Math.abs(dataSetSize - counter))
   override def cursor(): Int = counter
   override def totalExamples(): Int = dataSetSize
   override def inputColumns(): Int = featureSize

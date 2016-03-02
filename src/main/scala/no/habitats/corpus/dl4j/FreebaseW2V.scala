@@ -85,8 +85,8 @@ object FreebaseW2V {
   }
 
   def minimal() = {
-//    val trainIter: List[DataSet] = new MultiLabelIterator(train).asScala.toList
-    val trainIter: List[DataSet] = new MockIterator(train).asScala.toList
+    val trainIter: List[DataSet] = new MultiLabelIterator(train).asScala.toList
+//    val trainIter: List[DataSet] = new MockIterator(1L).asScala.toList
     DataSet.merge(trainIter.asJava)
   }
 
@@ -147,7 +147,7 @@ object FreebaseW2V {
       .learningRate(0.0018)
       .list(2)
       .layer(0, new GravesLSTM.Builder().nIn(vectorSize).nOut(200).activation("softsign").build())
-      .layer(1, new RnnOutputLayer.Builder().activation("softmax").lossFunction(LossFunctions.LossFunction.MCXENT).nIn(200).nOut(18).build())
+      .layer(1, new RnnOutputLayer.Builder().activation("softmax").lossFunction(LossFunctions.LossFunction.MCXENT).nIn(200).nOut(17).build())
       .pretrain(false).backprop(true).build()
     val net = new MultiLayerNetwork(conf)
     net.init()

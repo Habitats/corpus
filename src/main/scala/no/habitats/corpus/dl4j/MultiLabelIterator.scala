@@ -15,17 +15,16 @@ import scala.collection.JavaConverters._
 import MultiLabelIterator._
 
 class MultiLabelIterator(rdd: RDD[Article]) extends DataSetIterator {
-  val batchSize = 1
+  val batchSize = 50
   var counter = 0
   lazy val allArticles = rdd
     .filter(_.iptc.nonEmpty).collect
     .map(a => a.copy(ann = a.ann.filter(an => vectors.contains(an._2.fb))))
     .filter(_.ann.nonEmpty)
+  lazy val maxNumberOfFeatures = allArticles.map(_.ann.size).max
 
   override def next(num: Int): DataSet = {
     val articles = allArticles.slice(cursor, cursor + num)
-
-    val maxNumberOfFeatures = articles.map(_.ann.size).max
 
     // [miniBatchSize, inputSize, timeSeriesLength]
     val features = Nd4j.create(articles.size, featureSize, maxNumberOfFeatures)
@@ -56,7 +55,7 @@ class MultiLabelIterator(rdd: RDD[Article]) extends DataSetIterator {
     counter += articles.size
     new DataSet(features, labels, featureMask, labelsMask)
   }
-  override def batch(): Int = Math.min(batchSize, allArticles.size - counter)
+  override def batch(): Int = Math.min(batchSize, Math.max(allArticles.size - counter, 0))
   override def cursor(): Int = counter
   override def totalExamples(): Int = allArticles.size
   override def inputColumns(): Int = featureSize
