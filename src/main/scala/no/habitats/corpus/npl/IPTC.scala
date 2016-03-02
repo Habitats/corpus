@@ -8,6 +8,7 @@ import scala.collection.JavaConverters._
 import scala.io.Source
 
 object IPTC {
+
   // Helper methods for IPTC/RDF
   lazy val rdfModel: Model = {
     val model = ModelFactory.createDefaultModel()
@@ -36,7 +37,10 @@ object IPTC {
 
   // [ID, MediaTopic] pairs, containing only top level media topics
   private def topLevelMediaTopics(level: Int): Map[String, String] = {
-    rdfModel.listSubjects.asScala.filter(_.hasProperty(SKOS.prefLabel)).map(c => {
+    rdfModel.listSubjects.asScala
+      .filter(_.hasProperty(SKOS.prefLabel))
+      .filter(_.getProperty(SKOS.prefLabel).getLiteral.toString != "Freemasonry") // bug in the IPTC RDF
+      .map(c => {
       val top = toToplevelResource(level, c)
       (name(c), name(top))
     }).toMap
@@ -74,6 +78,7 @@ object IPTC {
   lazy val levels: Map[Int, Map[String, String]] = {
     (0 to 5).map(level => (level, topLevelMediaTopics(level))).toMap
   }
+  lazy val topCategories = IPTC.levels(0).values.toSet.toSeq.sorted
 
   def toBroad(desc: Set[String], level: Int): Set[String] = toIptc(desc).map(levels(level))
 }

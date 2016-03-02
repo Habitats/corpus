@@ -2,12 +2,16 @@ package no.habitats.corpus.dl4j
 
 import java.io.File
 
+import no.habitats.corpus.models.Article
 import no.habitats.corpus.spark.CorpusContext._
+import no.habitats.corpus.spark.RddFetcher
 import no.habitats.corpus.{Config, Log}
 import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.AsyncDataSetIterator
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
+import org.deeplearning4j.models.embeddings.wordvectors.WordVectors
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.layers.{GravesLSTM, RnnOutputLayer}
 import org.deeplearning4j.nn.conf.{GradientNormalization, NeuralNetConfiguration, Updater}
@@ -25,7 +29,11 @@ import scala.collection.JavaConverters._
 object FreebaseW2V {
 
   lazy val gModel = new File(Config.dataPath + "w2v/freebase-vectors-skipgram1000.bin")
-  lazy val gVec = WordVectorSerializer.loadGoogleModel(gModel, true)
+  lazy val gVec: WordVectors = WordVectorSerializer.loadGoogleModel(gModel, true)
+
+  lazy val split: Array[RDD[Article]] = RddFetcher.rdd.randomSplit(Array(0.8, 0.2), seed = 1L)
+  lazy val train: RDD[Article] = split(0)
+  lazy val test: RDD[Article] = split(1)
 
   def cacheWordVectors() = {
     sc.textFile(Config.dataPath + "nyt/combined_ids_0.5.txt")
@@ -42,26 +50,27 @@ object FreebaseW2V {
       .filter(arr => filter.isEmpty || filter.contains(arr(0)))
       .map(arr => (arr(0), arr.toSeq.slice(1, arr.length).map(_.toFloat).toArray))
       .map(arr => (arr._1, Nd4j.create(arr._2)))
-      .collect()
+      .collect() // this takes a long time
       .toMap
   }
 
   def trainSparkRNN() = {
-    val batchSize = 50
     val nEpochs = 5
-    var net = rnnNetwork()
+    var net = multiLabelRNN()
+    net.setUpdater(null)
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
-    val train: List[DataSet] = new CorpusIterator(true, batchSize).asScala.toList
-    val test: List[DataSet] = new CorpusIterator(false, batchSize).asScala.toList
-    val rddTrain: JavaRDD[DataSet] = sc.parallelize(train)
+    val trainIter: List[DataSet] = new MultiLabelIterator(train).asScala.toList
+    val testIter: List[DataSet] = new MultiLabelIterator(test).asScala.toList
+    val rddTrain: JavaRDD[DataSet] = sc.parallelize(trainIter)
+
 
     Log.v("Starting training ...")
     for (i <- 0 until nEpochs) {
       net = sparkNetwork.fitDataSet(rddTrain)
       Log.v(f"Epoch $i complete. Starting evaluation:")
       val eval = new Evaluation()
-      for (ds <- test) {
+      for (ds <- testIter) {
         ds.asScala.toList.foreach(t => {
           val features = t.getFeatureMatrix
           val labels = t.getLabels
@@ -75,21 +84,24 @@ object FreebaseW2V {
     }
   }
 
+  def minimal() = {
+//    val trainIter: List[DataSet] = new MultiLabelIterator(train).asScala.toList
+    val trainIter: List[DataSet] = new MockIterator(train).asScala.toList
+    DataSet.merge(trainIter.asJava)
+  }
+
   def trainRNN() = {
-    val batchSize = 50
     val nEpochs = 5
-    val net = rnnNetwork()
+    val net = multiLabelRNN()
 
-    val train = new AsyncDataSetIterator(new CorpusIterator(true, batchSize))
-    val test = new AsyncDataSetIterator(new CorpusIterator(false, batchSize))
-
-    Log.v("Starting training ...")
+    val trainIter = new AsyncDataSetIterator(new MultiLabelIterator(train))
+    val testIter = new AsyncDataSetIterator(new MultiLabelIterator(test))
+    Log.r("Starting training ...")
     for (i <- 0 until nEpochs) {
-      net.fit(train)
-      train.reset()
-      Log.v(f"Epoch $i complete. Starting evaluation:")
+      net.fit(trainIter)
+      trainIter.reset()
       val eval = new Evaluation()
-      test.asScala.toList.foreach(t => {
+      testIter.asScala.toList.foreach(t => {
         val features = t.getFeatureMatrix
         val labels = t.getLabels
         val inMask = t.getFeaturesMaskArray
@@ -97,12 +109,34 @@ object FreebaseW2V {
         val predicted = net.output(features, false, inMask, outMask)
         eval.evalTimeSeries(labels, predicted, outMask)
       })
-      test.reset()
-      Log.v(eval.stats)
+      Log.r(prettyConfusion(eval))
+      testIter.reset()
+      val stats = Seq[(String, String)](
+        "Epoch" -> f"$i%10d",
+        "TP" -> f"${eval.truePositives.toInt}%5d",
+        "FP" -> f"${eval.falsePositives.toInt}%5d",
+        "FN" -> f"${eval.falseNegatives.toInt}%5d",
+        "TN" -> f"${eval.trueNegatives.toInt}%5d",
+        "Recall" -> f"${eval.recall}%.3f",
+        "Precision" -> f"${eval.precision}%.3f",
+        "Accuracy" -> f"${eval.accuracy}%.3f",
+        "F-score" -> f"${eval.f1}%.3f"
+      )
+      if (i == 0) {
+        Log.r(stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString(""))
+      }
+      Log.r(stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString(""))
+      Log.r(eval.stats)
     }
   }
 
-  def rnnNetwork(): MultiLayerNetwork = {
+  def prettyConfusion(eval: Evaluation[Nothing]): String = {
+    eval.getConfusionMatrix.toCSV.split("\n")
+      .map(_.split(",").zipWithIndex.map { case (k, v) => if (v == 0) f"$k%12s" else f"$k%6s" }.mkString(""))
+      .mkString("\n", "\n", "")
+  }
+
+  def multiLabelRNN(): MultiLayerNetwork = {
     val vectorSize = 1000
     val conf = new NeuralNetConfiguration.Builder()
       .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
@@ -113,11 +147,10 @@ object FreebaseW2V {
       .learningRate(0.0018)
       .list(2)
       .layer(0, new GravesLSTM.Builder().nIn(vectorSize).nOut(200).activation("softsign").build())
-      .layer(1, new RnnOutputLayer.Builder().activation("softmax").lossFunction(LossFunctions.LossFunction.MCXENT).nIn(200).nOut(2).build())
+      .layer(1, new RnnOutputLayer.Builder().activation("softmax").lossFunction(LossFunctions.LossFunction.MCXENT).nIn(200).nOut(18).build())
       .pretrain(false).backprop(true).build()
     val net = new MultiLayerNetwork(conf)
     net.init()
-    net.setUpdater(null)
     net.setListeners(new ScoreIterationListener(1))
     net
   }

@@ -12,9 +12,7 @@ object RddFetcher {
 
   var size: Double = 1855658L
 
-  def rdd: RDD[Article] = rdd(sc)
-
-  def rdd(sc: SparkContext): RDD[Article] = {
+  lazy val rdd: RDD[Article] = {
     var rdd = Config.rdd match {
       case "cache" => cachedRdd(sc)
       case "local" => localRdd(sc)

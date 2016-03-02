@@ -18,11 +18,11 @@ object SparkUtil {
     Log.v(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
   }
 
-  lazy val rdd: RDD[Article] = RddFetcher.rdd(sc)
+  lazy val rdd: RDD[Article] = RddFetcher.rdd
 
   def trainNaiveBayes() = {
     val prefs = sc.broadcast[Prefs](Prefs(termFrequencyThreshold = 5, wikiDataIncludeBroad = false, wikiDataOnly = false))
-    val rdd = Preprocess.preprocess(prefs, RddFetcher.rdd(sc))
+    val rdd = Preprocess.preprocess(prefs, RddFetcher.rdd)
     ML.multiLabelClassification(prefs, rdd)
   }
 
@@ -57,13 +57,14 @@ object SparkUtil {
 
       // Modelling
       case "trainNaiveBayes" => trainNaiveBayes()
-      case "trainRNN" => FreebaseW2V.trainRNN()
+      case "trainRNN" => FreebaseW2V.trainRNN
       case "trainSparkRNN" => FreebaseW2V.trainSparkRNN()
+      case "trainSparkRNNM"=>FreebaseW2V.minimal()
 
       case _ => Log.r("No job ... Exiting!")
     }
     Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
-//    Thread.sleep(Long.MaxValue)
+    //    Thread.sleep(Long.MaxValue)
     //    sc.stop
   }
 
@@ -97,7 +98,7 @@ object SparkUtil {
 
   /** Fetch json RDD and compute IPTC and annotations */
   def annotateAndCacheEverything() = {
-    RddFetcher.rdd(sc)
+    RddFetcher.rdd
       .map(Corpus.toIPTC)
       .map(Corpus.toDBPediaAnnotated)
       .map(JsonSingle.toSingleJson)
@@ -106,8 +107,8 @@ object SparkUtil {
   }
 
   def computeAndCacheDBPediaAnnotationsToJson() = {
-    Spotlight.cacheDbpedia(RddFetcher.rdd(sc), 0.5)
-    Spotlight.cacheDbpedia(RddFetcher.rdd(sc), 0.75)
+    Spotlight.cacheDbpedia(RddFetcher.rdd, 0.5)
+    Spotlight.cacheDbpedia(RddFetcher.rdd, 0.75)
   }
 
   def printArticles(count: Int) = {
@@ -121,7 +122,7 @@ object SparkUtil {
   }
 
   def calculateIPTCDistribution() = {
-    val rdd = RddFetcher.rdd(sc)
+    val rdd = RddFetcher.rdd
       .flatMap(_.iptc.toSeq)
       .map(c => (c, 1))
       .reduceByKey(_ + _)

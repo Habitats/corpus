@@ -10220,20 +10220,6 @@
 			</rdf:Description>
 		</skos:broader><!--Narrower Relationships--><!--SKOS Mapping Relationships--><skos:exactMatch rdf:resource="http://cv.iptc.org/newscodes/subjectcode/12001000"/>
 	</rdf:Description>
-	<rdf:Description rdf:about="http://cv.iptc.org/newscodes/mediatopic/20000675">
-		<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
-		<skos:prefLabel xml:lang="en-GB">Freemasonry</skos:prefLabel>
-		<skos:definition xml:lang="en-GB">A secret international society based on the principles of brotherhood, charity and mutual aid </skos:definition>
-		<skos:inScheme rdf:resource="http://cv.iptc.org/newscodes/mediatopic/"/><!--Broader Relationships--><skos:broader>
-			<rdf:Description rdf:about="http://cv.iptc.org/newscodes/mediatopic/20000675">
-				<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
-			</rdf:Description>
-		</skos:broader><!--Narrower Relationships--><skos:narrower>
-			<rdf:Description rdf:about="http://cv.iptc.org/newscodes/mediatopic/20000675">
-				<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
-			</rdf:Description>
-		</skos:narrower><!--SKOS Mapping Relationships--><skos:exactMatch rdf:resource="http://cv.iptc.org/newscodes/subjectcode/12003000"/>
-	</rdf:Description>
 	<rdf:Description rdf:about="http://cv.iptc.org/newscodes/mediatopic/20000676">
 		<rdf:type rdf:resource="http://www.w3.org/2004/02/skos/core#Concept"/>
 		<skos:prefLabel xml:lang="en-GB">Hinduism</skos:prefLabel>
