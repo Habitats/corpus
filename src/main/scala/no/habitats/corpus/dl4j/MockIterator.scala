@@ -2,9 +2,7 @@ package no.habitats.corpus.dl4j
 
 import java.util
 
-import no.habitats.corpus.dl4j.MockIterator._
 import no.habitats.corpus.models.Article
-import no.habitats.corpus.npl.IPTC
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.nd4j.linalg.dataset.DataSet
@@ -21,15 +19,8 @@ class MockIterator(rdd: RDD[Article]) extends DataSetIterator {
   val featureSize = 1000
   val labelSize = 18
 
-//  lazy val allArticles = rdd
-//    .filter(_.iptc.nonEmpty).collect
-//    .map(a => a.copy(ann = a.ann.filter(an => vectors.contains(an._2.fb))))
-//    .filter(_.ann.nonEmpty)
-
   override def next(num: Int): DataSet = {
-    //    val articles = allArticles.slice(cursor, cursor + batch)
     val maxNumberOfFeatures = Random.nextInt(100) + 1
-//    val articles = allArticles.slice(cursor, cursor + num)
 
     // [miniBatchSize, inputSize, timeSeriesLength]
     val features = Nd4j.create(num, featureSize, maxNumberOfFeatures)
@@ -46,17 +37,10 @@ class MockIterator(rdd: RDD[Article]) extends DataSetIterator {
   override def totalExamples(): Int = dataSetSize
   override def inputColumns(): Int = featureSize
   override def setPreProcessor(preProcessor: DataSetPreProcessor): Unit = throw new UnsupportedOperationException
-  override def getLabels: util.List[String] = labels
+  override def getLabels: util.List[String] = Seq("a", "b", "c").asJava
   override def totalOutcomes(): Int = getLabels.size
   override def reset(): Unit = counter = 0
   override def numExamples(): Int = totalExamples()
   override def next(): DataSet = next(batch)
   override def hasNext: Boolean = cursor() < totalExamples()
-}
-
-object MockIterator {
-  lazy val vectors = FreebaseW2V.loadVectors()
-  lazy val labels = IPTC.topCategories.toList.asJava
-  lazy val features = vectors.keySet
-  lazy val featureSize = vectors.values.head.length()
 }
