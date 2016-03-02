@@ -61,7 +61,7 @@ object FreebaseW2V {
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
     val trainIter: List[DataSet] = new MultiLabelIterator(train).asScala.toList
-    val testIter: List[DataSet] = new MultiLabelIterator(test).asScala.toList
+    val testIter = new AsyncDataSetIterator(new MultiLabelIterator(test))
     val rddTrain: JavaRDD[DataSet] = sc.parallelize(trainIter)
 
 
@@ -70,23 +70,23 @@ object FreebaseW2V {
       net = sparkNetwork.fitDataSet(rddTrain)
       Log.v(f"Epoch $i complete. Starting evaluation:")
       val eval = new Evaluation()
-      for (ds <- testIter) {
-        ds.asScala.toList.foreach(t => {
-          val features = t.getFeatureMatrix
-          val labels = t.getLabels
-          val inMask = t.getFeaturesMaskArray
-          val outMask = t.getLabelsMaskArray
-          val predicted = net.output(features, false, inMask, outMask)
-          eval.evalTimeSeries(labels, predicted, outMask)
-        })
-      }
+      testIter.asScala.foreach(t => {
+        val features = t.getFeatureMatrix
+        val labels = t.getLabels
+        val inMask = t.getFeaturesMaskArray
+        val outMask = t.getLabelsMaskArray
+        val predicted = net.output(features, false, inMask, outMask)
+        eval.evalTimeSeries(labels, predicted, outMask)
+      })
+
       Log.v(eval.stats)
+      testIter.reset()
     }
   }
 
   def minimal() = {
     val trainIter: List[DataSet] = new MultiLabelIterator(train).asScala.toList
-//    val trainIter: List[DataSet] = new MockIterator(1L).asScala.toList
+    //    val trainIter: List[DataSet] = new MockIterator(1L).asScala.toList
     DataSet.merge(trainIter.asJava)
   }
 

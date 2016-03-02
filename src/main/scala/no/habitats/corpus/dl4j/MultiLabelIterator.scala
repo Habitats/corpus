@@ -46,10 +46,10 @@ class MultiLabelIterator(rdd: RDD[Article]) extends DataSetIterator {
       }
       getLabels.asScala.map(articles(i).iptc.contains).zipWithIndex.filter(_._1).map {
         case (k, v) =>
-          labels.putScalar(Array(i, v, tokens.size - 1), 1)
+          labels.putScalar(Array(i, v, tokens.size - 1), 1.0)
       }
       // Specify that an output exists at the final time step for this example
-      labelsMask.putScalar(Array(i, tokens.size - 1), 1)
+      labelsMask.putScalar(Array(i, tokens.size - 1), 1.0)
     }
 
     counter += articles.size
