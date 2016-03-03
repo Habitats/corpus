@@ -1,13 +1,10 @@
 package no.habitats.corpus.npl
 
-import java.io.{File, FileOutputStream, PrintWriter}
+import java.io.{File, PrintWriter}
 
-import breeze.linalg.shuffle
 import no.habitats.corpus.models.Annotation
-import no.habitats.corpus.spark.CorpusContext
 import no.habitats.corpus.spark.CorpusContext._
 import no.habitats.corpus.{Config, Log}
-import org.apache.spark.SparkContext
 import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._

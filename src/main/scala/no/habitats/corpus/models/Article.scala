@@ -3,7 +3,6 @@ package no.habitats.corpus.models
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.nytlabs.corpus.NYTCorpusDocument
-import dispatch.url
 import no.habitats.corpus.npl.IPTC
 import no.habitats.corpus.npl.extractors.OpenNLP
 import org.apache.spark.mllib.linalg.{Vector, Vectors}

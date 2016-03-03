@@ -1,4 +1,4 @@
-package no.habitats.corpus.dl4j
+package no.habitats.corpus.dl4j.ex
 
 import java.io.File
 
@@ -13,15 +13,14 @@ import org.deeplearning4j.text.tokenization.tokenizer.preprocessor.EndingPreProc
 import org.deeplearning4j.text.tokenization.tokenizerfactory.DefaultTokenizerFactory
 import org.slf4j.LoggerFactory
 
-
 import scala.collection.JavaConverters._
 
-object W2V  {
+object W2V {
   val log = LoggerFactory.getLogger(W2V.getClass)
 
   def main(args: Array[String]) = {
     log.info("Loading data ...")
-    val iter = new LineSentenceIterator(new File(Config.dataPath +"w2v/raw_sentences.txt"))
+    val iter = new LineSentenceIterator(new File(Config.dataPath + "w2v/raw_sentences.txt"))
     iter.setPreProcessor(new SentencePreProcessor {
       override def preProcess(sentence: String): String = sentence.toLowerCase
     })

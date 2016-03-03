@@ -57,9 +57,8 @@ object SparkUtil {
 
       // Modelling
       case "trainNaiveBayes" => trainNaiveBayes()
-      case "trainRNN" => FreebaseW2V.trainRNN
-      case "trainSparkRNN" => FreebaseW2V.trainSparkRNN()
-      case "trainSparkRNNM"=>FreebaseW2V.minimal()
+      case "trainRNN" => FreebaseW2V.trainMultiLabelRNN
+      case "trainSparkRNN" => FreebaseW2V.trainSparkMultiLabelRNN()
 
       case _ => Log.r("No job ... Exiting!")
     }

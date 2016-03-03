@@ -3,8 +3,6 @@ package no.habitats.corpus
 import java.io.FileNotFoundException
 import java.util.Properties
 
-import breeze.linalg.split
-
 import scala.collection.JavaConverters._
 import scala.io.{BufferedSource, Codec, Source}
 import scala.util.{Failure, Success, Try}

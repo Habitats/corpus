@@ -1,4 +1,4 @@
-package no.habitats.corpus.dl4j
+package no.habitats.corpus.dl4j.ex
 
 import java.io.File
 import java.net.URL

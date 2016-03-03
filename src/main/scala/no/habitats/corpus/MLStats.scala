@@ -2,13 +2,12 @@ package no.habitats.corpus
 
 import no.habitats.corpus.models.Article
 import org.apache.spark.broadcast.Broadcast
-import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.rdd.RDD
 
 /**
   * Created by mail on 01.03.2016.
   */
-case class MLStats(predicted: RDD[Article], numTraining: Int, cats: Set[String],  phrases: Seq[String], prefs: Broadcast[Prefs]) {
+case class MLStats(predicted: RDD[Article], numTraining: Int, cats: Set[String], phrases: Seq[String], prefs: Broadcast[Prefs]) {
   predicted.cache()
   lazy val totalCats = predicted.map(_.iptc.size).sum
   lazy val totalPredictions = predicted.map(_.pred.size).sum

@@ -51,7 +51,10 @@ object Corpus {
   def toDBPediaAnnotated(a: Article): Article = {
     dbpediaAnnotations.get(a.id) match {
       case Some(ann) => a.copy(ann = a.ann ++ ann.map(a => (a.id, a)).toMap)
-      case None => /**Log.v("NO DBPEDIA: " + article.id);*/ a
+      case None =>
+
+        /** Log.v("NO DBPEDIA: " + article.id); */
+        a
     }
   }
 }

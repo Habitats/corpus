@@ -1,7 +1,9 @@
-package no.habitats.corpus.dl4j
+package no.habitats.corpus.dl4j.multi
 
 import java.util
 
+import no.habitats.corpus.dl4j.FreebaseW2V
+import no.habitats.corpus.dl4j.multi.MultiLabelIterator._
 import no.habitats.corpus.models.{Annotation, Article}
 import no.habitats.corpus.npl.IPTC
 import org.apache.spark.rdd.RDD
@@ -12,7 +14,6 @@ import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.indexing.NDArrayIndex
 
 import scala.collection.JavaConverters._
-import MultiLabelIterator._
 
 class MultiLabelIterator(rdd: RDD[Article]) extends DataSetIterator {
   val batchSize = 50
@@ -21,10 +22,10 @@ class MultiLabelIterator(rdd: RDD[Article]) extends DataSetIterator {
     .filter(_.iptc.nonEmpty).collect
     .map(a => a.copy(ann = a.ann.filter(an => vectors.contains(an._2.fb))))
     .filter(_.ann.nonEmpty)
-  lazy val maxNumberOfFeatures = allArticles.map(_.ann.size).max
 
   override def next(num: Int): DataSet = {
     val articles = allArticles.slice(cursor, cursor + num)
+    val maxNumberOfFeatures = allArticles.map(_.ann.size).max
 
     // [miniBatchSize, inputSize, timeSeriesLength]
     val features = Nd4j.create(articles.size, featureSize, maxNumberOfFeatures)
