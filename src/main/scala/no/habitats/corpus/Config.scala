@@ -23,6 +23,7 @@ object Config {
       rdd = props.get("rdd"),
       job = props.get("job"),
       iptcFilter = props.get("iptcFilter").map(_.split(",").toSet),
+      category= props.get("category"),
       count = props.get("count").map(_.toInt)
     )
 
@@ -87,6 +88,7 @@ object Config {
   }
   def job = args.job.getOrElse(conf.getProperty("job"))
   def local = args.local.getOrElse(true)
+  def category = args.category.getOrElse(throw new IllegalArgumentException("NO CATEGORY DEFINED"))
 
   case class Arguments(
                         local: Option[Boolean] = None,
@@ -94,6 +96,7 @@ object Config {
                         rdd: Option[String] = None,
                         job: Option[String] = None,
                         count: Option[Int] = None,
+                        category: Option[String] = None,
                         iptcFilter: Option[Set[String]] = None
                       )
 }

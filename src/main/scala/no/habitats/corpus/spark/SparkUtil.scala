@@ -59,6 +59,7 @@ object SparkUtil {
       case "trainNaiveBayes" => trainNaiveBayes()
       case "trainRNNML" => FreebaseW2V.trainMultiLabelRNN()
       case "trainRNN" => IPTC.topCategories.foreach(c => FreebaseW2V.trainMultiLabelRNN(Some(c)))
+      case "trainRNNSingle" => FreebaseW2V.trainMultiLabelRNN(Some(Config.category))
       case "trainSparkRNN" => FreebaseW2V.trainSparkMultiLabelRNN()
 
       case _ => Log.r("No job ... Exiting!")

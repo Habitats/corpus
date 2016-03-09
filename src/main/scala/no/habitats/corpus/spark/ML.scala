@@ -32,7 +32,8 @@ object ML {
     val cats = if (Config.iptcFilter.nonEmpty) Config.iptcFilter else training.flatMap(_._1).collect.toSet
     cats.map(c => {
       Log.v(s"Training ... $c ...")
-      val labeledTraining = training .map(a => (if (a._0.contains(c)) 1 else 0, a._2))
+      val labeledTraining = training
+        .map(a => (if (a._1.contains(c)) 1 else 0, a._2))
         .map(a => LabeledPoint(a._1, a._2))
       val model = NaiveBayes.train(input = labeledTraining, lambda = 1.0, modelType = "multinomial")
       (c, model)
@@ -45,7 +46,7 @@ object ML {
       t._1.copy(pred = p)
     })
   }
-  
+
   def evaluate(rdd: RDD[Article], predicted: RDD[Article], training: RDD[(Set[String], Vector)], phrases: Seq[String], prefs: Broadcast[Prefs]) = {
     val sampleResult = predicted.map(_.toResult).reduce(_ + "\n" + _)
     Log.toFile(sampleResult, s"stats/sample_result_${Config.count}.txt")

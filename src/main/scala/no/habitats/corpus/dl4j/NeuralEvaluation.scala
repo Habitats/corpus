@@ -23,10 +23,10 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
 
   private lazy val fullStats = Seq[(String, String)](
     "Epoch" -> f"$epoch%5d",
-//    "TP" -> f"${eval.truePositives}%5d",
-//    "FP" -> f"${eval.falsePositives}%5d",
-//    "FN" -> f"${eval.falseNegatives}%5d",
-//    "TN" -> f"${eval.trueNegatives}%5d",
+    "TP" -> f"${eval.truePositives.get(1)}%5d",
+    "FP" -> f"${eval.falsePositives.get(1)}%5d",
+    "FN" -> f"${eval.falseNegatives.get(1)}%5d",
+    "TN" -> f"${eval.trueNegatives.get(1)}%5d",
     "Recall" -> f"${eval.recall}%.3f",
     "Precision" -> f"${eval.precision}%.3f",
     "Accuracy" -> f"${eval.accuracy}%.3f",
