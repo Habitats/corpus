@@ -2,7 +2,7 @@ package no.habitats.corpus.dl4j
 
 import java.io.File
 
-import no.habitats.corpus.dl4j.multi.{MultiLabelIterator, MultiLabelRNN}
+import no.habitats.corpus.dl4j.networks.{CorpusIterator, RNN}
 import no.habitats.corpus.models.Article
 import no.habitats.corpus.spark.CorpusContext._
 import no.habitats.corpus.spark.RddFetcher
@@ -12,6 +12,7 @@ import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.AsyncDataSetIterator
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet
@@ -38,22 +39,31 @@ object FreebaseW2V {
   }
 
   def loadVectors(filter: Set[String] = Set.empty): Map[String, INDArray] = {
-    sc.textFile(Config.dataPath + "nyt/fb_w2v_0.5.txt")
+    val vec = sc.textFile(Config.dataPath + "nyt/fb_w2v_0.5.txt")
       .map(_.split(", "))
       .filter(arr => filter.isEmpty || filter.contains(arr(0)))
       .map(arr => (arr(0), arr.toSeq.slice(1, arr.length).map(_.toFloat).toArray))
-      .map(arr => (arr._1, Nd4j.create(arr._2)))
+      .map(arr => {
+        val vector = Nd4j.create(arr._2)
+        val id = arr._1
+        (id, vector)
+      })
       .collect() // this takes a long time
       .toMap
+
+    vec
   }
 
-  def trainSparkMultiLabelRNN() = {
+  def trainSparkMultiLabelRNN(label: Option[String] = None): MultiLayerNetwork = {
     val nEpochs = 5
-    var net = MultiLabelRNN.create()
+    var net = label match {
+      case None => RNN.create()
+      case _ => RNN.createBinary()
+    }
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
-    val trainIter: List[DataSet] = new MultiLabelIterator(train).asScala.toList
-    val testIter = new AsyncDataSetIterator(new MultiLabelIterator(test))
+    val trainIter: List[DataSet] = new CorpusIterator(train, label).asScala.toList
+    val testIter = new AsyncDataSetIterator(new CorpusIterator(test, label))
     val rddTrain: JavaRDD[DataSet] = sc.parallelize(trainIter)
 
     Log.v("Starting training ...")
@@ -63,15 +73,21 @@ object FreebaseW2V {
       eval.log()
       testIter.reset()
     }
+
+    net
   }
 
-  def trainMultiLabelRNN() = {
-    val nEpochs = 100
-    val net = MultiLabelRNN.create()
+  def trainMultiLabelRNN(label: Option[String] = None): MultiLayerNetwork = {
+    val nEpochs = 5
+    val net = label match {
+      case None => RNN.create()
+      case _ => RNN.createBinary()
+    }
 
-    val trainIter = new AsyncDataSetIterator(new MultiLabelIterator(train))
-    val testIter = new AsyncDataSetIterator(new MultiLabelIterator(test))
-    Log.r("Starting training ...")
+    val trainIter = new AsyncDataSetIterator(new CorpusIterator(train, label))
+    val testIter = new AsyncDataSetIterator(new CorpusIterator(test, label))
+    Log.r(s"Training ${label.mkString(", ")} ...")
+    Log.r2(s"Training ${label.mkString(", ")} ...")
     for (i <- 0 until nEpochs) {
       net.fit(trainIter)
       trainIter.reset()
@@ -79,7 +95,7 @@ object FreebaseW2V {
       eval.log()
       testIter.reset()
     }
+
+    net
   }
 }
-
-

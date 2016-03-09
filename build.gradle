@@ -27,6 +27,9 @@ configurations {
         exclude group: 'org.mortbay.jetty'
         exclude group: 'org.slf4j', module: 'slf4j-log4j12'
         exclude group: 'log4j', module: 'log4j'
+//        exclude group: 'com.sun.jersey'
+//        exclude group: 'com.sun.jersey.jersey-test-framework'
+//        exclude group: 'com.sun.jersey.contribs'
     }
 //    runtime.exclude group: 'org.apache.spark'
 //    runtime.exclude group: 'org.apache.hbase'
@@ -41,7 +44,9 @@ dependencies {
     compile "org.scala-lang:scala-library:2.10.6"
     compile "org.scala-lang:scala-compiler:2.10.6"
 
-    compile('org.apache.spark:spark-core_2.10:1.5.2') { exclude group: 'com.google.guava' }
+    compile('org.apache.spark:spark-core_2.10:1.5.2') {
+        exclude group: 'com.google.guava'
+    }
     compile 'org.apache.spark:spark-mllib_2.10:1.5.2'
 
     // RDF
@@ -65,6 +70,10 @@ dependencies {
     compile 'org.nd4j:nd4j-x86:0.4-rc3.9-SNAPSHOT'
     compile fileTree('models/binary')
     compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging
+    compile 'javax.mail:javax.mail-api:1.5.5'
+    compile 'org.glassfish.jersey.core:jersey-server:2.22.2'
+    compile 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.22.2'
+    compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.22.2'
 
     // Standford NPL
     compile('edu.stanford.nlp:stanford-corenlp:3.6.0') { exclude group: 'xml-apis' }

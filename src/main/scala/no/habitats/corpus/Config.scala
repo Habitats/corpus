@@ -9,6 +9,8 @@ import scala.util.{Failure, Success, Try}
 
 object Config {
 
+  val seed = 123
+
   private var args: Arguments = Arguments()
   private var sparkConfig: String = null
   private var corpusConfig: String = null

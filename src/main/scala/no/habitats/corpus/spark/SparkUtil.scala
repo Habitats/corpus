@@ -3,7 +3,7 @@ package no.habitats.corpus.spark
 import no.habitats.corpus._
 import no.habitats.corpus.dl4j.FreebaseW2V
 import no.habitats.corpus.models.Article
-import no.habitats.corpus.npl.{Spotlight, WikiData}
+import no.habitats.corpus.npl.{IPTC, Spotlight, WikiData}
 import no.habitats.corpus.spark.CorpusContext._
 import org.apache.spark.rdd.RDD
 import org.joda.time.DateTime
@@ -57,7 +57,8 @@ object SparkUtil {
 
       // Modelling
       case "trainNaiveBayes" => trainNaiveBayes()
-      case "trainRNN" => FreebaseW2V.trainMultiLabelRNN
+      case "trainRNNML" => FreebaseW2V.trainMultiLabelRNN()
+      case "trainRNN" => IPTC.topCategories.foreach(c => FreebaseW2V.trainMultiLabelRNN(Some(c)))
       case "trainSparkRNN" => FreebaseW2V.trainSparkMultiLabelRNN()
 
       case _ => Log.r("No job ... Exiting!")

@@ -3,7 +3,6 @@
   */
 
 import no.habitats.corpus._
-import no.habitats.corpus.dl4j.SingleModelEval
 import no.habitats.corpus.models.{Annotation, Article}
 import no.habitats.corpus.spark._
 import org.junit.runner.RunWith
@@ -150,24 +149,5 @@ class MLTest extends FunSuite {
       assert(s === d.toSparse)
       assert(d === s.toDense)
     }
-  }
-
-  test("confusion test") {
-    val articles = Set[Article](
-      Article(id = "a1", iptc = abc, pred = acd),
-      Article(id = "a2", iptc = acd, pred = acd),
-      Article(id = "a3", iptc = bcd, pred = acd),
-      Article(id = "a4", iptc = abd, pred = acd),
-      Article(id = "a5", iptc = ad, pred = acd),
-      Article(id = "a6", iptc = ac, pred = acd),
-      Article(id = "a7", iptc = d, pred = acd),
-      Article(id = "a8", iptc = a, pred = acd)
-    )
-
-    val cat1 = SingleModelEval(tp = 2, fp = 1, fn = 3, tn = 4)
-    val cat2 = SingleModelEval(tp = 6, fp = 3, fn = 2, tn = 1)
-    val cat3 = SingleModelEval(tp = 2, fp = 0, fn = 1, tn = 7)
-
-
   }
 }
