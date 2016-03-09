@@ -1,87 +1,67 @@
 plugins {
-    id 'scala'
-    id 'application'
-    id 'idea'
     id 'com.github.johnrengelman.shadow' version '1.2.2'
+    id 'idea'
 }
 
-tasks.withType(ScalaCompile) {
-    sourceCompatibility = "1.7"
-    targetCompatibility = "1.7"
-}
+subprojects{
+    apply plugin: 'scala'
 
-mainClassName = 'no.habitats.corpus.spark.SparkUtil'
+    repositories {
+        mavenCentral()
+        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+        flatDir(dirs: 'models')
+    }
 
-repositories {
-    mavenCentral()
-    maven {url "https://oss.sonatype.org/content/repositories/snapshots"}
-    flatDir(dirs: 'models')
-}
+    compileScala {
+        scalaCompileOptions.useCompileDaemon = true
+    }
 
-shadowJar {
-    zip64 = true
-}
+    tasks.withType(ScalaCompile) {
+        scalaCompileOptions.useAnt = false
+        sourceCompatibility = "1.7"
+        targetCompatibility = "1.7"
+    }
 
-configurations {
-    all {
-        exclude group: 'org.mortbay.jetty'
-        exclude group: 'org.slf4j', module: 'slf4j-log4j12'
-        exclude group: 'log4j', module: 'log4j'
+    configurations {
+        all {
+            exclude group: 'org.mortbay.jetty'
+            exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+            exclude group: 'log4j', module: 'log4j'
 //        exclude group: 'com.sun.jersey'
 //        exclude group: 'com.sun.jersey.jersey-test-framework'
 //        exclude group: 'com.sun.jersey.contribs'
-    }
+        }
 //    runtime.exclude group: 'org.apache.spark'
 //    runtime.exclude group: 'org.apache.hbase'
 //    runtime.exclude group: 'org.cloudera.htrace', module: 'htrace-core'
 //    runtime.exclude module: 'stanford-corenlp-3.6.0-models'
 //    runtime.exclude module: 'reflectasm'
-}
-
-dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.11'
-    testCompile 'org.scalatest:scalatest_2.10:3.0.0-M7'
-    compile "org.scala-lang:scala-library:2.10.6"
-    compile "org.scala-lang:scala-compiler:2.10.6"
-
-    compile('org.apache.spark:spark-core_2.10:1.5.2') {
-        exclude group: 'com.google.guava'
     }
-    compile 'org.apache.spark:spark-mllib_2.10:1.5.2'
 
-    // RDF
-    compile('org.apache.jena:jena-core:3.0.0') { exclude group: 'xml-apis' }
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: '4.11'
+        testCompile 'org.scalatest:scalatest_2.10:3.0.0-M7'
+        compile "org.scala-lang:scala-library:2.10.5"
+        compile "org.scala-lang:scala-compiler:2.10.5"
 
-    // These are required for json4s to work. Something imported a deprecated version.
-    compile 'com.fasterxml.jackson.core:jackson-core:2.6.3'
-    compile 'com.fasterxml.jackson.core:jackson-databind:2.6.3'
-    compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.3'
-    compile 'com.fasterxml.jackson.module:jackson-module-scala_2.10:2.6.3'
+        // These are required for json4s to work. Something imported a deprecated version.
+        compile 'com.fasterxml.jackson.core:jackson-core:2.6.3'
+        compile 'com.fasterxml.jackson.core:jackson-databind:2.6.3'
+        compile 'com.fasterxml.jackson.core:jackson-annotations:2.6.3'
+        compile 'com.fasterxml.jackson.module:jackson-module-scala_2.10:2.6.3'
 
-    // The main Json library
-    compile 'org.json4s:json4s-native_2.10:3.3.0'
-    compile 'org.json4s:json4s-jackson_2.10:3.3.0'
-    compile files('libs/alpn-boot-8.1.6.v20151105.jar')
-
-    // DL4J
-    compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.9-SNAPSHOT'
-    compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.9-SNAPSHOT'
-    compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.9-SNAPSHOT'
-    compile 'org.nd4j:nd4j-x86:0.4-rc3.9-SNAPSHOT'
-    compile fileTree('models/binary')
-    compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging
-    compile 'javax.mail:javax.mail-api:1.5.5'
-    compile 'org.glassfish.jersey.core:jersey-server:2.22.2'
-    compile 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.22.2'
-    compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.22.2'
-
-    // Standford NPL
-    compile('edu.stanford.nlp:stanford-corenlp:3.6.0') { exclude group: 'xml-apis' }
-    compile ':stanford-corenlp-3.6.0-models@jar'
-    compile 'xml-apis:xml-apis:1.4.01'
-    compile 'com.google.protobuf:protobuf-java:2.6.1'
-    compile 'com.google.guava:guava:19.0'
-
-    // Async HTTP
-    compile 'net.databinder.dispatch:dispatch-core_2.10:0.11.3'
+        // The main Json library
+        compile 'org.json4s:json4s-native_2.10:3.3.0'
+        compile 'org.json4s:json4s-jackson_2.10:3.3.0'
+        compile files('libs/alpn-boot-8.1.6.v20151105.jar')
+    }
 }
+
+project(':ai') {
+    apply plugin: 'application'
+    apply plugin: 'com.github.johnrengelman.shadow'
+    shadowJar {
+        zip64 = true
+    }
+}
+
