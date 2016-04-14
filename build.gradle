@@ -59,15 +59,15 @@ subprojects {
         compile 'org.apache.spark:spark-mllib_2.10:1.5.2'
 
         // DL4J
-        compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.8'
-        compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.8'
-        compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.8'
-        compile 'org.nd4j:nd4j-x86:0.4-rc3.8'
+//        compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.8'
+//        compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.8'
+//        compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.8'
+//        compile 'org.nd4j:nd4j-x86:0.4-rc3.8'
 
-//        compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.9-SNAPSHOT'
-//        compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.9-SNAPSHOT'
-//        compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.9-SNAPSHOT'
-//        compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT'
+        compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.9-SNAPSHOT'
+        compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.9-SNAPSHOT'
+        compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.9-SNAPSHOT'
+        compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT'
 
         compile fileTree('models/binary')
         compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging
