@@ -34,6 +34,9 @@ case class Annotation(articleId: String,
 
 object Annotation {
   val NONE = "NONE"
+  val dw = WikiData.dbToWd
+  val wf = WikiData.wdToFb
+  val fw = WikiData.fbToWd
 
   def fromWikidata(articleId: String, wd: Entity): Annotation = {
     new Annotation(articleId = articleId, phrase = wd.name, mc = 1, wd = wd.id)
@@ -74,7 +77,7 @@ object Annotation {
           mc = arr(2).toInt,
           offset = arr(4).toInt,
           fb = arr(6),
-          wd = WikiData.fbToWd.getOrElse(arr(6), NONE)
+          wd = fw.getOrElse(arr(6), NONE)
         )
       })
       (articleId, ann)
@@ -82,8 +85,8 @@ object Annotation {
   }
 
   def fromDbpedia(dbpedia: DBPediaAnnotation): Annotation = {
-    val wd = WikiData.dbToWd.getOrElse(dbpedia.entity.id, NONE)
-    val fb = WikiData.wdToFb.getOrElse(wd, NONE)
+    val wd = dw.getOrElse(dbpedia.entity.id, NONE)
+    val fb = wf.getOrElse(wd, NONE)
     new Annotation(
       articleId = dbpedia.articleId,
       phrase = dbpedia.entity.name,

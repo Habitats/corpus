@@ -25,9 +25,21 @@ object WikiData {
   lazy val occupations = loadPairs("occupation.txt")
   lazy val genders = loadPairs("gender.txt")
 
-  lazy val fbToWd: Map[String, String] = Config.dataFile(pairsFile).getLines().map(_.split(",")).map(p => (p(0), p(1))).toMap
-  lazy val wdToFb: Map[String, String] = Config.dataFile("wikidata/fb_to_wd_all.txt").getLines().map(_.split(" ")).map(a => (a(0), a(1))).toMap
-  lazy val dbToWd: Map[String, String] = Config.dataFile("wikidata/dbpedia_to_wikidata.txt").getLines().map(_.split(" ")).filter(_.length == 2).map(a => (a(1), a(0))).toMap
+  lazy val fbToWd: Map[String, String] = loadCachedPairs(Config.dataPath + pairsFile)
+  lazy val wdToFb: Map[String, String] = loadCachedPairs(Config.dataPath + "wikidata/fb_to_wd_all.txt")
+  lazy val dbToWd: Map[String, String] = loadCachedPairs(Config.dataPath + "wikidata/dbpedia_to_wikidata.txt").map(a => (a._2 , a._1))
+
+  /**
+    * Load map
+    * @param path
+    * @return
+    */
+  def loadCachedPairs(path: String): Map[String, String] = {
+    Log.v("Loading " + path + " ...")
+    val pairs = sc.textFile(path).map(_.split(" ")).filter(_.length == 2).map(a => (a(0), a(1))).collect.toMap
+    Log.v("Loading complete!")
+    pairs
+  }
 
   // Download ALL FreeBase -> WikiData pairs in the entire WikiData db (1.5M~)
   def computeFreeBaseWikiDataPairs() = {

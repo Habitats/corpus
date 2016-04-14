@@ -78,7 +78,10 @@ object IPTC {
   lazy val levels: Map[Int, Map[String, String]] = {
     (0 to 5).map(level => (level, topLevelMediaTopics(level))).toMap
   }
-  lazy val topCategories = IPTC.levels(0).values.toSet.toSeq.sorted
+  lazy val topCategories = {
+    Log.v("Loading top level IPTC ...")
+    IPTC.levels(0).values.toSet.toSeq.sorted
+  }
 
   def toBroad(desc: Set[String], level: Int): Set[String] = toIptc(desc).map(levels(level))
 }

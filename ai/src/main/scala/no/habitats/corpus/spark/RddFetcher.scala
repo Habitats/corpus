@@ -51,18 +51,4 @@ object RddFetcher {
         localRdd(sc)
     }
   }
-
-  def cache(rdd: RDD[Article]) = {
-    try {
-      if (Config.local) {
-        IO.cacheRdd(rdd)
-      }
-      //      else {
-      //        IO.cache(rdd.collect)
-      //        IO.cacheRdd(rdd)
-      //      }
-    } catch {
-      case e: Exception => Log.e("Could not cache RDD!"); Log.e(e.getMessage)
-    }
-  }
 }

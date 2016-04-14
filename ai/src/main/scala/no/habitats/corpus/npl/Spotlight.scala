@@ -21,14 +21,16 @@ object Spotlight {
 
   /** Combine and store annotations with DBpedia, Wikidata and Freebase ID's */
   def combineAndCacheIds() = {
+    val dbp = WikiData.dbToWd
+    val dbf = WikiData.wdToFb
     RddFetcher.dbpedia(sc)
       .map(_.entity.id)
       .map(a => (a, 1))
       .reduceByKey(_ + _)
       .sortBy(_._2)
       .map { case (db, count) =>
-        val wd = WikiData.dbToWd.get(db)
-        val fb = WikiData.wdToFb.get(wd.getOrElse(""))
+        val wd = dbp.get(db)
+        val fb = dbf.get(wd.getOrElse(""))
         f"$count%-8s ${wd.getOrElse("")}%-10s ${fb.getOrElse("")}%-12s $db"
       }
       .coalesce(1)
