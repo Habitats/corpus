@@ -2,12 +2,13 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
+import no.habitats.corpus.common.Log
 import no.habitats.corpus.dl4j.FreebaseW2V
 import no.habitats.corpus.dl4j.networks.CorpusIterator._
 import no.habitats.corpus.models.{Annotation, Article}
 import no.habitats.corpus.npl.IPTC
-import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
+import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j

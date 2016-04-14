@@ -3,7 +3,7 @@ package no.habitats.corpus.dl4j.ex
 import java.io.File
 import java.net.URL
 
-import no.habitats.corpus.Log
+import no.habitats.corpus.common.Log
 import org.apache.commons.io.FilenameUtils
 import org.deeplearning4j.datasets.iterator.AsyncDataSetIterator
 import org.deeplearning4j.eval.Evaluation

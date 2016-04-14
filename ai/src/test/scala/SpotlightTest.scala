@@ -1,5 +1,5 @@
+import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.npl.Spotlight
-import no.habitats.corpus.{Config, Log}
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner

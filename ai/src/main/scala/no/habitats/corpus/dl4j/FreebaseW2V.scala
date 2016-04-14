@@ -2,11 +2,11 @@ package no.habitats.corpus.dl4j
 
 import java.io.File
 
+import no.habitats.corpus.common.CorpusContext._
+import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.dl4j.networks.{CorpusIterator, RNN}
 import no.habitats.corpus.models.Article
-import no.habitats.corpus.spark.CorpusContext._
 import no.habitats.corpus.spark.RddFetcher
-import no.habitats.corpus.{Config, Log}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.AsyncDataSetIterator

@@ -3,8 +3,9 @@ package no.habitats.corpus.spark
 import java.io.File
 
 import no.habitats.corpus._
+import no.habitats.corpus.common.CorpusContext._
+import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.{Article, DBPediaAnnotation}
-import no.habitats.corpus.spark.CorpusContext._
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkContext, SparkException}
 

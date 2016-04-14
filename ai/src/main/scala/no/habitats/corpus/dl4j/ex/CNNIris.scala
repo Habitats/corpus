@@ -2,7 +2,7 @@ package no.habitats.corpus.dl4j.ex
 
 import java.util.Random
 
-import no.habitats.corpus.Log
+import no.habitats.corpus.common.Log
 import org.deeplearning4j.datasets.iterator.impl.IrisDataSetIterator
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.api.OptimizationAlgorithm

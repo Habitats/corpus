@@ -2,7 +2,7 @@ package no.habitats.corpus.models
 
 import java.io.File
 
-import no.habitats.corpus.Config
+import no.habitats.corpus.common.Config
 import no.habitats.corpus.models.Annotation.NONE
 import no.habitats.corpus.npl.WikiData
 

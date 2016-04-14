@@ -2,7 +2,7 @@ package no.habitats.corpus.npl.extractors
 
 import java.io.FileInputStream
 
-import no.habitats.corpus.Config
+import no.habitats.corpus.common.Config
 import no.habitats.corpus.npl.models.Sentence
 import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
 import opennlp.tools.postag.{POSModel, POSTaggerME}

@@ -1,6 +1,6 @@
 package no.habitats.corpus.npl
 
-import no.habitats.corpus.Log
+import no.habitats.corpus.common.Log
 import org.apache.jena.rdf.model.{Model, ModelFactory, Resource}
 import org.apache.jena.vocabulary.SKOS
 

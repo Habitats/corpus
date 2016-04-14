@@ -2,7 +2,7 @@
   * Created by Patrick on 13.11.2015.
   */
 
-import no.habitats.corpus.Config
+import no.habitats.corpus.common.Config
 import no.habitats.corpus.npl.extractors.{OpenNLP, SimpleStandfordNER}
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite

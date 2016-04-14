@@ -1,10 +1,10 @@
 package no.habitats.corpus.npl
 
 import dispatch._
+import no.habitats.corpus.common.CorpusContext.sc
+import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.{Article, DBPediaAnnotation, Entity}
-import no.habitats.corpus.spark.CorpusContext._
 import no.habitats.corpus.spark.RddFetcher
-import no.habitats.corpus.{Config, Log}
 import org.apache.spark.rdd.RDD
 import org.joda.time.DateTime
 import org.json4s._

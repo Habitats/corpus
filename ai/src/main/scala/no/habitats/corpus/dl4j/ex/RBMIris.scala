@@ -1,6 +1,6 @@
 package no.habitats.corpus.dl4j.ex
 
-import no.habitats.corpus.Log
+import no.habitats.corpus.common.Log
 import org.deeplearning4j.datasets.iterator.impl.IrisDataSetIterator
 import org.deeplearning4j.nn.api.{Layer, OptimizationAlgorithm}
 import org.deeplearning4j.nn.conf.layers.RBM

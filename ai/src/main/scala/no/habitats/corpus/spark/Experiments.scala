@@ -1,7 +1,8 @@
 package no.habitats.corpus.spark
 
+import no.habitats.corpus.Prefs
+import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.Article
-import no.habitats.corpus.{Config, Log, Prefs}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 

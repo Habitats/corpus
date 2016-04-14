@@ -3,6 +3,7 @@ package no.habitats.corpus
 import java.io.File
 
 import com.nytlabs.corpus.{NYTCorpusDocument, NYTCorpusDocumentParser}
+import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.{Annotation, Article, DBPediaAnnotation}
 
 import scala.util.Try

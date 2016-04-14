@@ -1,6 +1,6 @@
 package no.habitats.corpus.dl4j.networks
 
-import no.habitats.corpus.{Config, Log}
+import no.habitats.corpus.common.{Config, Log}
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.layers.{GravesLSTM, RnnOutputLayer}
 import org.deeplearning4j.nn.conf.{GradientNormalization, NeuralNetConfiguration, Updater}

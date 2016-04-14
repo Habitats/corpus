@@ -1,5 +1,6 @@
 import no.habitats.corpus.spark.RddFetcher
-import no.habitats.corpus.{Config, Corpus}
+import no.habitats.corpus.Corpus
+import no.habitats.corpus.common.Config
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner

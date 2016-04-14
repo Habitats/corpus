@@ -2,9 +2,9 @@ package no.habitats.corpus.npl
 
 import java.io.{File, PrintWriter}
 
+import no.habitats.corpus.common.CorpusContext.sc
+import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.Annotation
-import no.habitats.corpus.spark.CorpusContext._
-import no.habitats.corpus.{Config, Log}
 import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._

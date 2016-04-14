@@ -1,10 +1,11 @@
 package no.habitats.corpus.spark
 
 import no.habitats.corpus._
+import no.habitats.corpus.common.CorpusContext._
+import no.habitats.corpus.common.{Config, CorpusContext, Log, NeuralModelLoader}
 import no.habitats.corpus.dl4j.FreebaseW2V
 import no.habitats.corpus.models.Article
 import no.habitats.corpus.npl.{IPTC, Spotlight, WikiData}
-import no.habitats.corpus.spark.CorpusContext._
 import org.apache.spark.rdd.RDD
 import org.joda.time.DateTime
 

@@ -3,6 +3,7 @@
   */
 
 import no.habitats.corpus._
+import no.habitats.corpus.common.Config
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner

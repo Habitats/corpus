@@ -3,7 +3,8 @@ package util
 import java.io.File
 
 import no.habitats.corpus.models.Annotation
-import no.habitats.corpus.{Config, Corpus}
+import no.habitats.corpus.Corpus
+import no.habitats.corpus.common.Config
 
 trait Samples {
 

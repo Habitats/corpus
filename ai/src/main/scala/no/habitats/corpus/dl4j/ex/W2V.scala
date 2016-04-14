@@ -2,7 +2,7 @@ package no.habitats.corpus.dl4j.ex
 
 import java.io.File
 
-import no.habitats.corpus.Config
+import no.habitats.corpus.common.Config
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors
 import org.deeplearning4j.models.word2vec.Word2Vec

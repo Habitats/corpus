@@ -1,7 +1,8 @@
 package no.habitats.corpus.spark
 
+import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.Article
-import no.habitats.corpus.{Config, Log, MLStats, Prefs}
+import no.habitats.corpus.{MLStats, Prefs}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.linalg.Vector
