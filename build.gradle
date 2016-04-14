@@ -3,10 +3,11 @@ plugins {
     id 'idea'
 }
 
-subprojects{
+subprojects {
     apply plugin: 'scala'
 
     repositories {
+        mavenLocal()
         mavenCentral()
         maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         flatDir(dirs: 'models')
@@ -27,6 +28,8 @@ subprojects{
             exclude group: 'org.mortbay.jetty'
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
             exclude group: 'log4j', module: 'log4j'
+            exclude group: 'org.fusesource.scalate'
+
 //        exclude group: 'com.sun.jersey'
 //        exclude group: 'com.sun.jersey.jersey-test-framework'
 //        exclude group: 'com.sun.jersey.contribs'
@@ -43,6 +46,35 @@ subprojects{
         testCompile 'org.scalatest:scalatest_2.10:3.0.0-M7'
         compile "org.scala-lang:scala-library:2.10.5"
         compile "org.scala-lang:scala-compiler:2.10.5"
+        compile "org.scala-lang:scala-reflect:2.10.5"
+
+        // Spark
+        compile('org.apache.spark:spark-core_2.10:1.5.2') {
+            exclude group: 'com.google.guava'
+            // yields security error due to differing versions
+            exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
+            exclude group: 'org.glassfish', module: 'javax.servlet'
+            exclude group: 'javax.servlet', module: 'javax.servlet-api'
+        }
+        compile 'org.apache.spark:spark-mllib_2.10:1.5.2'
+
+        // DL4J
+        compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.8'
+        compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.8'
+        compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.8'
+        compile 'org.nd4j:nd4j-x86:0.4-rc3.8'
+
+//        compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.9-SNAPSHOT'
+//        compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.9-SNAPSHOT'
+//        compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.9-SNAPSHOT'
+//        compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT'
+
+        compile fileTree('models/binary')
+        compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging
+        compile 'javax.mail:javax.mail-api:1.5.5'
+        compile 'org.glassfish.jersey.core:jersey-server:2.22.2'
+        compile 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.22.2'
+        compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.22.2'
 
         // These are required for json4s to work. Something imported a deprecated version.
         compile 'com.fasterxml.jackson.core:jackson-core:2.6.3'
@@ -56,12 +88,3 @@ subprojects{
         compile files('libs/alpn-boot-8.1.6.v20151105.jar')
     }
 }
-
-project(':ai') {
-    apply plugin: 'application'
-    apply plugin: 'com.github.johnrengelman.shadow'
-    shadowJar {
-        zip64 = true
-    }
-}
-
