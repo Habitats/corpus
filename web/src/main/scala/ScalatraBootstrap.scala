@@ -1,8 +1,9 @@
 import javax.servlet.ServletContext
 
-import no.habitats.corpus.Log
+import no.habitats.corpus.common.Log
 import no.habitats.corpus.web.CorpusServlet
 import org.scalatra.LifeCycle
+
 
 class ScalatraBootstrap extends LifeCycle {
 
