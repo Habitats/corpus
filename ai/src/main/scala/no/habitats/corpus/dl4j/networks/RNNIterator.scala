@@ -4,7 +4,7 @@ import java.util
 
 import no.habitats.corpus.common.Log
 import no.habitats.corpus.dl4j.FreebaseW2V
-import no.habitats.corpus.dl4j.networks.CorpusIterator._
+import no.habitats.corpus.dl4j.networks.RNNIterator._
 import no.habitats.corpus.models.{Annotation, Article}
 import no.habitats.corpus.npl.IPTC
 import org.deeplearning4j.datasets.iterator.DataSetIterator
@@ -16,15 +16,18 @@ import org.nd4j.linalg.indexing.NDArrayIndex
 
 import scala.collection.JavaConverters._
 
-class CorpusIterator(rdd: RDD[Article], label: Option[String]) extends DataSetIterator {
+class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 50) extends DataSetIterator {
 
   // 32 may be a good starting point,
-  val batchSize = 50
   var counter = 0
-  lazy val allArticles = rdd
-    .filter(_.iptc.nonEmpty).collect
-    .map(a => a.copy(ann = a.ann.filter(an => vectors.contains(an._2.fb))))
-    .filter(_.ann.nonEmpty)
+  val allArticles: Array[Article] = {
+    Log.v("Loading articles ...")
+    val a = rdd
+      .filter(_.iptc.nonEmpty)
+      .map(a => a.copy(ann = a.ann.filter(an => vectors.contains(an._2.fb))))
+      .filter(_.ann.nonEmpty)
+    a
+  }
 
   val categories: util.List[String] = label.fold(IPTC.topCategories.toList)(List(_)).asJava
 
@@ -78,11 +81,11 @@ class CorpusIterator(rdd: RDD[Article], label: Option[String]) extends DataSetIt
   override def reset(): Unit = counter = 0
   override def numExamples(): Int = totalExamples()
   override def next(): DataSet = next(batch)
-  override def hasNext: Boolean = cursor() < totalExamples()
+  override def hasNext: Boolean = counter < totalExamples()
 }
 
-object CorpusIterator {
-  lazy val vectors = FreebaseW2V.loadVectors()
-  lazy val features = vectors.keySet
-  lazy val featureSize = vectors.values.head.length()
+object RNNIterator {
+  lazy val vectors: Map[String, INDArray] = FreebaseW2V.loadVectors()
+  lazy val features: Set[String] = vectors.keySet
+  lazy val featureSize: Int = vectors.values.head.length()
 }

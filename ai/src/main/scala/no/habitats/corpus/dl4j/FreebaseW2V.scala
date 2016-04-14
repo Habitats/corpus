@@ -4,7 +4,7 @@ import java.io.File
 
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common.{Config, Log}
-import no.habitats.corpus.dl4j.networks.{CorpusIterator, RNN}
+import no.habitats.corpus.dl4j.networks.{RNNIterator, RNN}
 import no.habitats.corpus.models.Article
 import no.habitats.corpus.spark.RddFetcher
 import org.apache.spark.api.java.JavaRDD
@@ -39,6 +39,8 @@ object FreebaseW2V {
   }
 
   def loadVectors(filter: Set[String] = Set.empty): Map[String, INDArray] = {
+    val start = System.currentTimeMillis
+    Log.v("Loading vectors ...")
     val vec = sc.textFile(Config.dataPath + "nyt/fb_w2v_0.5.txt")
       .map(_.split(", "))
       .filter(arr => filter.isEmpty || filter.contains(arr(0)))
@@ -51,8 +53,27 @@ object FreebaseW2V {
       .collect() // this takes a long time
       .toMap
 
+    Log.v(s"Loaded vectors in ${System.currentTimeMillis() - start} ms")
     vec
   }
+
+  //  def loadVectors(filter: Set[String] = Set.empty): Map[String, INDArray] = {
+  //    val start = System.currentTimeMillis
+  //    val vec = Files.readAllLines(new File(Config.dataPath + "nyt/fb_w2v_0.5.txt").toPath).asScala
+  //      .map(_.split(", "))
+  //      .filter(arr => filter.isEmpty || filter.contains(arr(0)))
+  //      .map(arr => (arr(0), arr.toSeq.slice(1, arr.length).map(_.toFloat).toArray))
+  //      .map(arr => {
+  //        val vector = Nd4j.create(arr._2)
+  //        val id = arr._1
+  //        (id, vector)
+  //      })
+  //      .toMap
+  //
+  //    Log.v(s"Loaded vectors in ${System.currentTimeMillis() - start} ms")
+  //
+  //    vec
+  //  }
 
   def trainSparkMultiLabelRNN(label: Option[String] = None): MultiLayerNetwork = {
     val nEpochs = 5
@@ -62,8 +83,8 @@ object FreebaseW2V {
     }
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
-    val trainIter: List[DataSet] = new CorpusIterator(train, label).asScala.toList
-    val testIter = new AsyncDataSetIterator(new CorpusIterator(test, label))
+    val trainIter: List[DataSet] = new RNNIterator(train.collect(), label).asScala.toList
+    val testIter = new AsyncDataSetIterator(new RNNIterator(test.collect(), label))
     val rddTrain: JavaRDD[DataSet] = sc.parallelize(trainIter)
 
     Log.v("Starting training ...")
@@ -84,8 +105,8 @@ object FreebaseW2V {
       case _ => RNN.createBinary()
     }
 
-    val trainIter = new AsyncDataSetIterator(new CorpusIterator(train, label))
-    val testIter = new AsyncDataSetIterator(new CorpusIterator(test, label))
+    val trainIter = new AsyncDataSetIterator(new RNNIterator(train.collect(), label))
+    val testIter = new AsyncDataSetIterator(new RNNIterator(test.collect(), label))
     Log.r(s"Training ${label.mkString(", ")} ...")
     Log.r2(s"Training ${label.mkString(", ")} ...")
     for (i <- 0 until nEpochs) {
