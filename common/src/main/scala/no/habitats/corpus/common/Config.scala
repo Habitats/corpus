@@ -9,7 +9,14 @@ import scala.util.{Failure, Success, Try}
 
 object Config {
 
+
   val seed = 123
+
+  // Required data (need to be lazy, otherwise dataPath is null)
+  lazy val freebaseToWord2Vec = dataPath + "nyt/fb_w2v_0.5.txt"
+  lazy val freebaseToWikidata = dataPath + "wikidata/fb_to_wd_all.txt"
+  lazy val dbpediaToWikidata = dataPath + "wikidata/dbpedia_to_wikidata.txt"
+  lazy val nytCorpusAnnotated = dataPath + "nyt/nyt_corpus_annotated_0.5_sample.json"
 
   private var args: Arguments = Arguments()
   private var sparkConfig: String = null

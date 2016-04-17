@@ -6,9 +6,6 @@ import no.habitats.corpus.models.{Annotation, Article, DBPediaAnnotation, Entity
 import no.habitats.corpus.npl.{IPTC, Spotlight}
 import org.nd4j.linalg.api.ndarray.INDArray
 
-/**
-  * Created by mail on 10.03.2016.
-  */
 trait CorpusAPI {
 
   /**
@@ -19,7 +16,7 @@ trait CorpusAPI {
     */
   def predict(text: String): Set[String] = {
     val annotations: Seq[Annotation] = annotate(text)
-    val article = new Article(id = "NO_ID", ann = annotations.map(v => (v.id, v)).toMap)
+    val article = new Article(id = "NO_ID", body = text, ann = annotations.map(v => (v.id, v)).toMap)
     val iptc = IPTC.topCategories
     val rdd = CorpusContext.sc.parallelize(Seq(article))
     val model = NeuralModelLoader.cachedModel
@@ -61,6 +58,21 @@ trait CorpusAPI {
     * @return Collection of INDArray's representing each 1000d vector
     */
   def extractFreebaseW2V(text: String): Seq[INDArray] = {
-    annotate(text).map(_.fb).map(W2VLoader.fromId).filter(_.isDefined).map(_.get)
+    val annotated = annotate(text)
+    annotated
+      .map(_.fb)
+      .map(W2VLoader.fromId)
+      .filter(_.isDefined)
+      .map(_.get)
+  }
+
+  /**
+    * Extract word2vec vector from Freebase ID
+    *
+    * @param id - Freebase ID, e.g. "/m/02pqtw"
+    * @return 1000d INDArray's representing a single vector
+    */
+  def freebaseToWord2Vec(id: String): Option[INDArray] = {
+    W2VLoader.fromId(id)
   }
 }

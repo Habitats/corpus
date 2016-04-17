@@ -26,8 +26,8 @@ object WikiData {
   lazy val genders = loadPairs("gender.txt")
 
   lazy val fbToWd: Map[String, String] = loadCachedPairs(Config.dataPath + pairsFile)
-  lazy val wdToFb: Map[String, String] = loadCachedPairs(Config.dataPath + "wikidata/fb_to_wd_all.txt")
-  lazy val dbToWd: Map[String, String] = loadCachedPairs(Config.dataPath + "wikidata/dbpedia_to_wikidata.txt").map(a => (a._2 , a._1))
+  lazy val wdToFb: Map[String, String] = loadCachedPairs(Config.freebaseToWikidata)
+  lazy val dbToWd: Map[String, String] = loadCachedPairs(Config.dbpediaToWikidata).map(a => (a._2 , a._1))
 
   /**
     * Load map

@@ -2,7 +2,7 @@ package no.habitats.corpus.spark
 
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
-import no.habitats.corpus.common.{Config, CorpusContext, Log, NeuralModelLoader}
+import no.habitats.corpus.common._
 import no.habitats.corpus.dl4j.FreebaseW2V
 import no.habitats.corpus.models.Article
 import no.habitats.corpus.npl.{IPTC, Spotlight, WikiData}
@@ -42,7 +42,7 @@ object SparkUtil {
       case "printArticles" => printArticles(Config.count)
       case "count" => Log.r(s"Counting job: ${rdd.count} articles ...")
       case "preprocess" => Preprocess.preprocess(sc.broadcast(Prefs()), rdd)
-      case "fbw2vLoad" => FreebaseW2V.loadVectors()
+      case "fbw2vLoad" => W2VLoader.loadVectors()
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
@@ -69,6 +69,11 @@ object SparkUtil {
     Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
     //    Thread.sleep(Long.MaxValue)
     //    sc.stop
+  }
+
+  def allSteps() = {
+    val nyt = Corpus.articlesFromXML()
+
   }
 
   def prettyTime(ms: Long): String = {

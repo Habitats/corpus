@@ -38,24 +38,7 @@ object FreebaseW2V {
       .saveAsTextFile(Config.cachePath + "fb_w2v_0.5")
   }
 
-  def loadVectors(filter: Set[String] = Set.empty): Map[String, INDArray] = {
-    val start = System.currentTimeMillis
-    Log.v("Loading vectors ...")
-    val vec = sc.textFile(Config.dataPath + "nyt/fb_w2v_0.5.txt")
-      .map(_.split(", "))
-      .filter(arr => filter.isEmpty || filter.contains(arr(0)))
-      .map(arr => (arr(0), arr.toSeq.slice(1, arr.length).map(_.toFloat).toArray))
-      .collect() // this takes a long time
-      .map(arr => {
-        val vector = Nd4j.create(arr._2)
-        val id = arr._1
-        (id, vector)
-      })
-      .toMap
 
-    Log.v(s"Loaded vectors in ${System.currentTimeMillis() - start} ms")
-    vec
-  }
 
   //  def loadVectors(filter: Set[String] = Set.empty): Map[String, INDArray] = {
   //    val start = System.currentTimeMillis

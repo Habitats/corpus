@@ -2,7 +2,7 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
-import no.habitats.corpus.common.Log
+import no.habitats.corpus.common.{Log, W2VLoader}
 import no.habitats.corpus.dl4j.FreebaseW2V
 import no.habitats.corpus.dl4j.networks.RNNIterator._
 import no.habitats.corpus.models.{Annotation, Article}
@@ -85,7 +85,7 @@ class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 5
 }
 
 object RNNIterator {
-  lazy val vectors: Map[String, INDArray] = FreebaseW2V.loadVectors()
+  lazy val vectors: Map[String, INDArray] = W2VLoader.loadVectors()
   lazy val features: Set[String] = vectors.keySet
   lazy val featureSize: Int = vectors.values.head.length()
 }
