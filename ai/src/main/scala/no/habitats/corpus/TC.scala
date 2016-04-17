@@ -8,10 +8,10 @@ import org.apache.spark.rdd.RDD
   */
 case class TC(rdd: RDD[Article]) {
 
-  val documentsWithTerm = rdd.flatMap(_.ann.values).map(a => (a.id, 1)).reduceByKey(_ + _).collect.toMap
+  val documentsWithTerm      = rdd.flatMap(_.ann.values).map(a => (a.id, 1)).reduceByKey(_ + _).collect.toMap
   val maxFrequencyInDocument = rdd.map(a => (a.id, a.ann.map(_._2.mc).max)).collect.toMap
   val frequencySumInDocument = rdd.map(a => (a.id, a.ann.map(_._2.mc).sum)).collect.toMap
-  val documentCount = rdd.count
+  val documentCount          = rdd.count
 
   lazy val computed: RDD[Article] = {
     rdd.map(a => {

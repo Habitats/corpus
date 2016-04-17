@@ -34,8 +34,8 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
   )
 
   val statsHeader = fullStats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString("")
-  val stats = fullStats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString("")
-  val confusion = {
+  val stats       = fullStats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString("")
+  val confusion   = {
     eval.getConfusionMatrix.toCSV.split("\n")
       .map(_.split(",").zipWithIndex.map { case (k, v) => if (v == 0) f"$k%12s" else f"$k%6s" }.mkString(""))
       .mkString("\n", "\n", "")

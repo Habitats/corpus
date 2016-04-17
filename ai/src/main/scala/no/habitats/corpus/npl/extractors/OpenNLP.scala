@@ -32,11 +32,11 @@ object OpenNLP extends Extractor {
     new POSTaggerME(model)
   }
 
-  private lazy val persons = nameFinderME("opennlp/en-ner-person.bin")
-  private lazy val orgs = nameFinderME("opennlp/en-ner-organization.bin")
+  private lazy val persons   = nameFinderME("opennlp/en-ner-person.bin")
+  private lazy val orgs      = nameFinderME("opennlp/en-ner-organization.bin")
   private lazy val locations = nameFinderME("opennlp/en-ner-location.bin")
-  private lazy val money = nameFinderME("opennlp/en-ner-money.bin")
-  private lazy val date = nameFinderME("opennlp/en-ner-time.bin")
+  private lazy val money     = nameFinderME("opennlp/en-ner-money.bin")
+  private lazy val date      = nameFinderME("opennlp/en-ner-time.bin")
 
   def pair(model: NameFinderME, tokens: Array[String]): Array[(String, String)] = model.find(tokens).map(n => (n.getType, tokens.slice(n.getStart, n.getEnd).map(_.trim).mkString(" ")))
 

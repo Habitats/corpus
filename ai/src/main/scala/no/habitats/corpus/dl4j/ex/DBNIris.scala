@@ -15,7 +15,6 @@ import org.deeplearning4j.optimize.listeners.ScoreIterationListener
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.lossfunctions.LossFunctions
 
-
 /**
   * Created by mail on 17.02.2016.
   */

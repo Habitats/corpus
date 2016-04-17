@@ -12,17 +12,17 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 
 object CNN {
 
-  val numRows = 2
-  val numColumns = 2
-  val nChannels = 1
-  val outputNum = 3
-  val numSamples = 150
-  val batchSize = 150
-  val iterations = 10
+  val numRows       = 2
+  val numColumns    = 2
+  val nChannels     = 1
+  val outputNum     = 3
+  val numSamples    = 150
+  val batchSize     = 150
+  val iterations    = 10
   val splitTrainNum = 100
-  val listenerFreq = 1
-  val stride = Array(1, 1)
-  val kernel = Array(3, 1)
+  val listenerFreq  = 1
+  val stride        = Array(1, 1)
+  val kernel        = Array(3, 1)
 
   def create(): MultiLayerNetwork = {
     val builder = new NeuralNetConfiguration.Builder()

@@ -21,12 +21,12 @@ object Main extends App {
 }
 
 class MockIterator(seed: Long) extends DataSetIterator {
-  val batchSize = 50
-  var counter = 0
+  val batchSize   = 50
+  var counter     = 0
   val dataSetSize = 698
   val featureSize = 1000
-  val labelSize = 3
-  val r = new Random(seed)
+  val labelSize   = 3
+  val r           = new Random(seed)
 
   override def next(num: Int): DataSet = {
     val maxNumberOfFeatures = r.nextInt(100) + 1

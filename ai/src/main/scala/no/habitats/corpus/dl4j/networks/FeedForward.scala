@@ -12,9 +12,9 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 class FeedForward {
 
   val learningRate = 0.005
-  val numInputs = 2
-  val numOutputs = 2
-  val numHidden = 20
+  val numInputs    = 2
+  val numOutputs   = 2
+  val numHidden    = 20
 
   def create(): MultiLayerNetwork = {
     val conf = new NeuralNetConfiguration.Builder()

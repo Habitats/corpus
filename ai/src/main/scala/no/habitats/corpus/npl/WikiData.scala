@@ -18,19 +18,20 @@ object WikiData {
 
   val pairsFile = "wikidata/fb_to_wd_all.txt"
   // API roots
-  val wmflabs = "http://wdq.wmflabs.org/api?q="
-  val wiki = "https://www.wikidata.org/w/api.php?format=json&language=en&"
+  val wmflabs   = "http://wdq.wmflabs.org/api?q="
+  val wiki      = "https://www.wikidata.org/w/api.php?format=json&language=en&"
 
-  lazy val instanceOf = loadPairs("instanceOf.txt")
+  lazy val instanceOf  = loadPairs("instanceOf.txt")
   lazy val occupations = loadPairs("occupation.txt")
-  lazy val genders = loadPairs("gender.txt")
+  lazy val genders     = loadPairs("gender.txt")
 
   lazy val fbToWd: Map[String, String] = loadCachedPairs(Config.dataPath + pairsFile)
   lazy val wdToFb: Map[String, String] = loadCachedPairs(Config.freebaseToWikidata)
-  lazy val dbToWd: Map[String, String] = loadCachedPairs(Config.dbpediaToWikidata).map(a => (a._2 , a._1))
+  lazy val dbToWd: Map[String, String] = loadCachedPairs(Config.dbpediaToWikidata).map(a => (a._2, a._1))
 
   /**
     * Load map
+    *
     * @param path
     * @return
     */

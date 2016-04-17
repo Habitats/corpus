@@ -13,7 +13,7 @@ import scala.collection._
 
 object SparkUtil {
   val cacheDir = "cache"
-  var iter = 0
+  var iter     = 0
 
   def sparkTest() = {
     Log.v(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")

@@ -23,9 +23,9 @@ import scala.sys.process._
 object W2VSentiment {
 
   /** Data URL for downloading */
-  val DATA_URL = "http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
+  val DATA_URL          = "http://ai.stanford.edu/~amaas/data/sentiment/aclImdb_v1.tar.gz"
   /** Location to save and extract the training/testing data */
-  val DATA_PATH = FilenameUtils.concat(System.getProperty("java.io.tmpdir"), "dl4j_w2vSentiment/")
+  val DATA_PATH         = FilenameUtils.concat(System.getProperty("java.io.tmpdir"), "dl4j_w2vSentiment/")
   /** Location (local file system) for the Google News vectors. Set this manually. */
   val WORD_VECTORS_PATH = "D:/Archive/corpus/w2v/GoogleNews-vectors-negative300.bin"
 

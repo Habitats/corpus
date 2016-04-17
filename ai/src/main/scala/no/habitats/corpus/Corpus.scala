@@ -11,7 +11,7 @@ import scala.util.Try
 object Corpus {
 
   lazy val relevantArticleIds: Set[String] = Try(Config.dataFile("google_annotations/relevant_article_ids.txt").getLines().toSet).getOrElse(Set())
-  lazy val rawNYTParser = new NYTCorpusDocumentParser
+  lazy val rawNYTParser                    = new NYTCorpusDocumentParser
 
   lazy val googleAnnotations: Map[String, Seq[Annotation]] = {
     val annotations = Annotation.fromGoogle()
@@ -21,7 +21,9 @@ object Corpus {
   }
 
   lazy val dbpediaAnnotations: Map[String, Seq[Annotation]] = {
-    Config.dataFile("nyt/" + Config.dbpedia).getLines()
+    val path = "nyt/" + Config.dbpedia
+    Log.v(s"Loading $path ...")
+    Config.dataFile(path).getLines()
       .map(DBPediaAnnotation.fromSingleJson)
       .map(Annotation.fromDbpedia)
       .toList.groupBy(_.articleId)
@@ -52,10 +54,7 @@ object Corpus {
   def toDBPediaAnnotated(a: Article): Article = {
     dbpediaAnnotations.get(a.id) match {
       case Some(ann) => a.copy(ann = a.ann ++ ann.map(a => (a.id, a)).toMap)
-      case None =>
-
-        /** Log.v("NO DBPEDIA: " + article.id); */
-        a
+      case None => Log.v("NO DBPEDIA: " + a.id); a
     }
   }
 }

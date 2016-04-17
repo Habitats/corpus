@@ -14,14 +14,15 @@ object Config {
 
   // Required data (need to be lazy, otherwise dataPath is null)
   lazy val freebaseToWord2Vec = dataPath + "nyt/fb_w2v_0.5.txt"
-  lazy val freebaseToWikidata = dataPath + "wikidata/fb_to_wd_all.txt"
-  lazy val dbpediaToWikidata = dataPath + "wikidata/dbpedia_to_wikidata.txt"
   lazy val nytCorpusAnnotated = dataPath + "nyt/nyt_corpus_annotated_0.5_sample.json"
+  lazy val dbpedia            = dataPath + "nyt/dbpedia-all-0.75.json"
+  lazy val freebaseToWikidata = dataPath + "wikidata/fb_to_wd_all.txt"
+  lazy val dbpediaToWikidata  = dataPath + "wikidata/dbpedia_to_wikidata.txt"
 
-  private var args: Arguments = Arguments()
-  private var sparkConfig: String = null
-  private var corpusConfig: String = null
-  private val localConfigRoot = sys.env("DROPBOX_HOME") + "/code/projects/corpus/ai/src/main/resources/"
+  private var args           : Arguments = Arguments()
+  private var sparkConfig    : String    = null
+  private var corpusConfig   : String    = null
+  private val localConfigRoot: String    = sys.env("DROPBOX_HOME") + "/code/projects/corpus/ai/src/main/resources/"
 
   def setArgs(arr: Array[String]) = {
     lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
@@ -75,19 +76,18 @@ object Config {
   }
 
   // static
-  val testPath: String = conf.getProperty("test_path").replace("~", System.getProperty("user.home"))
-  val dataPath: String = conf.getProperty("data_path").replace("~", System.getProperty("user.home"))
-  val cachePath: String = conf.getProperty("cache_path").replace("~", System.getProperty("user.home"))
-  val dbpedia: String = conf.getProperty("dbpedia")
-  val broadMatch: Boolean = conf.getProperty("broad_match").toBoolean
-  val wikiDataOnly: Boolean = conf.getProperty("wikidata_only").toBoolean
-  val wikiDataIncludeBroad: Boolean = conf.getProperty("wikidata_include_broad").toBoolean
-  val phraseSkipThreshold: Int = conf.getProperty("term_frequency_threshold").toInt
-  val iptcFilter: Set[String] = Some(conf.getProperty("iptc_filter")).map(e => if (e.length > 0) e.split(",").toSet else Set[String]()).get
+  val testPath            : String      = conf.getProperty("test_path").replace("~", System.getProperty("user.home"))
+  val dataPath            : String      = conf.getProperty("data_path").replace("~", System.getProperty("user.home"))
+  val cachePath           : String      = conf.getProperty("cache_path").replace("~", System.getProperty("user.home"))
+  val broadMatch          : Boolean     = conf.getProperty("broad_match").toBoolean
+  val wikiDataOnly        : Boolean     = conf.getProperty("wikidata_only").toBoolean
+  val wikiDataIncludeBroad: Boolean     = conf.getProperty("wikidata_include_broad").toBoolean
+  val phraseSkipThreshold : Int         = conf.getProperty("term_frequency_threshold").toInt
+  val iptcFilter          : Set[String] = Some(conf.getProperty("iptc_filter")).map(e => if (e.length > 0) e.split(",").toSet else Set[String]()).get
 
   // Dynamic variables for file caching
   // TODO: this shouldn't be here. really.
-  var resultsFileName = "results.txt"
+  var resultsFileName     = "results.txt"
   var resultsCatsFileName = "results_cats.txt"
 
   // args

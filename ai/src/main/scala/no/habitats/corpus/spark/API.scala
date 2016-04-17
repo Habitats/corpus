@@ -1,6 +1,5 @@
 package no.habitats.corpus.spark
 
-import no.habitats.corpus.common.CorpusContext
 import no.habitats.corpus.common.CorpusContext._
 import org.apache.spark.mllib.classification.SVMWithSGD
 import org.apache.spark.mllib.evaluation.{BinaryClassificationMetrics, MultilabelMetrics}
@@ -14,7 +13,7 @@ import org.apache.spark.rdd.RDD
 object API {
 
   // all of these: [1.0, 0.0, 3.0]
-  val dv = Vectors.dense(1.0, 0.0, 3.0)
+  val dv  = Vectors.dense(1.0, 0.0, 3.0)
   val sv1 = Vectors.sparse(3, Array(0, 2), Array(1.0, 3.0))
   val sv2 = Vectors.sparse(3, Seq((0, 1.0), (2, 3.0)))
 
@@ -26,15 +25,15 @@ object API {
 
   // RDD[Vector] can be converted to distributed matrices
   val rdd: RDD[Vector] = sc.parallelize(Seq(dv, sv1, sv2))
-  val mat = new RowMatrix(rdd)
-  val m = mat.numRows()
-  val n = mat.numCols()
+  val mat              = new RowMatrix(rdd)
+  val m                = mat.numRows()
+  val n                = mat.numCols()
 
   val rdd2: RDD[IndexedRow] = sc.parallelize(Seq(IndexedRow(1, dv), IndexedRow(2, sv1), IndexedRow(3, sv2)))
-  val mat2 = new IndexedRowMatrix(rdd2)
+  val mat2                  = new IndexedRowMatrix(rdd2)
 
   val rdd3: RDD[MatrixEntry] = sc.parallelize(Seq(MatrixEntry(0, 1, 0.2), MatrixEntry(0, 2, 0.5), MatrixEntry(0, 5, 0.9)))
-  val mat3 = new CoordinateMatrix(rdd3)
+  val mat3                   = new CoordinateMatrix(rdd3)
 
   // statistics
   val summary = Statistics.colStats(rdd)
@@ -53,16 +52,16 @@ object API {
   //######################
 
   // TF-IDF
-  val docs = Seq(Seq("hello", "world"), Seq("Shoop", "da", "whoop"), Seq("who", "is", "da", "man"))
-  val docsRdd = sc.parallelize(docs)
-  val hashingTF = new HashingTF()
+  val docs            = Seq(Seq("hello", "world"), Seq("Shoop", "da", "whoop"), Seq("who", "is", "da", "man"))
+  val docsRdd         = sc.parallelize(docs)
+  val hashingTF       = new HashingTF()
   val tf: RDD[Vector] = hashingTF.transform(docsRdd)
   tf.cache()
-  val idf = new IDF(minDocFreq = 1).fit(tf)
+  val idf                = new IDF(minDocFreq = 1).fit(tf)
   val tfidf: RDD[Vector] = idf.transform(tf)
 
   // Word2Vec
-  val w2v = new Word2Vec
+  val w2v      = new Word2Vec
   val w2vModel = w2v.fit(docsRdd)
   val synonyms = w2vModel.findSynonyms("hello", 20)
   for ((synonym, cosineSimilarity) <- synonyms) {
@@ -77,15 +76,14 @@ object API {
   val normalizer = new Normalizer(p = Double.PositiveInfinity)
   val normalized = tfidf.map(x => normalizer.transform(x))
 
-
   //######################
   //### Classification ###
   //######################
 
   val labeledRdd: RDD[LabeledPoint] = sc.parallelize(Seq(LabeledPoint(1.0, dv), LabeledPoint(0.0, sv1), LabeledPoint(0.5, sv2)))
-  val splits = labeledRdd.randomSplit(Array(0.6, 0.4), seed = 11L)
-  val training = splits(0).cache
-  val test = splits(1)
+  val splits                        = labeledRdd.randomSplit(Array(0.6, 0.4), seed = 11L)
+  val training                      = splits(0).cache
+  val test                          = splits(1)
 
   // SVM classification
   val model = SVMWithSGD.train(training, numIterations = 100)

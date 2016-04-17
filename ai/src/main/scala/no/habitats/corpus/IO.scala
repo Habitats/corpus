@@ -14,10 +14,9 @@ import org.json4s.jackson.Serialization._
 import scala.collection.JavaConverters._
 import scala.io.{Codec, Source}
 
-
 object IO {
   val rddCacheDir = Config.cachePath + "rdd_" + Config.count
-  val cacheFile = Config.cachePath + Config.count + ".cache"
+  val cacheFile   = Config.cachePath + Config.count + ".cache"
 
   def walk(path: String, count: Int = 100, filter: String = ""): Seq[File] = {
     val dir = FileSystems.getDefault.getPath(path)
@@ -72,8 +71,8 @@ object IO {
 }
 
 object JsonSingle {
-  implicit val formats = Serialization.formats(NoTypeHints)
-  lazy val jsonFile = new File(Config.nytCorpusAnnotated)
+  implicit val formats  = Serialization.formats(NoTypeHints)
+  lazy     val jsonFile = new File(Config.nytCorpusAnnotated)
 
   def cacheRawNYTtoJson(count: Int = Config.count, articles: Seq[Article] = Nil) = {
     jsonFile.delete
