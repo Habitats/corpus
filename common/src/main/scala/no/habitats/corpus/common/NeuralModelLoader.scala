@@ -20,6 +20,7 @@ object NeuralModelLoader {
 
     // write config
     FileUtils.write(new File(confPath(label, count)), model.getLayerWiseConfigurations.toJson)
+    dos.close()
   }
 
   def load(label: String, count: Int): MultiLayerNetwork = {
@@ -34,6 +35,7 @@ object NeuralModelLoader {
     Log.v("Loading %s ...".format(coefficients))
     val dis = new DataInputStream(new FileInputStream(coefficients))
     val params = Nd4j.read(dis)
+    dis.close()
 
     // create network
     Log.v("Initializing network ...")
