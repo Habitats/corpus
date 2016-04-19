@@ -25,7 +25,7 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     contentType = formats("txt")
     val text = params.get("text").get
     Log.v("hello!")
-    predict(text).mkString(", ")
+    predict(text).mkString("\n")
   }
 
   get("/extract/:text/?") {

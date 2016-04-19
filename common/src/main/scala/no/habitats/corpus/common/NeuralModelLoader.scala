@@ -10,8 +10,8 @@ import org.nd4j.linalg.factory.Nd4j
 
 object NeuralModelLoader {
 
-  def coefficientsPath(label: String, count: Int): String = Config.cachePath + s"coefficients_${label}_${Config.count}.bin"
-  def confPath(label: String, count: Int): String = Config.cachePath + s"conf_${label}_${Config.count}.json"
+  def coefficientsPath(label: String, count: Int): String = Config.cachePath + s"coefficients_${label}_${count}.bin"
+  def confPath(label: String, count: Int): String = Config.cachePath + s"conf_${label}_${count}.json"
 
   def save(model: MultiLayerNetwork, label: String, count: Int) = {
     // write parameters
