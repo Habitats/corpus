@@ -8,7 +8,7 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import scala.collection.JavaConverters._
 
 case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, epoch: Int) {
-  private val eval = {
+  private lazy val eval = {
     val e = new Evaluation()
     testIter.asScala.toList.foreach(t => {
       val features = t.getFeatureMatrix
@@ -21,7 +21,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
     e
   }
 
-  private val fullStats = Seq[(String, String)](
+  private lazy val fullStats = Seq[(String, String)](
     "Epoch" -> f"$epoch%5d",
     "TP" -> f"${eval.truePositives.get(1)}%5d",
     "FP" -> f"${eval.falsePositives.get(1)}%5d",
@@ -33,9 +33,9 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
     "F-score" -> f"${eval.f1}%.3f"
   )
 
-  val statsHeader = fullStats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString("")
-  val stats       = fullStats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString("")
-  val confusion   = {
+  lazy val statsHeader = fullStats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString("")
+  lazy val stats       = fullStats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString("")
+  lazy val confusion   = {
     eval.getConfusionMatrix.toCSV.split("\n")
       .map(_.split(",").zipWithIndex.map { case (k, v) => if (v == 0) f"$k%12s" else f"$k%6s" }.mkString(""))
       .mkString("\n", "\n", "")

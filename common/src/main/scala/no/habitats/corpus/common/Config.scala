@@ -9,14 +9,16 @@ import scala.util.{Failure, Success, Try}
 
 object Config {
 
-
   val seed = 123
 
   // Required data (need to be lazy, otherwise dataPath is null)
+  lazy val nytCorpus          = dataPath + "nyt/nyt_corpus.json"
+  lazy val nytCorpusAnnotated = dataPath + "nyt/nyt_corpus_annotated_0.5.json"
   lazy val freebaseToWord2Vec = dataPath + "nyt/fb_w2v_0.5.txt"
-  lazy val nytCorpusAnnotated = dataPath + "nyt/nyt_corpus_annotated_0.5_sample.json"
-  lazy val dbpedia            = dataPath + "nyt/dbpedia-all-0.75.json"
+  lazy val dbpedia            = dataPath + "nyt/dbpedia-all-0.5.json"
+  lazy val combinedIds        = dataPath + "nyt/combined_ids_0.5.txt"
   lazy val freebaseToWikidata = dataPath + "wikidata/fb_to_wd_all.txt"
+  lazy val wikidataToFreebase = dataPath + "wikidata/wd_to_fb.txt"
   lazy val dbpediaToWikidata  = dataPath + "wikidata/dbpedia_to_wikidata.txt"
 
   private var args           : Arguments = Arguments()
@@ -40,7 +42,7 @@ object Config {
     Log.v("SPARK CONFIG: " + sparkConfig + "\n\t" + sparkProps.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
   }
 
-  def dataFile(s: String): BufferedSource = Try(Source.fromFile(dataPath + s)(Codec.ISO8859)) match {
+  def dataFile(s: String): BufferedSource = Try(Source.fromFile(s)(Codec.ISO8859)) match {
     case Success(file) => Log.v("Loading data file: " + s); file
     case Failure(ex) => throw new FileNotFoundException(s"Error loading data file: $s - ERROR: ${ex.getMessage}")
   }
@@ -75,15 +77,24 @@ object Config {
     conf
   }
 
+  def formatPath(path: String): String = {
+    path
+      .replace("~", System.getProperty("user.home"))
+      .replace("%ARCHIVE_HOME%", sys.env("ARCHIVE_HOME"))
+      .replace("%DROPBOX_HOME%", sys.env("DROPBOX_HOME"))
+      .replace("\\", "/")
+  }
+
   // static
-  val testPath            : String      = conf.getProperty("test_path").replace("~", System.getProperty("user.home"))
-  val dataPath            : String      = conf.getProperty("data_path").replace("~", System.getProperty("user.home"))
-  val cachePath           : String      = conf.getProperty("cache_path").replace("~", System.getProperty("user.home"))
+  val testPath            : String      = formatPath(conf.getProperty("test_path"))
+  val dataPath            : String      = formatPath(conf.getProperty("data_path"))
+  val cachePath           : String      = formatPath(conf.getProperty("cache_path"))
   val broadMatch          : Boolean     = conf.getProperty("broad_match").toBoolean
   val wikiDataOnly        : Boolean     = conf.getProperty("wikidata_only").toBoolean
   val wikiDataIncludeBroad: Boolean     = conf.getProperty("wikidata_include_broad").toBoolean
   val phraseSkipThreshold : Int         = conf.getProperty("term_frequency_threshold").toInt
   val iptcFilter          : Set[String] = Some(conf.getProperty("iptc_filter")).map(e => if (e.length > 0) e.split(",").toSet else Set[String]()).get
+  val dbpediaSpotlightURL : String      = conf.getProperty("dbpedia_spotlight_url")
 
   // Dynamic variables for file caching
   // TODO: this shouldn't be here. really.

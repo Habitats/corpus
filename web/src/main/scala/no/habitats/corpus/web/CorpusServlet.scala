@@ -40,11 +40,6 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     annotate(text).map(_.toString).mkString("\n")
   }
 
-  /**
-    * Extract word2vec vectors based on pre-trained Freebase model from a text
-    *
-    * @return Collection of INDArray's representing each 1000d vector
-    */
   get("/w2v/:text/?") {
     contentType = formats("txt")
     val text = params.get("text").get
@@ -56,13 +51,11 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     val id = "/m/" + params.get("id").get
   }
 
-
-
   get("/vec/m/:id/?") {
     contentType = formats("txt")
     val id = "/m/" + params.get("id").get
     freebaseToWord2Vec(id) match {
-      case Some(w2v) => w2v.toString()
+      case Some(w2v) => w2v.toString
       case None => "NO_MATCH"
     }
   }

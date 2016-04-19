@@ -4,7 +4,7 @@ import dispatch._
 import no.habitats.corpus.common.CorpusContext.sc
 import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.{Article, DBPediaAnnotation, Entity}
-import no.habitats.corpus.spark.RddFetcher
+import no.habitats.corpus.spark.{RddFetcher, SparkUtil}
 import org.apache.spark.rdd.RDD
 import org.joda.time.DateTime
 import org.json4s._
@@ -23,7 +23,7 @@ object Spotlight {
   def combineAndCacheIds() = {
     val dbp = WikiData.dbToWd
     val dbf = WikiData.wdToFb
-    RddFetcher.dbpedia(sc)
+    val rdd = RddFetcher.dbpedia(sc)
       .map(_.entity.id)
       .map(a => (a, 1))
       .reduceByKey(_ + _)
@@ -33,13 +33,13 @@ object Spotlight {
         val fb = dbf.get(wd.getOrElse(""))
         f"$count%-8s ${wd.getOrElse("")}%-10s ${fb.getOrElse("")}%-12s $db"
       }
-      .coalesce(1)
-      .saveAsTextFile(Config.cachePath + Config.dbpedia + "_" + DateTime.now.secondOfDay.get)
+
+    SparkUtil.saveAsText(rdd, Config.dbpedia)
   }
 
   /** Entity extraction using DBPedia Spotlight REST API */
   def fetchAnnotations(text: String, confidence: Double = 0.5): List[Entity] = {
-    val request = url("http://localhost:2222/rest/annotate").POST
+    val request = url(Config.dbpediaSpotlightURL).POST
       .addHeader("content-type", "application/x-www-form-urlencoded")
       .addHeader("Accept", "application/json")
       .addParameter("User-agent", Math.random.toString)
@@ -83,7 +83,8 @@ object Spotlight {
         json
       }
     }
-    entities.coalesce(1, shuffle = true).saveAsTextFile(Config.cachePath + "dbpedia_json_" + confidence + "_" + DateTime.now.secondOfDay.get)
+
+    SparkUtil.saveAsText(entities, "dbpedia_json_" + confidence)
   }
 }
 

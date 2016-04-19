@@ -28,16 +28,6 @@ class IOTest extends FunSuite with Samples {
     assert(a1.ann.map(_._2.id).toSet.intersect(Set("/m/078tg", "/m/01fqm", "/m/0d05q4")).size == 3)
   }
 
-  test("cache json NYT corpus") {
-    val limit = 1000
-    val articles = Corpus.articlesFromXML(count = limit).sortBy(_.id)
-    JsonSingle.cacheRawNYTtoJson(limit)
-    val cached = JsonSingle.load(limit).sortBy(_.id)
-    for (a <- articles.indices) {
-      assert(articles(a) == cached(a))
-    }
-  }
-
   test("walking") {
     val limit = 3000
     val files = IO.walk(Config.dataPath + "/nyt/", count = limit, filter = "1")

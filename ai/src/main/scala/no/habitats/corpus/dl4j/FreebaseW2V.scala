@@ -6,7 +6,7 @@ import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.dl4j.networks.{RNN, RNNIterator}
 import no.habitats.corpus.models.Article
-import no.habitats.corpus.spark.RddFetcher
+import no.habitats.corpus.spark.{RddFetcher, SparkUtil}
 import org.apache.spark.api.java.JavaRDD
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.AsyncDataSetIterator
@@ -23,36 +23,18 @@ object FreebaseW2V {
   lazy val gModel            = new File(Config.dataPath + "w2v/freebase-vectors-skipgram1000.bin")
   lazy val gVec: WordVectors = WordVectorSerializer.loadGoogleModel(gModel, true)
 
-  lazy val split: Array[RDD[Article]] = RddFetcher.rdd.randomSplit(Array(0.8, 0.2), seed = 1L)
+  lazy val split: Array[RDD[Article]] = RddFetcher.annotatedRdd.randomSplit(Array(0.8, 0.2), seed = Config.seed)
   lazy val train: RDD[Article]        = split(0)
   lazy val test : RDD[Article]        = split(1)
 
   def cacheWordVectors() = {
-    sc.textFile(Config.dataPath + "nyt/combined_ids_0.5.txt")
+    val rdd = sc.textFile(Config.combinedIds)
       .map(_.substring(22, 35).trim)
       .filter(gVec.hasWord).map(fb => (fb, gVec.getWordVector(fb)))
       .map(a => f"${a._1}, ${a._2.toSeq.mkString(", ")}")
-      .coalesce(1, shuffle = true)
-      .saveAsTextFile(Config.cachePath + "fb_w2v_0.5")
-  }
 
-  //  def loadVectors(filter: Set[String] = Set.empty): Map[String, INDArray] = {
-  //    val start = System.currentTimeMillis
-  //    val vec = Files.readAllLines(new File(Config.dataPath + "nyt/fb_w2v_0.5.txt").toPath).asScala
-  //      .map(_.split(", "))
-  //      .filter(arr => filter.isEmpty || filter.contains(arr(0)))
-  //      .map(arr => (arr(0), arr.toSeq.slice(1, arr.length).map(_.toFloat).toArray))
-  //      .map(arr => {
-  //        val vector = Nd4j.create(arr._2)
-  //        val id = arr._1
-  //        (id, vector)
-  //      })
-  //      .toMap
-  //
-  //    Log.v(s"Loaded vectors in ${System.currentTimeMillis() - start} ms")
-  //
-  //    vec
-  //  }
+    SparkUtil.saveAsText(rdd, "fb_to_w2v")
+  }
 
   def trainSparkMultiLabelRNN(label: Option[String] = None): MultiLayerNetwork = {
     val nEpochs = 5
@@ -84,8 +66,8 @@ object FreebaseW2V {
       case _ => RNN.createBinary()
     }
 
-    val trainIter = new AsyncDataSetIterator(new RNNIterator(train.collect(), label))
-    val testIter = new AsyncDataSetIterator(new RNNIterator(test.collect(), label))
+    val trainIter = new RNNIterator(train.collect(), label)
+    val testIter = new RNNIterator(test.collect(), label)
     Log.r(s"Training ${label.mkString(", ")} ...")
     Log.r2(s"Training ${label.mkString(", ")} ...")
     for (i <- 0 until nEpochs) {

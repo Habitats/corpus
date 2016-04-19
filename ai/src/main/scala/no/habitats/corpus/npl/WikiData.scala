@@ -5,6 +5,7 @@ import java.io.{File, PrintWriter}
 import no.habitats.corpus.common.CorpusContext.sc
 import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.Annotation
+import no.habitats.corpus.spark.SparkUtil
 import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -16,7 +17,6 @@ object WikiData {
   implicit val formats = Serialization.formats(NoTypeHints)
   implicit def toJson(url: String): JValue = parse(Source.fromURL(url).mkString)
 
-  val pairsFile = "wikidata/fb_to_wd_all.txt"
   // API roots
   val wmflabs   = "http://wdq.wmflabs.org/api?q="
   val wiki      = "https://www.wikidata.org/w/api.php?format=json&language=en&"
@@ -25,8 +25,8 @@ object WikiData {
   lazy val occupations = loadPairs("occupation.txt")
   lazy val genders     = loadPairs("gender.txt")
 
-  lazy val fbToWd: Map[String, String] = loadCachedPairs(Config.dataPath + pairsFile)
-  lazy val wdToFb: Map[String, String] = loadCachedPairs(Config.freebaseToWikidata)
+  lazy val fbToWd: Map[String, String] = loadCachedPairs(Config.wikidataToFreebase).map(a => (a._2, a._1))
+  lazy val wdToFb: Map[String, String] = loadCachedPairs(Config.wikidataToFreebase)
   lazy val dbToWd: Map[String, String] = loadCachedPairs(Config.dbpediaToWikidata).map(a => (a._2, a._1))
 
   /**
@@ -37,7 +37,7 @@ object WikiData {
     */
   def loadCachedPairs(path: String): Map[String, String] = {
     Log.v("Loading " + path + " ...")
-    val pairs = sc.textFile(path).map(_.split(" ")).filter(_.length == 2).map(a => (a(0), a(1))).collect.toMap
+    val pairs = Config.dataFile(path).getLines.map(_.split(" ")).filter(_.length == 2).map(a => (a(0), a(1))).toMap
     Log.v("Loading complete!")
     pairs
   }
@@ -53,7 +53,7 @@ object WikiData {
       List(JInt(wb), JString(valueType), JString(fb)) = triple
     } yield (fb.toString, wb.toString)
     Log.v("Done! Storing ...")
-    val file = new File(Config.dataPath + pairsFile)
+    val file = new File(Config.freebaseToWikidata)
     file.createNewFile
     val writer = new PrintWriter(file)
     pairs.foreach(p => writer.println(p._1 + "," + p._2))
@@ -66,7 +66,7 @@ object WikiData {
   def computeSubclassOf() = loadWdPropPairs("subclassOf", "279")
 
   def loadPairs(name: String): Map[String, Set[String]] = {
-    Config.dataFile("wikidata/" + name).getLines().map(line => {
+    Config.dataFile(Config.dataPath + "wikidata/" + name).getLines().map(line => {
       val v = line.split(" ")
       (v(0), v(1).split(",").toSet)
     }).toMap
@@ -113,22 +113,22 @@ object WikiData {
   def resToId(res: String): String = res.substring(res.lastIndexOf("/") + 1, res.length - 1)
 
   def extractFreebaseFromWikiDump() = {
-    sc.textFile("e:/wikidata-simple-statements.nt")
+    val rdd = sc.textFile("e:/wikidata-simple-statements.nt")
       .map(_.split(" ").toList.take(3))
       .filter(a => a(1) == "<http://www.wikidata.org/entity/P646c>")
       .map { case a :: b :: c :: Nil => (resToId(a), c.substring(1, c.length - 1)) }
       .map { case (wikiId, fbId) => wikiId + " " + fbId }
-      .coalesce(1, shuffle = true)
-      .saveAsTextFile(Config.cachePath + "wiki_to_fb_" + DateTime.now.secondOfDay.get)
+
+    SparkUtil.saveAsText(rdd, "wiki_to_fb")
   }
 
   def extractWikiIDFromDbpediaDump() = {
-    sc.textFile("e:/wikidatawiki-20150330-sameas-all-wikis.ttl")
+    val rdd = sc.textFile("e:/wikidatawiki-20150330-sameas-all-wikis.ttl")
       .map(_.split(" ").toList.take(3))
       .filter(a => a(2).startsWith("<http://dbpedia.org"))
       .map { case a :: b :: c :: Nil => (resToId(a), resToId(c)) }
       .map { case (wikiId, dbpediaId) => wikiId + " " + dbpediaId }
-      .coalesce(1, shuffle = true)
-      .saveAsTextFile(Config.cachePath + "dbpedia_to_wiki_" + DateTime.now.secondOfDay.get)
+
+    SparkUtil.saveAsText(rdd, "dbpedia_to_wiki")
   }
 }

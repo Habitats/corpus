@@ -19,12 +19,12 @@ object SparkUtil {
     Log.v(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
   }
 
-  lazy val rdd: RDD[Article] = RddFetcher.rdd
+  lazy val rdd: RDD[Article] = RddFetcher.annotatedRdd
 
   def trainNaiveBayes() = {
     val prefs = sc.broadcast[Prefs](Prefs(termFrequencyThreshold = 5, wikiDataIncludeBroad = false, wikiDataOnly = false))
-    val rdd = Preprocess.preprocess(prefs, RddFetcher.rdd)
-    ML.multiLabelClassification(prefs, rdd)
+    val preprocessed = Preprocess.preprocess(prefs, rdd)
+    ML.multiLabelClassification(prefs, preprocessed)
   }
 
   def main(args: Array[String]) = {
@@ -50,7 +50,7 @@ object SparkUtil {
       case "wdToFbFromDump" => WikiData.extractFreebaseFromWikiDump()
       case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
       case "combineIds" => Spotlight.combineAndCacheIds()
-      case "fullCache" => annotateAndCacheEverything()
+      case "fullCache" => annotateAndCacheArticles()
       case "fbw2v" => FreebaseW2V.cacheWordVectors()
 
       // Display stats
@@ -69,11 +69,6 @@ object SparkUtil {
     Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
     //    Thread.sleep(Long.MaxValue)
     //    sc.stop
-  }
-
-  def allSteps() = {
-    val nyt = Corpus.articlesFromXML()
-
   }
 
   def prettyTime(ms: Long): String = {
@@ -105,13 +100,16 @@ object SparkUtil {
   }
 
   /** Fetch json RDD and compute IPTC and annotations */
-  def annotateAndCacheEverything() = {
-    RddFetcher.rdd
+  def annotateAndCacheArticles() = {
+    val rdd = RddFetcher.rdd
       .map(Corpus.toIPTC)
       .map(Corpus.toDBPediaAnnotated)
       .map(JsonSingle.toSingleJson)
-      .coalesce(1, shuffle = true)
-      .saveAsTextFile(Config.cachePath + "nyt_with_all_" + DateTime.now.secondOfDay.get)
+    saveAsText(rdd, "nyt_with_all")
+  }
+
+  def saveAsText(rdd: RDD[String], name: String) = {
+    rdd.coalesce(1, shuffle = true).saveAsTextFile(Config.cachePath + name + "_" + DateTime.now.secondOfDay.get)
   }
 
   def computeAndCacheDBPediaAnnotationsToJson() = {

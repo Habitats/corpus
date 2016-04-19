@@ -10,7 +10,6 @@ import scala.util.Try
 
 object Corpus {
 
-  lazy val relevantArticleIds: Set[String] = Try(Config.dataFile("google_annotations/relevant_article_ids.txt").getLines().toSet).getOrElse(Set())
   lazy val rawNYTParser                    = new NYTCorpusDocumentParser
 
   lazy val googleAnnotations: Map[String, Seq[Annotation]] = {
@@ -21,7 +20,7 @@ object Corpus {
   }
 
   lazy val dbpediaAnnotations: Map[String, Seq[Annotation]] = {
-    val path = "nyt/" + Config.dbpedia
+    val path = Config.dbpedia
     Log.v(s"Loading $path ...")
     Config.dataFile(path).getLines()
       .map(DBPediaAnnotation.fromSingleJson)
@@ -30,7 +29,7 @@ object Corpus {
   }
 
   def articlesFromXML(path: String = Config.dataPath + "/nyt/", count: Int = Config.count): Seq[Article] = {
-    Log.v(f"Loading $count articles ...")
+    Log.v(f"Loading ${if (count == Integer.MAX_VALUE) "all" else count} articles ...")
     IO.walk(path, count, filter = ".xml")
       .map(toNYT)
       .map(toArticle)

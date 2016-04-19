@@ -11,25 +11,27 @@ import org.apache.spark.{SparkContext, SparkException}
 
 object RddFetcher {
 
-  var size: Double = 1855658L
+  lazy val rdd         : RDD[Article] = fetchRDD(annotated = false)
+  lazy val annotatedRdd: RDD[Article] = fetchRDD(annotated = true)
 
-  lazy val rdd: RDD[Article] = {
+  private def fetchRDD(annotated: Boolean): RDD[Article] = {
+    val path = if (annotated) Config.nytCorpusAnnotated else Config.nytCorpus
     var rdd = Config.rdd match {
       case "cache" => cachedRdd(sc)
-      case "local" => localRdd(sc)
+      case "local" => sc.textFile(path, Config.partitions).map(JsonSingle.fromSingleJson)
     }
     rdd = if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(Config.count)) else rdd
     rdd = if (Config.iptcFilter.nonEmpty) rdd.filter(a => a.iptc.intersect(Config.iptcFilter).nonEmpty) else rdd
     rdd
   }
 
-  def dbpedia(sc: SparkContext, name: String = "/nyt/" + Config.dbpedia): RDD[DBPediaAnnotation] = {
-    val rdd = sc.textFile(Config.dataPath + name).map(DBPediaAnnotation.fromSingleJson)
+  def dbpedia(sc: SparkContext, name: String = Config.dbpedia): RDD[DBPediaAnnotation] = {
+    val rdd = sc.textFile(name).map(DBPediaAnnotation.fromSingleJson)
     if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(Config.count)) else rdd
   }
 
   def localRdd(sc: SparkContext): RDD[Article] = {
-    sc.textFile("file:///" + JsonSingle.jsonFile.getAbsolutePath, Config.partitions).map(JsonSingle.fromSingleJson)
+    sc.textFile(Config.nytCorpus, Config.partitions).map(JsonSingle.fromSingleJson)
   }
 
   def cachedRdd(sc: SparkContext): RDD[Article] = {
@@ -47,8 +49,7 @@ object RddFetcher {
     } catch {
       case e: SparkException =>
         Log.v("Invalid class: " + e.getMessage)
-        Log.v("Falling back to local ...")
-        localRdd(sc)
+        throw e
     }
   }
 }
