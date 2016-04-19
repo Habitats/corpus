@@ -59,10 +59,10 @@ object SparkUtil {
       // Modelling
       case "trainNaiveBayes" => trainNaiveBayes()
       case "trainRNNML" => FreebaseW2V.trainMultiLabelRNN()
-      case "trainRNN" => IPTC.topCategories.foreach(c => FreebaseW2V.trainMultiLabelRNN(Some(c)))
-      case "trainRNNSingle" => NeuralModelLoader.save(FreebaseW2V.trainMultiLabelRNN(Some(Config.category))) // category=?
+      case "trainRNN" => IPTC.topCategories.foreach(c => NeuralModelLoader.save(FreebaseW2V.trainMultiLabelRNN(Some(c)), c, Config.count))
+      case "trainRNNSingle" => NeuralModelLoader.save(FreebaseW2V.trainMultiLabelRNN(Some(Config.category)), Config.category, Config.count) // category=?
       case "trainSparkRNN" => FreebaseW2V.trainSparkMultiLabelRNN()
-      case "loadRNN" => NeuralModelLoader.load()
+      case "loadRNN" => NeuralModelLoader.load(Config.category, Config.count)
 
       case _ => Log.r("No job ... Exiting!")
     }

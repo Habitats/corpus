@@ -19,7 +19,7 @@ trait CorpusAPI {
     val article = new Article(id = "NO_ID", body = text, ann = annotations.map(v => (v.id, v)).toMap)
     val iptc = IPTC.topCategories
     val rdd = CorpusContext.sc.parallelize(Seq(article))
-    val model = NeuralModelLoader.cachedModel
+    val model = NeuralModelLoader.load("sport", 100000)
     val predictors: Map[String, NeuralPredictor] = iptc.map(label => (label, new NeuralPredictor(model, article, label))).toMap
     val results: Set[String] = predictors.map { case (label, predictor) => (label, predictor.correct()) }.filter(_._2).keySet
 
