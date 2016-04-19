@@ -45,12 +45,12 @@ object Spotlight {
       .addParameter("User-agent", Math.random.toString)
       .addParameter("text", text)
       .addParameter("confidence", confidence.toString)
-    //.addParameter("types", "Person,Organisation,Location")
+//    .addParameter("types", "Person,Organisation,Location")
 
     // Let Spark handle the parallelism, it's pretty good at it
     val res = Await.result(Http(request OK as.String), 15 minutes)
     val json = parse(res)
-    Log.v(pretty(json))
+//    Log.v(pretty(json))
     val resources = json \ "Resources" match {
       case JArray(e) => e
       case _ => Nil

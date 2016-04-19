@@ -6,6 +6,9 @@ import com.nytlabs.corpus.NYTCorpusDocument
 import no.habitats.corpus.npl.IPTC
 import no.habitats.corpus.npl.extractors.OpenNLP
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization._
 
 case class Article(id: String,
                    hl: String = null,
@@ -16,7 +19,7 @@ case class Article(id: String,
                    url: Option[String] = None,
                    desc: Set[String] = Set(),
                    pred: Set[String] = Set(),
-                   ann: Map[String, Annotation] = Map()) {
+                   ann: Map[String, Annotation] = Map()) extends JSonable {
 
   override def toString: String = {
     val iptcstr = iptc.mkString(", ")

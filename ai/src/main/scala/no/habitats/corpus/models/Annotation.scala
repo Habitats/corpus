@@ -5,6 +5,9 @@ import java.io.File
 import no.habitats.corpus.common.Config
 import no.habitats.corpus.models.Annotation.NONE
 import no.habitats.corpus.npl.WikiData
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
+import org.json4s.jackson.Serialization._
 
 import scala.collection.mutable.ListBuffer
 import scala.io.{BufferedSource, Codec, Source}
@@ -17,7 +20,7 @@ case class Annotation(articleId: String,
                       wd: String = NONE, // WikiData ID
                       db: String = NONE,
                       tfIdf: Double = -1 // term frequency, inverse document frequency
-                     ) {
+                     ) extends JSonable {
 
   lazy val id: String = {
     if (fb != NONE) fb
