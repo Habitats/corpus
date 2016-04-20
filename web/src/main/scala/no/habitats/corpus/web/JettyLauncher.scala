@@ -1,5 +1,6 @@
 package no.habitats.corpus.web
 
+import no.habitats.corpus.common.Config
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
 import org.scalatra.servlet.ScalatraListener
@@ -9,6 +10,7 @@ import org.scalatra.servlet.ScalatraListener
   */
 object JettyLauncher {
   def main(args: Array[String]) {
+    Config.setArgs(args)
     val port = if (System.getenv("PORT") != null) System.getenv("PORT").toInt else 8090
     //    val port = 8090
     val server = new Server(port)

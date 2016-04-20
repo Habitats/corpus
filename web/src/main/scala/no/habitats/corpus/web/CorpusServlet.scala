@@ -1,7 +1,7 @@
 package no.habitats.corpus.web
 
 import no.habitats.corpus.CorpusAPI
-import no.habitats.corpus.common.{Config, Log}
+import no.habitats.corpus.common.{Config, Log, W2VLoader}
 import no.habitats.corpus.models.{Annotation, Entity}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
@@ -56,9 +56,14 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     contentType = formats("txt")
     val id = "/m/" + params.get("id").get
     freebaseToWord2Vec(id) match {
-      case Some(w2v) => w2v.toString
+      case Some(w2v) => W2VLoader.toString(w2v)
       case None => "NO_MATCH"
     }
+  }
+
+  get("/vec/size/?") {
+    contentType = formats("txt")
+    W2VLoader.featureSize.toString
   }
 
   get("/info/:text/?") {
@@ -85,7 +90,9 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
         <ul>
           <li>
             <h3>Predicted Category</h3>
-            <div>{predictions.mkString("\n", "\n", "")}</div>
+            <div>
+              {predictions.mkString("\n", "\n", "")}
+            </div>
           </li>
           <li>
             <h3>Annotations</h3>

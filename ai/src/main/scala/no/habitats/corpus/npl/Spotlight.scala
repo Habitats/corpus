@@ -1,6 +1,7 @@
 package no.habitats.corpus.npl
 
 import dispatch._
+
 import no.habitats.corpus.common.CorpusContext.sc
 import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.{Article, DBPediaAnnotation, Entity}

@@ -9,7 +9,7 @@ subprojects {
     repositories {
         mavenLocal()
         mavenCentral()
-        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
+//        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
         flatDir(dirs: 'models')
     }
 
@@ -29,16 +29,13 @@ subprojects {
             exclude group: 'org.slf4j', module: 'slf4j-log4j12'
             exclude group: 'log4j', module: 'log4j'
             exclude group: 'org.fusesource.scalate'
-
-//        exclude group: 'com.sun.jersey'
-//        exclude group: 'com.sun.jersey.jersey-test-framework'
-//        exclude group: 'com.sun.jersey.contribs'
+            exclude group: 'com.sun.jersey.jersey-test-framework', module: 'jersey-test-framework-grizzly2'
+            exclude group: 'com.sun.jersey', module: 'jersey-json'
+            exclude group: 'com.sun.jersey', module: 'jersey-core'
+//            exclude group: 'com.typesafe.akka', module: 'akka-remote_2.10'
+//            exclude group: 'com.typesafe.akka', module: 'akka-actor_2.10'
+//            exclude group: 'com.typesafe.akka', module: 'akka-slf4j_2.10'
         }
-//    runtime.exclude group: 'org.apache.spark'
-//    runtime.exclude group: 'org.apache.hbase'
-//    runtime.exclude group: 'org.cloudera.htrace', module: 'htrace-core'
-//    runtime.exclude module: 'stanford-corenlp-3.6.0-models'
-//    runtime.exclude module: 'reflectasm'
     }
 
     dependencies {
@@ -55,6 +52,9 @@ subprojects {
             exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
             exclude group: 'org.glassfish', module: 'javax.servlet'
             exclude group: 'javax.servlet', module: 'javax.servlet-api'
+            exclude group: 'com.sun.jersey.jersey-test-framework', module: 'jersey-test-framework-grizzly2'
+            exclude group: 'com.sun.jersey', module: 'jersey-json'
+            exclude group: 'com.sun.jersey', module: 'jersey-core'
         }
         compile 'org.apache.spark:spark-mllib_2.10:1.5.2'
 
@@ -68,6 +68,7 @@ subprojects {
         compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.9-SNAPSHOT'
         compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.9-SNAPSHOT'
         compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT'
+        compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
 
         compile fileTree('models/binary')
         compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging

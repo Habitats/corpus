@@ -1,6 +1,7 @@
 package no.habitats.corpus
 
 import java.io._
+
 import java.nio.file.{FileSystems, Files}
 
 import no.habitats.corpus.common.{Config, Log}

@@ -26,6 +26,8 @@ object Config {
   private var corpusConfig   : String    = null
   private val localConfigRoot: String    = sys.env("DROPBOX_HOME") + "/code/projects/corpus/ai/src/main/resources/"
 
+  val corpusApiURL = "http://corpus.habitats.no:8090/vec"
+
   def setArgs(arr: Array[String]) = {
     lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
     args = Arguments(
@@ -34,7 +36,8 @@ object Config {
       job = props.get("job"),
       iptcFilter = props.get("iptcFilter").map(_.split(",").toSet),
       category = props.get("category"),
-      count = props.get("count").map(_.toInt)
+      count = props.get("count").map(_.toInt),
+      useApi = props.get("useApi").map(_.toBoolean)
     )
 
     Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
@@ -109,6 +112,7 @@ object Config {
   }
   def job = args.job.getOrElse(conf.getProperty("job"))
   def category = args.category.getOrElse(throw new IllegalArgumentException("NO CATEGORY DEFINED"))
+  def useApi = args.useApi.getOrElse(false)
 
   case class Arguments(
                         partitions: Option[Int] = None,
@@ -116,6 +120,7 @@ object Config {
                         job: Option[String] = None,
                         count: Option[Int] = None,
                         category: Option[String] = None,
-                        iptcFilter: Option[Set[String]] = None
+                        iptcFilter: Option[Set[String]] = None,
+                        useApi: Option[Boolean] = None
                       )
 }

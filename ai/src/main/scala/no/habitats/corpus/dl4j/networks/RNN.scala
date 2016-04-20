@@ -7,6 +7,7 @@ import org.deeplearning4j.nn.conf.{GradientNormalization, NeuralNetConfiguration
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
+import org.deeplearning4j.ui.weights.HistogramIterationListener
 import org.nd4j.linalg.lossfunctions.LossFunctions
 
 object RNN {
@@ -54,7 +55,7 @@ object RNN {
     val net = new MultiLayerNetwork(conf)
     net.init()
     net.setListeners(new ScoreIterationListener(1))
-    //    net.setListeners(new HistogramIterationListener(1))
+//    net.setListeners(new HistogramIterationListener(1))
     net.setUpdater(null)
     net
   }

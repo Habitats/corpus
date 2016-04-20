@@ -3,11 +3,9 @@ package no.habitats.corpus.dl4j.networks
 import java.util
 
 import no.habitats.corpus.common.{Log, W2VLoader}
-import no.habitats.corpus.dl4j.networks.RNNIterator._
 import no.habitats.corpus.models.{Annotation, Article}
 import no.habitats.corpus.npl.IPTC
 import org.deeplearning4j.datasets.iterator.DataSetIterator
-import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j
@@ -15,7 +13,7 @@ import org.nd4j.linalg.indexing.NDArrayIndex
 
 import scala.collection.JavaConverters._
 
-class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 50) extends DataSetIterator {
+class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 100) extends DataSetIterator {
 
   // 32 may be a good starting point,
   var counter                     = 0
@@ -23,7 +21,7 @@ class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 5
     Log.v("Loading articles ...")
     val a = rdd
       .filter(_.iptc.nonEmpty)
-      .map(a => a.copy(ann = a.ann.filter(an => vectors.contains(an._2.fb))))
+      .map(a => a.copy(ann = a.ann.filter(an => an._2.fb != "NONE" && W2VLoader.contains(an._2.fb))))
       .filter(_.ann.nonEmpty)
     a
   }
@@ -35,7 +33,7 @@ class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 5
     val maxNumberOfFeatures = articles.map(_.ann.size).max
 
     // [miniBatchSize, inputSize, timeSeriesLength]
-    val features = Nd4j.create(articles.size, featureSize, maxNumberOfFeatures)
+    val features = Nd4j.create(articles.size, W2VLoader.featureSize, maxNumberOfFeatures)
     val labels = Nd4j.create(articles.size, totalOutcomes, maxNumberOfFeatures)
     // [miniBatchSize, timeSeriesLength]
     val featureMask = Nd4j.zeros(articles.size, maxNumberOfFeatures)
@@ -45,10 +43,10 @@ class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 5
       val tokens = articles(i).ann.values
         .filter(_.fb != Annotation.NONE)
         .map(_.fb)
-        .filter(vectors.contains)
+        .filter(W2VLoader.contains)
         .toList
       for (j <- tokens.indices) {
-        val vector = vectors(tokens(j))
+        val vector = W2VLoader.fromId(tokens(j)).get
         features.put(Array(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.point(j)), vector)
         featureMask.putScalar(Array(i, j), 1.0)
       }
@@ -73,7 +71,7 @@ class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 5
   override def batch(): Int = Math.min(batchSize, Math.max(allArticles.size - counter, 0))
   override def cursor(): Int = counter
   override def totalExamples(): Int = allArticles.size
-  override def inputColumns(): Int = featureSize
+  override def inputColumns(): Int = W2VLoader.featureSize
   override def setPreProcessor(preProcessor: DataSetPreProcessor): Unit = throw new UnsupportedOperationException
   override def getLabels: util.List[String] = categories
   override def totalOutcomes(): Int = if (label.isDefined) 2 else getLabels.size
@@ -81,10 +79,4 @@ class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 5
   override def numExamples(): Int = totalExamples()
   override def next(): DataSet = next(batch)
   override def hasNext: Boolean = counter < totalExamples()
-}
-
-object RNNIterator {
-  lazy val vectors    : Map[String, INDArray] = W2VLoader.loadVectors()
-  lazy val features   : Set[String]           = vectors.keySet
-  lazy val featureSize: Int                   = vectors.values.head.length()
 }

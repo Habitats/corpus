@@ -42,7 +42,6 @@ object SparkUtil {
       case "printArticles" => printArticles(Config.count)
       case "count" => Log.r(s"Counting job: ${rdd.count} articles ...")
       case "preprocess" => Preprocess.preprocess(sc.broadcast(Prefs()), rdd)
-      case "fbw2vLoad" => W2VLoader.loadVectors()
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
@@ -51,6 +50,7 @@ object SparkUtil {
       case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
       case "combineIds" => Spotlight.combineAndCacheIds()
       case "fullCache" => annotateAndCacheArticles()
+      case "fullCacheSep" => annotateAndCacheSeparateArticles()
       case "fbw2v" => FreebaseW2V.cacheWordVectors()
 
       // Display stats
@@ -106,6 +106,17 @@ object SparkUtil {
       .map(Corpus.toDBPediaAnnotated)
       .map(JsonSingle.toSingleJson)
     saveAsText(rdd, "nyt_with_all")
+  }
+
+  def annotateAndCacheSeparateArticles() = {
+    val rdd = RddFetcher.annotatedRdd
+    rdd.cache()
+    IPTC.topCategories.map(c => {
+      val filtered = rdd
+        .filter(_.iptc.contains(c))
+        .map(JsonSingle.toSingleJson)
+      saveAsText(filtered, "nyt_with_all_" + c)
+    })
   }
 
   def saveAsText(rdd: RDD[String], name: String) = {

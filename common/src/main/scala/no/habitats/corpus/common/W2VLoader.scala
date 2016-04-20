@@ -1,18 +1,61 @@
 package no.habitats.corpus.common
 
+import dispatch._
 import no.habitats.corpus.common.CorpusContext.sc
+import org.json4s.NoTypeHints
+import org.json4s.jackson.Serialization
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 
+import scala.concurrent.Await
+import scala.concurrent.ExecutionContext.Implicits.global
+import scala.concurrent.duration._
+
 object W2VLoader {
 
-  lazy val vectors = loadVectors()
+  implicit val formats = Serialization.formats(NoTypeHints)
 
-  def fromId(id: String): Option[INDArray] = vectors.get(id)
+  private lazy val vectors = loadVectors()
 
-  def contains(id: String): Boolean = vectors.contains(id)
+  def fromId(id: String): Option[INDArray] = {
+    if (Config.useApi) {
+      val request = url(Config.corpusApiURL + id).GET
+      val res = Await.result(Http(request OK as.String), 15 minutes)
+      if (res != "NO_MATCH") {
+        val vec = W2VLoader.fromString(res)
+        Some(vec)
+      } else {
+        None
+      }
+    } else {
+      vectors.get(id)
+    }
+  }
 
-  def loadVectors(filter: Set[String] = Set.empty): Map[String, INDArray] = {
+  def contains(id: String): Boolean = {
+    if (Config.useApi) {
+      val request = url(Config.corpusApiURL + id).GET
+      val res = Await.result(Http(request OK as.String), 15 minutes)
+      res.length() > 10
+    } else {
+      vectors.contains(id)
+    }
+  }
+
+  def featureSize(): Int = {
+    if (Config.useApi) {
+      val request = url(Config.corpusApiURL + "/size").GET
+      val res = Await.result(Http(request OK as.String), 15 minutes)
+      res.toInt
+    } else {
+      vectors.values.head.length()
+    }
+  }
+
+  def toString(w2v: INDArray): String = w2v.data().asFloat().mkString(",")
+  def fromString(w2v: String): INDArray = Nd4j.create(w2v.split(",").map(_.toFloat))
+
+  private def loadVectors(filter: Set[String] = Set.empty): Map[String, INDArray] = {
     Log.v(s"Loading cached W2V vectors (${Config.freebaseToWord2Vec}) ...")
     val start = System.currentTimeMillis
     var vec = sc.textFile(Config.freebaseToWord2Vec)
@@ -21,10 +64,10 @@ object W2VLoader {
       .map(arr => (arr(0), arr.toSeq.slice(1, arr.length).map(_.toFloat).toArray))
       .collect() // this takes a long time
       .map(arr => {
-        val vector = Nd4j.create(arr._2)
-        val id = arr._1
-        (id, vector)
-      })
+      val vector = Nd4j.create(arr._2)
+      val id = arr._1
+      (id, vector)
+    })
       .toMap
 
     // This is a sanity check, due to a bug with spark and nd4j 3.9 not serializing properly
