@@ -41,6 +41,12 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     annotate(text).map(_.toJson).mkString("\n")
   }
 
+  get("/annotate_types/:text/?") {
+    contentType = formats("txt")
+    val text = params.get("text").get
+    annotateWithTypes(text).map(_.toJson).mkString("\n")
+  }
+
   get("/w2v/:text/?") {
     contentType = formats("txt")
     val text = params.get("text").get
@@ -71,7 +77,8 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     val text = params.get("text").get
     val entities: Seq[Entity] = extract(text)
     val annotations: Seq[Annotation] = annotate(text)
-    val w2v: Seq[String] = annotations.map(_.fb).map(fb => {
+    val annotationsWithTypes: Seq[Annotation] = annotateWithTypes(text)
+    val w2v: Seq[String] = annotationsWithTypes.map(_.fb).map(fb => {
       val vec = freebaseToWord2Vec(fb) match {
         case Some(w2v) => w2v.toString
         case None => "NO_MATCH"
@@ -90,14 +97,20 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
         <ul>
           <li>
             <h3>Predicted Category</h3>
-            <div>
+            <pre>
               {predictions.mkString("\n", "\n", "")}
-            </div>
+            </pre>
           </li>
           <li>
             <h3>Annotations</h3>
             <pre>
               {annotations.map(_.toString).mkString("\n", "\n", "")}
+            </pre>
+          </li>
+          <li>
+            <h3>Annotations with Types</h3>
+            <pre>
+              {annotationsWithTypes.map(_.toString).mkString("\n", "\n", "")}
             </pre>
           </li>
           <li>
@@ -123,6 +136,7 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     val shortArticle = Config.testFile("npl/article_short.txt").getLines().mkString("\n")
     val sport1 = Config.testFile("npl/sports_article.txt").getLines().mkString("\n")
     val sport2 = Config.testFile("npl/sports_article2.txt").getLines().mkString("\n")
+    val sport3 = Config.testFile("npl/sports_article3.txt").getLines().mkString("\n")
     val fb = "/m/02bv9"
     <html>
       <body>
@@ -133,6 +147,7 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
             <h3>Detailed Info</h3>
             <a href={"/info/" + sport1}>Sport example</a> <br/>
             <a href={"/info/" + sport2}>Sport2 example</a> <br/>
+            <a href={"/info/" + sport3}>Sport3 example</a> <br/>
             <a href={"/info/" + shortArticle}>Short example</a> <br/>
             <a href={"/info/" + longArticle}>Long example</a>
           </li>
@@ -145,6 +160,11 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
             <h3>Annotate</h3>
             <a href={"/annotate/" + shortArticle}>Short example</a> <br/>
             <a href={"/annotate/" + longArticle}>Long example</a>
+          </li>
+          <li>
+            <h3>Annotate with Types</h3>
+            <a href={"/annotate_types/" + shortArticle}>Short example</a> <br/>
+            <a href={"/annotate_types/" + longArticle}>Long example</a>
           </li>
           <li>
             <h3>Word2Vec extraction</h3>

@@ -25,9 +25,10 @@ object WikiData {
   lazy val occupations = loadPairs("occupation.txt")
   lazy val genders     = loadPairs("gender.txt")
 
-  lazy val fbToWd: Map[String, String] = loadCachedPairs(Config.wikidataToFreebase).map(a => (a._2, a._1))
+  lazy val fbToWd: Map[String, String] = wdToFb.map(a => (a._2, a._1))
   lazy val wdToFb: Map[String, String] = loadCachedPairs(Config.wikidataToFreebase)
-  lazy val dbToWd: Map[String, String] = loadCachedPairs(Config.dbpediaToWikidata).map(a => (a._2, a._1))
+  lazy val dbToWd: Map[String, String] = wdToDb.map(a => (a._2, a._1))
+  lazy val wdToDb: Map[String, String] = loadCachedPairs(Config.wikidataToDbPedia)
 
   /**
     * Load map
@@ -36,9 +37,8 @@ object WikiData {
     * @return
     */
   def loadCachedPairs(path: String): Map[String, String] = {
-    Log.v("Loading " + path + " ...")
     val pairs = Config.dataFile(path).getLines.map(_.split(" ")).filter(_.length == 2).map(a => (a(0), a(1))).toMap
-    Log.v("Loading complete!")
+    Log.v(s"Loaded $path!")
     pairs
   }
 

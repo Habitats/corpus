@@ -5,4 +5,5 @@
 *.iml
 ai/log
 build
+hs_err*.log
 log

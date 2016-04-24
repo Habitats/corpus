@@ -2,7 +2,7 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
-import no.habitats.corpus.common.{Log, W2VLoader}
+import no.habitats.corpus.common.W2VLoader
 import no.habitats.corpus.models.{Annotation, Article}
 import no.habitats.corpus.npl.IPTC
 import org.deeplearning4j.datasets.iterator.DataSetIterator
@@ -13,19 +13,10 @@ import org.nd4j.linalg.indexing.NDArrayIndex
 
 import scala.collection.JavaConverters._
 
-class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 100) extends DataSetIterator {
+class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize: Int = 50) extends DataSetIterator {
 
   // 32 may be a good starting point,
-  var counter                     = 0
-  val allArticles: Array[Article] = {
-    Log.v("Loading articles ...")
-    val a = rdd
-      .filter(_.iptc.nonEmpty)
-      .map(a => a.copy(ann = a.ann.filter(an => an._2.fb != "NONE" && W2VLoader.contains(an._2.fb))))
-      .filter(_.ann.nonEmpty)
-    a
-  }
-
+  var counter                       = 0
   val categories: util.List[String] = label.fold(IPTC.topCategories.toList)(List(_)).asJava
 
   override def next(num: Int): DataSet = {
@@ -40,10 +31,10 @@ class RNNIterator(rdd: Array[Article], label: Option[String], batchSize: Int = 1
     val labelsMask = Nd4j.zeros(articles.size, maxNumberOfFeatures)
 
     for (i <- articles.toList.indices) {
-      val tokens = articles(i).ann.values
-        .filter(_.fb != Annotation.NONE)
+      val tokens: List[String] = articles(i).ann.values
+        // We want to preserve order
+        .toSeq.sortBy(ann => ann.offset)
         .map(_.fb)
-        .filter(W2VLoader.contains)
         .toList
       for (j <- tokens.indices) {
         val vector = W2VLoader.fromId(tokens(j)).get

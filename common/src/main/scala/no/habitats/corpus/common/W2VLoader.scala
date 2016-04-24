@@ -15,7 +15,8 @@ object W2VLoader {
 
   implicit val formats = Serialization.formats(NoTypeHints)
 
-  private lazy val vectors = loadVectors()
+  lazy val vectors: Map[String, INDArray] = loadVectors()
+  lazy val ids    : Set[String]           = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
 
   def fromId(id: String): Option[INDArray] = {
     if (Config.useApi) {
@@ -33,13 +34,7 @@ object W2VLoader {
   }
 
   def contains(id: String): Boolean = {
-    if (Config.useApi) {
-      val request = url(Config.corpusApiURL + id).GET
-      val res = Await.result(Http(request OK as.String), 15 minutes)
-      res.length() > 10
-    } else {
-      vectors.contains(id)
-    }
+    ids.contains(id)
   }
 
   def featureSize(): Int = {
@@ -67,8 +62,7 @@ object W2VLoader {
       val vector = Nd4j.create(arr._2)
       val id = arr._1
       (id, vector)
-    })
-      .toMap
+    }).toMap
 
     // This is a sanity check, due to a bug with spark and nd4j 3.9 not serializing properly
     // SHOULD ALWAYS BE EQUAL!

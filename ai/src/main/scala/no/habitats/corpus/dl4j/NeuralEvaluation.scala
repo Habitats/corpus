@@ -7,7 +7,7 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.collection.JavaConverters._
 
-case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, epoch: Int) {
+case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, epoch: Int, label: String) {
   private lazy val eval = {
     val e = new Evaluation()
     testIter.asScala.toList.foreach(t => {
@@ -22,6 +22,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
   }
 
   private lazy val fullStats = Seq[(String, String)](
+    "Category" -> f"$label%41s",
     "Epoch" -> f"$epoch%5d",
     "TP" -> f"${eval.truePositives.get(1)}%5d",
     "FP" -> f"${eval.falsePositives.get(1)}%5d",

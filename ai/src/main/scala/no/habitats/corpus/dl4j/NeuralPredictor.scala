@@ -49,11 +49,8 @@ case class NeuralPredictor(net: MultiLayerNetwork, article: Article, label: Stri
 
 object NeuralPredictor {
 
-  val labels = Set("sport")
-  private lazy val models: Map[String, MultiLayerNetwork] =  labels.map(label => (label, NeuralModelLoader.load(label, 100000))).toMap
-
   def predict(article: Article): Set[String] = {
-    val predictors: Map[String, NeuralPredictor] = models.map{case (label, model) => (label, new NeuralPredictor(model, article, label))}
+    val predictors: Map[String, NeuralPredictor] = NeuralModelLoader.bestModels.map { case (label, model) => (label, new NeuralPredictor(model, article, label)) }
     val results: Set[String] = predictors.map { case (label, predictor) => s"$label: ${predictor.correct()}" }.toSet
     results
   }

@@ -47,6 +47,22 @@ trait CorpusAPI {
   }
 
   /**
+    * Annotate a text with versatile annotations linked to Wikidata, DBpedia and Freebase, including types
+    *
+    * @param text
+    * @return Collection of annotations
+    */
+  def annotateWithTypes(text: String): Seq[Annotation] = {
+    val db = for {
+      entities <- Spotlight.fetchAnnotations(text).groupBy(_.id).values
+      db = new DBPediaAnnotation("NO_ID", mc = entities.size, entities.minBy(_.offset))
+      ann = Annotation.fromDbpedia(db)
+      types <- Seq(ann) ++ Annotation.fromDBpediaType(db)
+    } yield types
+    db.toSeq
+  }
+
+  /**
     * Extract word2vec vectors based on pre-trained Freebase model from a text
     *
     * @param text

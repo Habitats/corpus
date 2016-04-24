@@ -12,14 +12,21 @@ object Config {
   val seed = 123
 
   // Required data (need to be lazy, otherwise dataPath is null)
-  lazy val nytCorpus          = dataPath + "nyt/nyt_corpus.json"
-  lazy val nytCorpusAnnotated = dataPath + "nyt/nyt_corpus_annotated_0.5.json"
-  lazy val freebaseToWord2Vec = dataPath + "nyt/fb_w2v_0.5.txt"
-  lazy val dbpedia            = dataPath + "nyt/dbpedia-all-0.5.json"
-  lazy val combinedIds        = dataPath + "nyt/combined_ids_0.5.txt"
-  lazy val freebaseToWikidata = dataPath + "wikidata/fb_to_wd_all.txt"
-  lazy val wikidataToFreebase = dataPath + "wikidata/wd_to_fb.txt"
-  lazy val dbpediaToWikidata  = dataPath + "wikidata/dbpedia_to_wikidata.txt"
+  lazy val nytCorpus                 = dataPath + "nyt/nyt_corpus.json"
+  lazy val nytCorpusDbpediaAnnotated = dataPath + "nyt/nyt_corpus_annotated_0.5.json"
+  lazy val nytCorpusW2VAnnotated     = dataPath + "nyt/nyt_corpus_annotated_w2v_0.5_min10.json"
+  //    lazy val nytCorpusW2VAnnotated     = dataPath + "nyt/separated_w2v_min10/weather_balanced.json"
+  //    lazy val nytCorpusW2VAnnotated     = dataPath + "nyt/separated_w2v_min10/religion_and_belief_balanced.json"
+  lazy val testWithAnnotation        = dataPath + "nyt/test_annotated.json"
+  lazy val freebaseToWord2Vec        = dataPath + "nyt/fb_w2v_0.5.txt"
+  lazy val freebaseToWord2VecIDs     = dataPath + "nyt/fb_w2v_0.5_ids.txt"
+  lazy val dbpedia                   = dataPath + "nyt/dbpedia-all-0.5.json"
+  lazy val combinedIds               = dataPath + "nyt/combined_ids_0.5.txt"
+  lazy val freebaseToWikidata        = dataPath + "wikidata/fb_to_wd_all.txt"
+  lazy val wikidataToFreebase        = dataPath + "wikidata/wd_to_fb.txt"
+  lazy val wikidataToDbPedia         = dataPath + "wikidata/wikidata_to_dbpedia.txt"
+
+  def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.json"
 
   private var args           : Arguments = Arguments()
   private var sparkConfig    : String    = null
@@ -92,10 +99,12 @@ object Config {
   val testPath            : String      = formatPath(conf.getProperty("test_path"))
   val dataPath            : String      = formatPath(conf.getProperty("data_path"))
   val cachePath           : String      = formatPath(conf.getProperty("cache_path"))
+  val modelPath           : String      = formatPath(conf.getProperty("model_path"))
   val broadMatch          : Boolean     = conf.getProperty("broad_match").toBoolean
   val wikiDataOnly        : Boolean     = conf.getProperty("wikidata_only").toBoolean
   val wikiDataIncludeBroad: Boolean     = conf.getProperty("wikidata_include_broad").toBoolean
   val phraseSkipThreshold : Int         = conf.getProperty("term_frequency_threshold").toInt
+  val minimumAnnotations  : Int         = conf.getProperty("minimum_annotations").toInt
   val iptcFilter          : Set[String] = Some(conf.getProperty("iptc_filter")).map(e => if (e.length > 0) e.split(",").toSet else Set[String]()).get
   val dbpediaSpotlightURL : String      = conf.getProperty("dbpedia_spotlight_url")
 

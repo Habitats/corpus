@@ -23,7 +23,7 @@ object RNN {
   private def build(output: Int): MultiLayerNetwork = {
     val vectorSize = 1000
     val hiddenNodes = 333 // should not be less than a quarter of the input size
-    val learningRate = 0.05
+    val learningRate = 0.005
 
     Log.r(f"Count: ${Config.count} - Hidden: $hiddenNodes - LR: $learningRate")
     Log.r2(f"Count: ${Config.count} - Hidden: $hiddenNodes - LR: $learningRate")

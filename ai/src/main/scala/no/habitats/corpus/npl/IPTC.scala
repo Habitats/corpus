@@ -9,6 +9,9 @@ import scala.io.Source
 
 object IPTC {
 
+  /** arts, culture and entertainment --> arts_culture_and_entertainment */
+  def trim(label: String) = label.replaceAll("[,\\s+]+", "_")
+
   // Helper methods for IPTC/RDF
   lazy val rdfModel: Model = {
     val model = ModelFactory.createDefaultModel()

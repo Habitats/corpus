@@ -5,9 +5,6 @@ import java.io.File
 import no.habitats.corpus.common.Config
 import no.habitats.corpus.models.Annotation.NONE
 import no.habitats.corpus.npl.WikiData
-import org.json4s.NoTypeHints
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization._
 
 import scala.collection.mutable.ListBuffer
 import scala.io.{BufferedSource, Codec, Source}
@@ -40,6 +37,7 @@ object Annotation {
   val dw   = WikiData.dbToWd
   val wf   = WikiData.wdToFb
   val fw   = WikiData.fbToWd
+  val wd   = WikiData.wdToDb
 
   def fromWikidata(articleId: String, wd: Entity): Annotation = {
     new Annotation(articleId = articleId, phrase = wd.name, mc = 1, wd = wd.id)
@@ -99,6 +97,22 @@ object Annotation {
       fb = fb,
       offset = dbpedia.entity.offset
     )
+  }
+
+  def fromDBpediaType(dbpedia: DBPediaAnnotation): Set[Annotation] = {
+    dbpedia.entity.types.map(wdType => {
+      val fb = wf.getOrElse(wdType, NONE)
+      val db = wd.getOrElse(wdType, NONE)
+      new Annotation(
+        articleId = dbpedia.articleId,
+        phrase = "type->" + db,
+        mc = dbpedia.mc,
+        db = db,
+        wd = wdType,
+        fb = fb,
+        offset = dbpedia.entity.offset
+      )
+    })
   }
 }
 
