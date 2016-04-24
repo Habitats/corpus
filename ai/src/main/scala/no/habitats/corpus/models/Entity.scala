@@ -13,6 +13,6 @@ case class Entity(
                    types: Set[String]
                  ) extends JSonable {
 
-  override def toString = toJson
+  override def toString: String = f"id: $id%40s > offset: $offset%5d > similarity: $similarityScore%.5f > support: $support%5d > types: ${types.mkString(", ")}"
 }
 

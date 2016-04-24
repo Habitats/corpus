@@ -75,9 +75,9 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
   get("/info/:text/?") {
     contentType = formats("html")
     val text = params.get("text").get
-    val entities: Seq[Entity] = extract(text)
-    val annotations: Seq[Annotation] = annotate(text)
-    val annotationsWithTypes: Seq[Annotation] = annotateWithTypes(text)
+    val entities: Seq[Entity] = extract(text).sortBy(_.offset)
+    val annotations: Seq[Annotation] = annotate(text).sortBy(_.offset)
+    val annotationsWithTypes: Seq[Annotation] = annotateWithTypes(text).sortBy(_.offset)
     val w2v: Seq[String] = annotationsWithTypes.map(_.fb).map(fb => {
       val vec = freebaseToWord2Vec(fb) match {
         case Some(w2v) => w2v.toString
@@ -102,6 +102,12 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
             </pre>
           </li>
           <li>
+            <h3>Raw Entities</h3>
+            <pre>
+              {entities.mkString("\n", "\n", "")}
+            </pre>
+          </li>
+          <li>
             <h3>Annotations</h3>
             <pre>
               {annotations.map(_.toString).mkString("\n", "\n", "")}
@@ -117,12 +123,6 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
             <h3>Freebase W2V Vectors</h3>
             <pre>
               {w2v.map(_.toString).mkString("\n", "\n", "")}
-            </pre>
-          </li>
-          <li>
-            <h3>Raw Entities</h3>
-            <pre>
-              {entities.map(_.toJson).mkString("\n", "\n", "")}
             </pre>
           </li>
         </ul>

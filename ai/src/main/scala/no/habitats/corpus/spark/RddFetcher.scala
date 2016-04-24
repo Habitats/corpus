@@ -22,7 +22,7 @@ object RddFetcher {
     (id, (iptc.toSet, fb.toSet))
   }).toMap
 
-  lazy val test           : RDD[Article] = limit(sc.textFile(Config.testWithAnnotation, Config.partitions).map(JsonSingle.fromSingleJson))
+  lazy val test           : RDD[Article] = limit(sc.textFile(Config.testWithAnnotation, Config.partitions).map(JsonSingle.fromSingleJson).filter(_.ann.size >= Config.minimumAnnotations))
   lazy val rdd            : RDD[Article] = fetchRDD(annotated = false)
   lazy val annotatedRdd   : RDD[Article] = fetchRDD(annotated = true)
   lazy val annotatedW2VRdd: RDD[Article] = {
