@@ -13,7 +13,7 @@ import org.nd4j.linalg.indexing.NDArrayIndex
 
 import scala.collection.JavaConverters._
 
-class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize: Int = 50) extends DataSetIterator {
+class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize: Int) extends DataSetIterator {
 
   // 32 may be a good starting point,
   var counter                       = 0

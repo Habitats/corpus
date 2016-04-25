@@ -6,6 +6,7 @@ import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, epoch: Int, label: String) {
   private lazy val eval = {
@@ -13,10 +14,17 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
     testIter.asScala.toList.foreach(t => {
       val features = t.getFeatureMatrix
       val labels = t.getLabels
-      val inMask = t.getFeaturesMaskArray
-      val outMask = t.getLabelsMaskArray
-      val predicted = net.output(features, false, inMask, outMask)
-      e.evalTimeSeries(labels, predicted, outMask)
+      if (t.getFeaturesMaskArray != null) {
+        // timeseries eval
+        val inMask = t.getFeaturesMaskArray
+        val outMask = t.getLabelsMaskArray
+        val predicted = net.output(features, false, inMask, outMask)
+        e.evalTimeSeries(labels, predicted, outMask)
+      } else {
+        // matrix eval
+        val predicted = net.output(features, false)
+        e.eval(labels, predicted)
+      }
     })
     e
   }
@@ -31,7 +39,8 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
     "Recall" -> f"${eval.recall}%.3f",
     "Precision" -> f"${eval.precision}%.3f",
     "Accuracy" -> f"${eval.accuracy}%.3f",
-    "F-score" -> f"${eval.f1}%.3f"
+    "F-score" -> f"${eval.f1}%.3f",
+    "Error" -> f"${net.score}%.10f"
   )
 
   lazy val statsHeader = fullStats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString("")

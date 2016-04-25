@@ -4,7 +4,7 @@ import java.io.File
 
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common.{Config, Log, NeuralModelLoader, W2VLoader}
-import no.habitats.corpus.dl4j.networks.{RNN, RNNIterator}
+import no.habitats.corpus.dl4j.networks._
 import no.habitats.corpus.models.Article
 import no.habitats.corpus.spark.{RddFetcher, SparkUtil}
 import org.apache.spark.api.java.JavaRDD
@@ -24,10 +24,6 @@ object FreebaseW2V {
   lazy val gModel            = new File(Config.dataPath + "w2v/freebase-vectors-skipgram1000.bin")
   lazy val gVec: WordVectors = WordVectorSerializer.loadGoogleModel(gModel, true)
 
-  lazy val train: RDD[Article]        = split(0)
-  lazy val test : RDD[Article]        = split(1)
-  lazy val split: Array[RDD[Article]] = RddFetcher.annotatedW2VRdd.randomSplit(Array(0.8, 0.2), seed = Config.seed)
-
   def cacheWordVectors() = {
     val rdd = sc.textFile(Config.combinedIds)
       .map(_.substring(22, 35).trim)
@@ -42,20 +38,19 @@ object FreebaseW2V {
       .coalesce(1, shuffle = true).saveAsTextFile(Config.cachePath + "w2v_ids" + DateTime.now.secondOfDay.get)
   }
 
-  def trainSparkMultiLabelRNN(label: Option[String] = None): MultiLayerNetwork = {
-    val nEpochs = 5
+  def trainSparkMultiLabelRNN(label: Option[String] = None, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     var net = label match {
-      case None => RNN.create()
-      case _ => RNN.createBinary()
+      case None => RNN.create(neuralPrefs)
+      case _ => RNN.createBinary(neuralPrefs)
     }
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
-    val trainIter: List[DataSet] = new RNNIterator(train.collect(), label).asScala.toList
-    val testIter = new AsyncDataSetIterator(new RNNIterator(test.collect(), label))
+    val trainIter: List[DataSet] = new RNNIterator(neuralPrefs.train.collect(), label, batchSize = neuralPrefs.minibatchSize).asScala.toList
+    val testIter = new AsyncDataSetIterator(new RNNIterator(neuralPrefs.validation.collect(), label, batchSize = neuralPrefs.minibatchSize))
     val rddTrain: JavaRDD[DataSet] = sc.parallelize(trainIter)
 
     Log.v("Starting training ...")
-    for (i <- 0 until nEpochs) {
+    for (i <- 0 until neuralPrefs.epochs) {
       net = sparkNetwork.fitDataSet(rddTrain)
       val eval = NeuralEvaluation(net, testIter, i, label.getOrElse("All"))
       eval.log()
@@ -65,21 +60,34 @@ object FreebaseW2V {
     net
   }
 
-  def trainMultiLabelRNN(label: Option[String] = None, train: RDD[Article] = this.train, test: RDD[Article] = this.test): MultiLayerNetwork = {
-    val nEpochs = 5
-    val net = label match {
-      case None => RNN.create()
-      case _ => RNN.createBinary()
-    }
+  def trainBinaryRNN(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
+    val net = RNN.createBinary(neuralPrefs)
 
-    val trainIter = new RNNIterator(train.collect(), label)
-    val testIter = new RNNIterator(test.collect(), label)
+    val trainIter = new RNNIterator(neuralPrefs.train.collect(), Some(label), batchSize = neuralPrefs.minibatchSize)
+    val testIter = new RNNIterator(neuralPrefs.validation.collect(), Some(label), batchSize = neuralPrefs.minibatchSize)
     Log.r(s"Training ${label.mkString(", ")} ...")
     Log.r2(s"Training ${label.mkString(", ")} ...")
-    for (i <- 0 until nEpochs) {
+    for (i <- 0 until neuralPrefs.epochs) {
       net.fit(trainIter)
       trainIter.reset()
-      val eval = NeuralEvaluation(net, testIter, i, label.getOrElse("All"))
+      val eval = NeuralEvaluation(net, testIter, i, label)
+      eval.log()
+      testIter.reset()
+    }
+
+    net
+  }
+
+  def trainBinaryFFN(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
+    val net = FeedForward.create()
+    val trainIter = new FeedForwardIterator(neuralPrefs.train.collect(), label, batchSize = neuralPrefs.minibatchSize)
+    val testIter = new FeedForwardIterator(neuralPrefs.validation.collect(), label, batchSize = neuralPrefs.minibatchSize)
+    Log.r(s"Training $label ...")
+    Log.r2(s"Training $label ...")
+    for (i <- 0 until neuralPrefs.epochs) {
+      net.fit(trainIter)
+      trainIter.reset()
+      val eval = NeuralEvaluation(net, testIter, i, label)
       eval.log()
       testIter.reset()
     }
@@ -89,10 +97,10 @@ object FreebaseW2V {
 
   def testAllModels() = {
     val models = NeuralModelLoader.bestModels
-    val test = RddFetcher.test.collect()
+    val test = RddFetcher.annotatedTestW2V.collect()
     var i = 0
     models.foreach { case (label, net) => {
-      val testIter = new RNNIterator(test, Some(label))
+      val testIter = new RNNIterator(test, Some(label), 50)
       val eval = NeuralEvaluation(net, testIter, i, label)
       eval.log()
       i += 1

@@ -27,6 +27,8 @@ case class Article(id: String,
     f"$id - $hl >> TAGS >> $iptcstr >> PHRASES >> $annstr"
   }
 
+  def filterAnnotation(f: Annotation => Boolean): Article = copy(ann = ann.filter{case (id, an) => f(an)})
+
   def toStringFull: String = {
     val iptcstr = iptc.mkString(", ")
     val annstr = ann.values.toSeq.sortBy(_.tfIdf).mkString("\n\t\t")

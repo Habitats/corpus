@@ -78,10 +78,10 @@ object IPTC {
   }).filter(_.nonEmpty).map(_.get)
 
   // Map every descriptor to its corresponding top level IPTC topic
-  lazy val levels: Map[Int, Map[String, String]] = {
+  lazy val levels       : Map[Int, Map[String, String]]                           = {
     (0 to 5).map(level => (level, topLevelMediaTopics(level))).toMap
   }
-  lazy val topCategories                         = {
+  lazy val topCategories: Seq[String] = {
     Log.v("Loading top level IPTC ...")
     IPTC.levels(0).values.toSet.toSeq.sorted
   }

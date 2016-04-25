@@ -1,7 +1,6 @@
 package no.habitats.corpus.spark
 
 import java.io.File
-import java.util.{Collections, Random}
 
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
@@ -10,7 +9,7 @@ import no.habitats.corpus.models.{Article, DBPediaAnnotation}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkContext, SparkException}
 
-import scala.collection.JavaConverters._
+import scala.collection.Map
 
 object RddFetcher {
 
@@ -22,43 +21,31 @@ object RddFetcher {
     (id, (iptc.toSet, fb.toSet))
   }).toMap
 
-  lazy val test           : RDD[Article] = limit(sc.textFile(Config.testWithAnnotation, Config.partitions).map(JsonSingle.fromSingleJson).filter(_.ann.size >= Config.minimumAnnotations))
-  lazy val rdd            : RDD[Article] = fetchRDD(annotated = false)
-  lazy val annotatedRdd   : RDD[Article] = fetchRDD(annotated = true)
-  lazy val annotatedW2VRdd: RDD[Article] = {
-    val path = Config.nytCorpusW2VAnnotated
-    val rdd = sc.textFile(path, Config.partitions)
-      .map(JsonSingle.fromSingleJson)
-      .filter(_.ann.size > Config.phraseSkipThreshold)
-      .filter(_.iptc.nonEmpty)
-    limit(rdd)
+  lazy val annotatedTrainW2V     : RDD[Article] = limit(sc.textFile(Config.annotatedTrainW2V, (Config.partitions * 0.6).toInt).map(JsonSingle.fromSingleJson), 0.6)
+  lazy val annotatedValidationW2V: RDD[Article] = limit(sc.textFile(Config.annotatedValidationW2V, (Config.partitions * 0.2).toInt).map(JsonSingle.fromSingleJson), 0.2)
+  lazy val annotatedTestW2V      : RDD[Article] = limit(sc.textFile(Config.annotatedTestW2V, (Config.partitions * 0.2).toInt).map(JsonSingle.fromSingleJson), 0.2)
+  lazy val rdd                   : RDD[Article] = limit(sc.textFile(Config.nytCorpus, Config.partitions).map(JsonSingle.fromSingleJson))
+  lazy val annotatedRdd          : RDD[Article] = limit(sc.textFile(Config.nytCorpusDbpediaAnnotated, Config.partitions).map(JsonSingle.fromSingleJson))
+
+  def limit(rdd: RDD[Article], fraction: Double = 1): RDD[Article] = {
+    val num = (Config.count * fraction).toInt
+    if (num < Integer.MAX_VALUE) sc.parallelize(rdd.take(num))
+    else rdd
   }
 
-  def limit(rdd: RDD[Article]): RDD[Article] = if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(Config.count)) else rdd
-
-  def balanced(label: String): RDD[Article] = limit(sc.textFile(Config.balanced(label), Config.partitions).map(JsonSingle.fromSingleJson))
+  def balanced(label: String, train: Boolean): RDD[Article] = limit(sc.textFile(Config.balanced(label), Config.partitions).map(JsonSingle.fromSingleJson), if (train) 0.6 else 0.2)
 
   /** Create a new dataset with all articles with a given label, and the same amount of randomly sampled articles other labels */
   def createBalanced(label: String, all: RDD[Article]): RDD[Article] = {
-    val idLabeled: Set[String] = minimal.filter(_._2._1.contains(label)).keySet
-    val idOther: Set[String] = {
-      val arr = minimal.filter(a => !a._2._1.contains(label)).keySet.toBuffer.asJava
-      Collections.shuffle(arr, new Random(Config.seed))
-      arr.asScala.take(idLabeled.size).toSet
-    }
+    val labels: Map[Boolean, Set[String]] = all
+      .map(a => (a.id, a.iptc))
+      .groupBy(_._2.contains(label))
+      .map { case (c, ids) => (c, ids.map(_._1).toSet) }
+      .collectAsMap()
+    val idLabeled: Set[String] = labels(true)
+    val idOther: Set[String] = labels(false).take(idLabeled.size)
     // Need to shuffle the examples for training purposes
-    all.filter(a => idLabeled.contains(a.id) || idOther.contains(a.id)).sortBy(a => Math.random)
-  }
-
-  private def fetchRDD(annotated: Boolean): RDD[Article] = {
-    val path = if (annotated) Config.nytCorpusDbpediaAnnotated else Config.nytCorpus
-    var rdd = Config.rdd match {
-      case "cache" => cachedRdd(sc)
-      case "local" => sc.textFile(path, Config.partitions).map(JsonSingle.fromSingleJson)
-    }
-    rdd = limit(rdd)
-    rdd = if (Config.iptcFilter.nonEmpty) rdd.filter(a => a.iptc.intersect(Config.iptcFilter).nonEmpty) else rdd
-    rdd
+    all.filter(a => idLabeled.contains(a.id) || idOther.contains(a.id))
   }
 
   def dbpedia(sc: SparkContext, name: String = Config.dbpedia): RDD[DBPediaAnnotation] = {

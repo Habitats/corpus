@@ -6,13 +6,15 @@ import java.nio.file.{Files, StandardCopyOption}
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
-import no.habitats.corpus.dl4j.FreebaseW2V
+import no.habitats.corpus.dl4j.{FreebaseW2V, NeuralPrefs}
 import no.habitats.corpus.models.{Annotation, Article}
 import no.habitats.corpus.npl.{IPTC, Spotlight, WikiData}
 import org.apache.commons.io.FileUtils
 import org.apache.spark.rdd.RDD
+import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.collection._
+import scala.util.Try
 
 object SparkUtil {
   val cacheDir = "cache"
@@ -53,24 +55,21 @@ object SparkUtil {
       case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
       case "combineIds" => Spotlight.combineAndCacheIds()
       case "cacheAnnotated" => annotateAndCacheArticles()
-      case "cacheAnnotatedW2V" => annotateAndCacheArticlesWithW2V()
-      case "fullCacheSep" => annotateAndCacheSeparateArticles()
+      case "splitAndCacheAnnotatedW2V" => splitAndCacheArticlesWithW2V()
       case "cacheBalanced" => cacheBalanced()
       case "cacheMinimal" => cacheMinimalArticles()
       case "fbw2v" => FreebaseW2V.cacheWordVectors()
       case "fbw2vids" => FreebaseW2V.cacheWordVectorIds()
-      case "cacheTest" => cacheTest()
 
       // Display stats
       case "iptcDistribution" => calculateIPTCDistribution()
 
       // Modelling
       case "trainNaiveBayes" => trainNaiveBayes()
-      case "trainRNNML" => FreebaseW2V.trainMultiLabelRNN()
-      case "trainRNN" => IPTC.topCategories.foreach(c => NeuralModelLoader.save(FreebaseW2V.trainMultiLabelRNN(Some(c)), c, Config.count))
+      case "trainRNN" => trainRNN()
       case "trainRNNBalanced" => trainRNNBalanced()
-      case "trainRNNSingle" => NeuralModelLoader.save(FreebaseW2V.trainMultiLabelRNN(Some(Config.category)), Config.category, Config.count) // category=?
-      case "trainSparkRNN" => FreebaseW2V.trainSparkMultiLabelRNN()
+      case "trainRNNBalancedSingle" => trainRNNBalancedSingle()
+      case "trainFNNBalancedSingle" => trainFNNBalancedSingle()
       case "loadRNN" => NeuralModelLoader.load(Config.category, Config.count)
       case "testModels" => FreebaseW2V.testAllModels()
 
@@ -90,69 +89,103 @@ object SparkUtil {
     saveAsText(rdd, "nyt_with_all")
   }
 
-  def trainRNNBalanced() = {
-    val done = Set(
-      "arts, culture and entertainment",
-      "conflicts, war and peace",
-      "crime, law and justice",
-      "disaster, accident and emergency incident",
-      "economy, business and finance",
-      "education",
-      "environment",
-      "health",
-      "human interest",
-      "labour"
-    )
-    IPTC.topCategories.filter(c => !done.contains(c)).foreach(c => {
-      val rdd = RddFetcher.balanced(IPTC.trim(c))
-      val split = rdd.randomSplit(Array(0.8, 0.2), Config.seed)
-      NeuralModelLoader.save(FreebaseW2V.trainMultiLabelRNN(Some(c), split(0), split(1)), c, Config.count)
-    })
+  def trainRNN() = {
+    for {
+      learningRate <- Seq(0.5, 0.05, 0.005, 0.0005, 0.00005)
+      hiddeNodes <- Seq(333)
+      category <- Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
+      miniBatchSize <- Seq(50)
+      epochs <- Seq(5)
+      (train, test) = {
+        val train = RddFetcher.balanced(IPTC.trim(category) + "_train", true)
+        val validation = RddFetcher.balanced(IPTC.trim(category) + "_validation", false)
+        //        val split: Array[RDD[Article]] = RddFetcher.annotatedW2VRdd.randomSplit(Array(0.8, 0.2), seed = Config.seed)
+        (train, validation)
+      }
+    } yield {
+      val neuralPrefs = NeuralPrefs(learningRate, hiddeNodes, train, test, miniBatchSize, epochs)
+      val n: MultiLayerNetwork = FreebaseW2V.trainBinaryRNN(category, neuralPrefs = neuralPrefs)
+      //      NeuralModelLoader.save(n, category, Config.count)
+    }
   }
 
-  def cacheTest() = {
-    val test = RddFetcher.annotatedRdd.randomSplit(Array(0.99, 0.01), Config.seed)(1)
-      .filter(_.iptc.nonEmpty)
-      .map(a => a.copy(ann = a.ann.filter(an => an._2.fb != Annotation.NONE && W2VLoader.contains(an._2.fb))))
-      .filter(_.ann.nonEmpty)
-      .map(JsonSingle.toSingleJson)
-    saveAsText(test, "test_annotated")
+  def trainRNNBalanced() = {
+    val done = Set[String](
+      //      "arts, culture and entertainment",
+      //      "conflicts, war and peace",
+      //      "crime, law and justice",
+      //      "disaster, accident and emergency incident",
+      //      "economy, business and finance",
+      //      "education",
+      //      "environment",
+      //      "health",
+      //      "human interest",
+      //      "labour"
+    )
+    IPTC.topCategories.filter(c => !done.contains(c)).foreach(trainRNNBalancedSingle)
+  }
+
+  def trainRNNBalancedSingle(c: String = Config.category) = trainBalancedSingle(c, FreebaseW2V.trainBinaryRNN)
+
+  def trainFNNBalancedSingle(c: String = Config.category) = trainBalancedSingle(c, FreebaseW2V.trainBinaryFFN)
+
+  def trainBalancedSingle(c: String = Config.category, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork) = {
+    val train = RddFetcher.balanced(IPTC.trim(c) + "_train", true)
+    val validation = RddFetcher.balanced(IPTC.trim(c) + "_validation", false)
+    for {
+      hiddenNodes <- Seq(10)
+      //      hiddenNodes <- Seq(1, 5, 10, 20, 50, 100, 200)
+      learningRate <- Seq(0.001)
+    } yield {
+      val neuralPrefs = NeuralPrefs(
+        learningRate = learningRate,
+        hiddenNodes = hiddenNodes,
+        train = train,
+        minibatchSize = 1000,
+        validation = validation,
+        histogram = true,
+        epochs = 5
+      )
+      val net: MultiLayerNetwork = trainNetwork(c, neuralPrefs)
+      NeuralModelLoader.save(net, c, Config.count)
+      System.gc()
+    }
   }
 
   def cacheMinimalArticles() = {
-    val minimal = RddFetcher.annotatedW2VRdd
+    val minimal = RddFetcher.annotatedRdd
       .filter(_.iptc.nonEmpty)
+      .map(_.filterAnnotation(an => an.fb != Annotation.NONE && W2VLoader.contains(an.fb)))
+      .filter(_.ann.nonEmpty)
       .map(a => f"${a.id} ${a.iptc.map(IPTC.trim).mkString(",")} ${a.ann.map(_._2.fb).mkString(",")}")
     saveAsText(minimal, "minimal")
   }
 
   def cacheBalanced() = {
-    val all = RddFetcher.annotatedW2VRdd
-    IPTC.topCategories
-      //    Set("weather")
-      .foreach(c => {
-      val balanced = RddFetcher.createBalanced(IPTC.trim(c), all).filter(_.iptc.nonEmpty)
-      SparkUtil.saveAsText(balanced.map(JsonSingle.toSingleJson), c + "_balanced")
-    })
+    val train = RddFetcher.annotatedTrainW2V
+    val validation = RddFetcher.annotatedValidationW2V
+    val test = RddFetcher.annotatedTestW2V
+    val splits = Seq("train" -> train, "validation" -> validation, "test" -> test)
+    splits.foreach { case (kind, rdd) =>
+      IPTC.topCategories
+        //      Set("weather")
+        .foreach(c => {
+        val balanced = RddFetcher.createBalanced(IPTC.trim(c), rdd).filter(_.iptc.nonEmpty)
+        SparkUtil.saveAsText(balanced.map(JsonSingle.toSingleJson), s"${c}_${kind}_balanced")
+      })
+    }
   }
 
-  def annotateAndCacheArticlesWithW2V() = {
+  def splitAndCacheArticlesWithW2V() = {
     val rdd = RddFetcher.annotatedRdd
-      .map(a => a.copy(ann = a.ann.filter(an => an._2.fb != Annotation.NONE && W2VLoader.contains(an._2.fb))))
-      .filter(_.ann.size >= Config.phraseSkipThreshold)
+      .filter(_.iptc.nonEmpty)
+      .map(_.filterAnnotation(an => an.fb != Annotation.NONE && W2VLoader.contains(an.fb)))
+      .filter(_.ann.nonEmpty)
       .map(JsonSingle.toSingleJson)
-    saveAsText(rdd, "nyt_with_all_w2v_" + Config.phraseSkipThreshold)
-  }
-
-  def annotateAndCacheSeparateArticles() = {
-    val rdd = RddFetcher.annotatedW2VRdd
-    rdd.cache()
-    IPTC.topCategories.foreach(c => {
-      val filtered = rdd
-        .filter(_.iptc.contains(c))
-        .map(JsonSingle.toSingleJson)
-      saveAsText(filtered, c)
-    })
+    val splits = rdd.sortBy(a => Math.random).randomSplit(Array(0.6, 0.2, 0.2), Config.seed)
+    saveAsText(splits(0), "nyt_train_w2v_" + Config.minimumAnnotations)
+    saveAsText(splits(1), "nyt_validation_w2v_" + Config.minimumAnnotations)
+    saveAsText(splits(2), "nyt_test_w2v_" + Config.minimumAnnotations)
   }
 
   def computeAndCacheDBPediaAnnotationsToJson() = {
