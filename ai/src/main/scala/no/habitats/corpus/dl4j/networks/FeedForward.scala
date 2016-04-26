@@ -15,8 +15,8 @@ object FeedForward {
   val learningRate = 0.01
   val numInputs    = 1000
   val numOutputs   = 2
-  val firstLayer  = 500
-  val secondLayer = 500
+  val firstLayer   = 500
+  val secondLayer  = 500
 
   def create(): MultiLayerNetwork = {
     val conf = new NeuralNetConfiguration.Builder()

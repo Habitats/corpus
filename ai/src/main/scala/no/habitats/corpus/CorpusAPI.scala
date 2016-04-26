@@ -1,9 +1,9 @@
 package no.habitats.corpus
 
-import no.habitats.corpus.common.{CorpusContext, NeuralModelLoader, W2VLoader}
+import no.habitats.corpus.common.W2VLoader
 import no.habitats.corpus.dl4j.NeuralPredictor
 import no.habitats.corpus.models.{Annotation, Article, DBPediaAnnotation, Entity}
-import no.habitats.corpus.npl.{IPTC, Spotlight}
+import no.habitats.corpus.npl.Spotlight
 import org.nd4j.linalg.api.ndarray.INDArray
 
 trait CorpusAPI {

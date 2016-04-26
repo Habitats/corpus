@@ -6,7 +6,6 @@ import no.habitats.corpus.common.CorpusContext.sc
 import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.Annotation
 import no.habitats.corpus.spark.SparkUtil
-import org.joda.time.DateTime
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
@@ -18,8 +17,8 @@ object WikiData {
   implicit def toJson(url: String): JValue = parse(Source.fromURL(url).mkString)
 
   // API roots
-  val wmflabs   = "http://wdq.wmflabs.org/api?q="
-  val wiki      = "https://www.wikidata.org/w/api.php?format=json&language=en&"
+  val wmflabs = "http://wdq.wmflabs.org/api?q="
+  val wiki    = "https://www.wikidata.org/w/api.php?format=json&language=en&"
 
   lazy val instanceOf  = loadPairs("instanceOf.txt")
   lazy val occupations = loadPairs("occupation.txt")

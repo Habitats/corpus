@@ -6,11 +6,9 @@ import com.nytlabs.corpus.{NYTCorpusDocument, NYTCorpusDocumentParser}
 import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.{Annotation, Article, DBPediaAnnotation}
 
-import scala.util.Try
-
 object Corpus {
 
-  lazy val rawNYTParser                    = new NYTCorpusDocumentParser
+  lazy val rawNYTParser = new NYTCorpusDocumentParser
 
   lazy val googleAnnotations: Map[String, Seq[Annotation]] = {
     val annotations = Annotation.fromGoogle()

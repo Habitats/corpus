@@ -62,7 +62,7 @@ object RNN {
     net.init()
     Log.v(s"Initialized network with ${net.numParams} params!")
     net.setListeners(new ScoreIterationListener(1))
-    if (neuralPrefs.histogram){
+    if (neuralPrefs.histogram) {
       net.setListeners(new HistogramIterationListener(1))
     }
     net.setUpdater(null)

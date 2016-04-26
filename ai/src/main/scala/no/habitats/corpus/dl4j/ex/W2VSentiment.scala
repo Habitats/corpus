@@ -15,7 +15,6 @@ import org.deeplearning4j.nn.conf.{GradientNormalization, NeuralNetConfiguration
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.nn.weights.WeightInit
 import org.deeplearning4j.optimize.listeners.ScoreIterationListener
-import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.lossfunctions.LossFunctions
 
 import scala.collection.JavaConverters._

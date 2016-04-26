@@ -5,10 +5,8 @@ import java.io.File
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common.{Config, Log, NeuralModelLoader, W2VLoader}
 import no.habitats.corpus.dl4j.networks._
-import no.habitats.corpus.models.Article
 import no.habitats.corpus.spark.{RddFetcher, SparkUtil}
 import org.apache.spark.api.java.JavaRDD
-import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.AsyncDataSetIterator
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors

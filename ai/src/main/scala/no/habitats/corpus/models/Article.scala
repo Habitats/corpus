@@ -6,9 +6,6 @@ import com.nytlabs.corpus.NYTCorpusDocument
 import no.habitats.corpus.npl.IPTC
 import no.habitats.corpus.npl.extractors.OpenNLP
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
-import org.json4s.NoTypeHints
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization._
 
 case class Article(id: String,
                    hl: String = null,
@@ -27,7 +24,7 @@ case class Article(id: String,
     f"$id - $hl >> TAGS >> $iptcstr >> PHRASES >> $annstr"
   }
 
-  def filterAnnotation(f: Annotation => Boolean): Article = copy(ann = ann.filter{case (id, an) => f(an)})
+  def filterAnnotation(f: Annotation => Boolean): Article = copy(ann = ann.filter { case (id, an) => f(an) })
 
   def toStringFull: String = {
     val iptcstr = iptc.mkString(", ")

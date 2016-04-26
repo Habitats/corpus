@@ -3,7 +3,7 @@ package no.habitats.corpus.dl4j.networks
 import java.util
 
 import no.habitats.corpus.common.W2VLoader
-import no.habitats.corpus.models.{Annotation, Article}
+import no.habitats.corpus.models.Article
 import no.habitats.corpus.npl.IPTC
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.nd4j.linalg.dataset.DataSet

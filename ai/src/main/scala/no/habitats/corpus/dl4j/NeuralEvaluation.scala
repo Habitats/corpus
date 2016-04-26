@@ -6,7 +6,6 @@ import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.collection.JavaConverters._
-import scala.util.Try
 
 case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, epoch: Int, label: String) {
   private lazy val eval = {

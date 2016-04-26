@@ -32,6 +32,15 @@ object SparkUtil {
     ML.multiLabelClassification(prefs, preprocessed)
   }
 
+  def cacheSubSampled() = {
+    val rdds = Map(
+      //      "train" -> RddFetcher.annotatedTrainW2V,
+      "test" -> RddFetcher.annotatedTestW2V,
+      "validation" -> RddFetcher.annotatedValidationW2V
+    )
+    rdds.foreach { case (k, v) => RddFetcher.cacheSubSampled(v, k) }
+  }
+
   def main(args: Array[String]) = {
     Config.setArgs(args)
 
@@ -58,6 +67,8 @@ object SparkUtil {
       case "splitAndCacheAnnotatedW2V" => splitAndCacheArticlesWithW2V()
       case "cacheBalanced" => cacheBalanced()
       case "cacheMinimal" => cacheMinimalArticles()
+      case "cacheSuperSampled" => RddFetcher.cacheSuperSampled(Some(100000))
+      case "cacheSubSampled" => cacheSubSampled()
       case "fbw2v" => FreebaseW2V.cacheWordVectors()
       case "fbw2vids" => FreebaseW2V.cacheWordVectorIds()
 
@@ -69,7 +80,7 @@ object SparkUtil {
       case "trainRNN" => trainRNN()
       case "trainRNNBalanced" => trainRNNBalanced()
       case "trainRNNBalancedSingle" => trainRNNBalancedSingle()
-      case "trainFNNBalancedSingle" => trainFNNBalancedSingle()
+      case "trainFFNBalancedSingle" => trainFFNBalancedSingle()
       case "loadRNN" => NeuralModelLoader.load(Config.category, Config.count)
       case "testModels" => FreebaseW2V.testAllModels()
 
@@ -127,26 +138,29 @@ object SparkUtil {
 
   def trainRNNBalancedSingle(c: String = Config.category) = trainBalancedSingle(c, FreebaseW2V.trainBinaryRNN)
 
-  def trainFNNBalancedSingle(c: String = Config.category) = trainBalancedSingle(c, FreebaseW2V.trainBinaryFFN)
+  def trainFFNBalancedSingle(c: String = Config.category) = trainBalancedSingle(c, FreebaseW2V.trainBinaryFFN)
 
   def trainBalancedSingle(c: String = Config.category, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork) = {
-    val train = RddFetcher.balanced(IPTC.trim(c) + "_train", true)
-    val validation = RddFetcher.balanced(IPTC.trim(c) + "_validation", false)
+    //    val train = RddFetcher.balanced(IPTC.trim(c) + "_train", true)
+    //    val validation = RddFetcher.balanced(IPTC.trim(c) + "_validation", false)
+    val train = RddFetcher.subTrainW2V
+    val validation = RddFetcher.subValidationW2V
     for {
       hiddenNodes <- Seq(10)
       //      hiddenNodes <- Seq(1, 5, 10, 20, 50, 100, 200)
-      learningRate <- Seq(0.001)
+      learningRate <- Seq(0.05)
     } yield {
       val neuralPrefs = NeuralPrefs(
         learningRate = learningRate,
         hiddenNodes = hiddenNodes,
         train = train,
-        minibatchSize = 1000,
+        minibatchSize = 200,
         validation = validation,
         histogram = true,
         epochs = 5
       )
       val net: MultiLayerNetwork = trainNetwork(c, neuralPrefs)
+      Log.v(neuralPrefs)
       NeuralModelLoader.save(net, c, Config.count)
       System.gc()
     }
@@ -167,11 +181,12 @@ object SparkUtil {
     val test = RddFetcher.annotatedTestW2V
     val splits = Seq("train" -> train, "validation" -> validation, "test" -> test)
     splits.foreach { case (kind, rdd) =>
+      rdd.cache()
       IPTC.topCategories
         //      Set("weather")
         .foreach(c => {
-        val balanced = RddFetcher.createBalanced(IPTC.trim(c), rdd).filter(_.iptc.nonEmpty)
-        SparkUtil.saveAsText(balanced.map(JsonSingle.toSingleJson), s"${c}_${kind}_balanced")
+        val balanced = RddFetcher.createBalanced(c, rdd).filter(_.iptc.nonEmpty)
+        SparkUtil.saveAsText(balanced.map(JsonSingle.toSingleJson), s"${IPTC.trim(c)}_${kind}_balanced")
       })
     }
   }
