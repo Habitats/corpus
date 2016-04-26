@@ -21,8 +21,16 @@
   </appender>
 
   <logger name="org.apache.catalina.core" level="DEBUG"/>
-  <logger name="org.deeplearning4j" level="DEBUG"/>
-  <logger name="org.nd4j" level="DEBUG"/>
+  <logger name="org.deeplearning4j" level="INFO"/>
+  <logger name="org.deeplearning4j.ui.weights.HistogramIterationListener" level="WARN"/>
+  <logger name="log4j.logger.spark" level="WARN" />
+  <logger name="log4j.logger.spark.scheduler" level="WARN" />
+  <logger name="log4j.logger.spark.CacheTracker" level="WARN" />
+  <logger name="log4j.logger.spark.CacheTrackerActor" level="WARN" />
+  <logger name="log4j.logger.spark.MapOutputTrackerActor" level="WARN" />
+  <logger name="log4j.logger.spark.MapOutputTracker" level="WARN" />
+  <logger name="org.apache.hadoop.conf" level="WARN" />
+  <logger name="org.nd4j" level="INFO"/>
   <logger name="org.eclipse.jetty" level="INFO"/>
   <logger name="opennlp.uima.util" level="OFF"/>
 

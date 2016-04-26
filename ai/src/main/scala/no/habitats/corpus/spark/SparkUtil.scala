@@ -24,23 +24,6 @@ object SparkUtil {
     Log.v(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
   }
 
-  lazy val rdd: RDD[Article] = RddFetcher.annotatedRdd
-
-  def trainNaiveBayes() = {
-    val prefs = sc.broadcast[Prefs](Prefs(termFrequencyThreshold = 5, wikiDataIncludeBroad = false, wikiDataOnly = false))
-    val preprocessed = Preprocess.preprocess(prefs, rdd)
-    ML.multiLabelClassification(prefs, preprocessed)
-  }
-
-  def cacheSubSampled() = {
-    val rdds = Map(
-      //      "train" -> RddFetcher.annotatedTrainW2V,
-      "test" -> RddFetcher.annotatedTestW2V,
-      "validation" -> RddFetcher.annotatedValidationW2V
-    )
-    rdds.foreach { case (k, v) => RddFetcher.cacheSubSampled(v, k) }
-  }
-
   def main(args: Array[String]) = {
     Config.setArgs(args)
 
@@ -54,23 +37,23 @@ object SparkUtil {
       // Misc
       case "test" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
-      case "count" => Log.r(s"Counting job: ${rdd.count} articles ...")
-      case "preprocess" => Preprocess.preprocess(sc.broadcast(Prefs()), rdd)
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
       case "computeDbAnnotations" => computeAndCacheDBPediaAnnotationsToJson()
+
       case "wdToFbFromDump" => WikiData.extractFreebaseFromWikiDump()
       case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
       case "combineIds" => Spotlight.combineAndCacheIds()
+      case "fbw2v" => FreebaseW2V.cacheWordVectors()
+      case "fbw2vids" => FreebaseW2V.cacheWordVectorIds()
+
       case "cacheAnnotated" => annotateAndCacheArticles()
       case "splitAndCacheAnnotatedW2V" => splitAndCacheArticlesWithW2V()
       case "cacheBalanced" => cacheBalanced()
       case "cacheMinimal" => cacheMinimalArticles()
       case "cacheSuperSampled" => RddFetcher.cacheSuperSampled(Some(100000))
       case "cacheSubSampled" => cacheSubSampled()
-      case "fbw2v" => FreebaseW2V.cacheWordVectors()
-      case "fbw2vids" => FreebaseW2V.cacheWordVectorIds()
 
       // Display stats
       case "iptcDistribution" => calculateIPTCDistribution()
@@ -78,7 +61,6 @@ object SparkUtil {
       // Modelling
       case "trainNaiveBayes" => trainNaiveBayes()
       case "trainRNN" => trainRNN()
-      case "trainRNNBalanced" => trainRNNBalanced()
       case "trainRNNBalancedSingle" => trainRNNBalancedSingle()
       case "trainFFNBalancedSingle" => trainFFNBalancedSingle()
       case "loadRNN" => NeuralModelLoader.load(Config.category, Config.count)
@@ -89,15 +71,6 @@ object SparkUtil {
     Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
     //    Thread.sleep(Long.MaxValue)
     //    sc.stop
-  }
-
-  /** Fetch json RDD and compute IPTC and annotations */
-  def annotateAndCacheArticles() = {
-    val rdd = RddFetcher.rdd
-      .map(Corpus.toIPTC)
-      .map(Corpus.toDBPediaAnnotated)
-      .map(JsonSingle.toSingleJson)
-    saveAsText(rdd, "nyt_with_all")
   }
 
   def trainRNN() = {
@@ -118,22 +91,6 @@ object SparkUtil {
       val n: MultiLayerNetwork = FreebaseW2V.trainBinaryRNN(category, neuralPrefs = neuralPrefs)
       //      NeuralModelLoader.save(n, category, Config.count)
     }
-  }
-
-  def trainRNNBalanced() = {
-    val done = Set[String](
-      //      "arts, culture and entertainment",
-      //      "conflicts, war and peace",
-      //      "crime, law and justice",
-      //      "disaster, accident and emergency incident",
-      //      "economy, business and finance",
-      //      "education",
-      //      "environment",
-      //      "health",
-      //      "human interest",
-      //      "labour"
-    )
-    IPTC.topCategories.filter(c => !done.contains(c)).foreach(trainRNNBalancedSingle)
   }
 
   def trainRNNBalancedSingle(c: String = Config.category) = trainBalancedSingle(c, FreebaseW2V.trainBinaryRNN)
@@ -159,11 +116,31 @@ object SparkUtil {
         histogram = true,
         epochs = 5
       )
-      val net: MultiLayerNetwork = trainNetwork(c, neuralPrefs)
       Log.v(neuralPrefs)
+      val net: MultiLayerNetwork = trainNetwork(c, neuralPrefs)
       NeuralModelLoader.save(net, c, Config.count)
       System.gc()
     }
+  }
+
+  def trainNaiveBayes() = {
+    Config.resultsFileName = "res_baseline"
+    Config.resultsCatsFileName = "res_baseline_cats"
+    //    val train = RddFetcher.annotatedTrainW2V
+    //    val validation = RddFetcher.annotatedValidationW2V
+    val train = RddFetcher.subTrainW2V
+    val validation = RddFetcher.subValidationW2V
+    val prefs = sc.broadcast(Prefs())
+    val models = ML.multiLabelClassification(prefs, train, validation)
+    models.foreach { case (c, model) => MLlibModelLoader.save(model, s"nb_${IPTC.trim(c)}.bin") }
+  }
+
+  /** Fetch json RDD and compute IPTC and annotations */
+  def annotateAndCacheArticles() = {
+    val rdd = RddFetcher.rdd
+      .map(Corpus.toIPTC)
+      .map(Corpus.toDBPediaAnnotated)
+    saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_with_all")
   }
 
   def cacheMinimalArticles() = {
@@ -192,29 +169,30 @@ object SparkUtil {
   }
 
   def splitAndCacheArticlesWithW2V() = {
-    val rdd = RddFetcher.annotatedRdd
+    var rdd = RddFetcher.annotatedRdd
       .filter(_.iptc.nonEmpty)
       .map(_.filterAnnotation(an => an.fb != Annotation.NONE && W2VLoader.contains(an.fb)))
       .filter(_.ann.nonEmpty)
-      .map(JsonSingle.toSingleJson)
-    val splits = rdd.sortBy(a => Math.random).randomSplit(Array(0.6, 0.2, 0.2), Config.seed)
+    rdd = TC(rdd).computed
+
+    val splits = rdd.map(JsonSingle.toSingleJson).sortBy(a => Math.random).randomSplit(Array(0.6, 0.2, 0.2), Config.seed)
     saveAsText(splits(0), "nyt_train_w2v_" + Config.minimumAnnotations)
     saveAsText(splits(1), "nyt_validation_w2v_" + Config.minimumAnnotations)
     saveAsText(splits(2), "nyt_test_w2v_" + Config.minimumAnnotations)
   }
 
+  def cacheSubSampled() = {
+    val rdds = Map(
+      //      "train" -> RddFetcher.annotatedTrainW2V,
+      "test" -> RddFetcher.annotatedTestW2V,
+      "validation" -> RddFetcher.annotatedValidationW2V
+    )
+    rdds.foreach { case (k, v) => RddFetcher.cacheSubSampled(v, k) }
+  }
+
   def computeAndCacheDBPediaAnnotationsToJson() = {
     Spotlight.cacheDbpedia(RddFetcher.rdd, 0.5)
     Spotlight.cacheDbpedia(RddFetcher.rdd, 0.75)
-  }
-
-  def saveAsText(rdd: RDD[String], name: String) = {
-    val path = Config.cachePath + s"${name.replaceAll("[,\\s+]+", "_")}"
-    FileUtils.deleteDirectory(new File(path))
-    rdd.coalesce(1, shuffle = true).saveAsTextFile(path)
-    val file = new File(path + ".json")
-    Files.move(new File(path + "/part-00000").toPath, file.toPath, StandardCopyOption.REPLACE_EXISTING)
-    FileUtils.deleteDirectory(new File(path))
   }
 
   def printArticles(count: Int) = {
@@ -236,6 +214,18 @@ object SparkUtil {
     Log.v(rdd.collect.map(c => f"${c._2}%-10s - ${c._1}").mkString("IPTC CATEGORY DISTRIBUTION\n", "\n", ""))
   }
 
+  def stats(rdd: RDD[Article]) = {
+    val a = Preprocess.preprocess(sc.broadcast(Prefs()), rdd)
+    val prefs = sc.broadcast(Prefs(iteration = iter))
+    val annCounts = a.flatMap(a => a.iptc.map(c => (c, a.ann.size))).reduceByKey(_ + _).collectAsMap
+    Log.toFile(annCounts.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "stats/annotation_pr_iptc.txt")
+    val artByAnn = a.flatMap(a => a.iptc.map(c => (c, 1))).reduceByKey(_ + _).collectAsMap
+    Log.toFile(artByAnn.map(c => f"${c._1}%30s ${c._2}%10d").mkString("\n"), "stats/articles_pr_iptc.txt")
+    val iptc = a.flatMap(_.iptc).distinct.collect
+    val avgAnnIptc = iptc.map(c => (c, annCounts(c).toDouble / artByAnn(c))).toMap
+    Log.toFile(avgAnnIptc.map(c => f"${c._1}%30s ${c._2}%10.0f").mkString("\n"), "stats/average_ann_pr_iptc.txt")
+  }
+
   /////////////////////
   // Utility methods //
   /////////////////////
@@ -245,6 +235,15 @@ object SparkUtil {
       .map(w => w.replaceAll("[^a-zA-Z0-9]", ""))
       .map(w => (w, 1)).reduceByKey(_ + _)
       .collect.sortBy(_._2).reverse.toMap
+  }
+
+  def saveAsText(rdd: RDD[String], name: String) = {
+    val path = Config.cachePath + s"${name.replaceAll("[,\\s+]+", "_")}"
+    FileUtils.deleteDirectory(new File(path))
+    rdd.coalesce(1, shuffle = true).saveAsTextFile(path)
+    val file = new File(path + ".json")
+    Files.move(new File(path + "/part-00000").toPath, file.toPath, StandardCopyOption.REPLACE_EXISTING)
+    FileUtils.deleteDirectory(new File(path))
   }
 
   def memstat() = {

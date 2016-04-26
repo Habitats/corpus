@@ -77,7 +77,7 @@ object FreebaseW2V {
   }
 
   def trainBinaryFFN(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
-    val net = FeedForward.create()
+    val net = FeedForward.create(neuralPrefs)
     val trainIter = new FeedForwardIterator(neuralPrefs.train.collect(), label, batchSize = neuralPrefs.minibatchSize)
     val testIter = new FeedForwardIterator(neuralPrefs.validation.collect(), label, batchSize = neuralPrefs.minibatchSize)
     Log.r(s"Training $label ...")

@@ -33,10 +33,6 @@ object Preprocess {
     var rdd = raw
     Log.v(s"${current(rdd)} - Running preprocessing ...")
 
-    // Filterings ...
-    if (prefs.value.wikiDataIncludeBroad) {
-      rdd = wikiDataAnnotations(rdd, prefs)
-    }
     rdd = phraseSkipFilter(rdd, prefs)
     rdd = rdd.filter(_.iptc.nonEmpty).filter(_.ann.nonEmpty)
 

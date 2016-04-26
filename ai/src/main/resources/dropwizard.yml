@@ -18,13 +18,14 @@ server:
 logging:
 
   # The default level of all loggers. Can be OFF, ERROR, WARN, INFO, DEBUG, TRACE, or ALL.
-  level: INFO
+  level: WARN
 
   # Logger-specific levels.
   loggers:
 
     # Sets the level for 'com.example.app' to DEBUG.
     org.deeplearning4j: INFO
+    org.deeplearning4j.ui.weights.HistogramIterationListener: WARN
     org.eclipse.jetty: INFO
 
   appenders:

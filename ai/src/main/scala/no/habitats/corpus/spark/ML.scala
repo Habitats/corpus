@@ -2,6 +2,7 @@ package no.habitats.corpus.spark
 
 import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.models.Article
+import no.habitats.corpus.npl.IPTC
 import no.habitats.corpus.{MLStats, Prefs}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.classification._
@@ -11,26 +12,25 @@ import org.apache.spark.rdd.RDD
 
 object ML {
 
-  def multiLabelClassification(prefs: Broadcast[Prefs], rdd: RDD[Article]) = {
-    val phrases = rdd.flatMap(_.ann.keySet).collect.distinct.sorted
-    val splits = rdd.randomSplit(Array(0.8, 0.20), seed = 1L)
+  def multiLabelClassification(prefs: Broadcast[Prefs], train: RDD[Article], test: RDD[Article]): Map[String, NaiveBayesModel] = {
+    val phrases = (train ++ test).flatMap(_.ann.keySet).collect.distinct.sorted
 
-    val training = splits(0).map(a => (a.iptc, a.toVector(phrases)))
+    val training = train.map(a => (a.iptc, a.toVector(phrases)))
     training.cache
-    val testing = splits(1).map(t => (t, t.toVector(phrases)))
+    val testing = test.map(t => (t, t.toVector(phrases)))
     testing.cache
 
-    val catModelPairs = trainModelsNaiveBayedMultiNominal(training)
+    val catModelPairs = trainModelsNaiveBayedMultiNominal(training, prefs.value.categories)
     //      val catModelPairs = trainModelsSVM(training)
     Log.v("--- Training complete! ")
     val predicted = predictCategories(catModelPairs, testing)
 
     Log.v("--- Predictions complete! ")
-    evaluate(rdd, predicted, training, phrases, prefs)
+    evaluate( predicted, training, phrases, prefs)
+    catModelPairs
   }
 
-  def trainModelsNaiveBayedMultiNominal(training: RDD[(Set[String], Vector)]): Map[String, ClassificationModel] = {
-    val cats = if (Config.iptcFilter.nonEmpty) Config.iptcFilter else training.flatMap(_._1).collect.toSet
+  def trainModelsNaiveBayedMultiNominal(training: RDD[(Set[String], Vector)], cats: Seq[String]): Map[String, NaiveBayesModel] = {
     cats.map(c => {
       Log.v(s"Training ... $c ...")
       val labeledTraining = training
@@ -48,7 +48,7 @@ object ML {
     })
   }
 
-  def evaluate(rdd: RDD[Article], predicted: RDD[Article], training: RDD[(Set[String], Vector)], phrases: Seq[String], prefs: Broadcast[Prefs]) = {
+  def evaluate( predicted: RDD[Article], training: RDD[(Set[String], Vector)], phrases: Seq[String], prefs: Broadcast[Prefs]) = {
     val sampleResult = predicted.map(_.toResult).reduce(_ + "\n" + _)
     Log.toFile(sampleResult, s"stats/sample_result_${Config.count}.txt")
     val labelCardinalityDistribution = predicted.map(p => f"${p.iptc.size}%2d ${p.pred.size}%2d").reduce(_ + "\n" + _)

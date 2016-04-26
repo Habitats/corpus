@@ -34,10 +34,10 @@ case class Annotation(articleId: String,
 
 object Annotation {
   val NONE = "NONE"
-  val dw   = WikiData.dbToWd
-  val wf   = WikiData.wdToFb
-  val fw   = WikiData.fbToWd
-  val wd   = WikiData.wdToDb
+  lazy val dw = WikiData.dbToWd
+  lazy val wf = WikiData.wdToFb
+  lazy val fw = WikiData.fbToWd
+  lazy val wd = WikiData.wdToDb
 
   def fromWikidata(articleId: String, wd: Entity): Annotation = {
     new Annotation(articleId = articleId, phrase = wd.name, mc = 1, wd = wd.id)
