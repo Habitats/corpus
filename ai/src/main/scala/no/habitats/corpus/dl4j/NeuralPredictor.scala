@@ -49,7 +49,7 @@ case class NeuralPredictor(net: MultiLayerNetwork, article: Article, label: Stri
 object NeuralPredictor {
 
   def predict(article: Article): Set[String] = {
-    val predictors: Map[String, NeuralPredictor] = NeuralModelLoader.bestModels.map { case (label, model) => (label, new NeuralPredictor(model, article, label)) }
+    val predictors: Map[String, NeuralPredictor] = NeuralModelLoader.bestModels("ffa").map { case (label, model) => (label, new NeuralPredictor(model, article, label)) }
     val results: Set[String] = predictors.map { case (label, predictor) => s"$label: ${predictor.correct()}" }.toSet
     results
   }

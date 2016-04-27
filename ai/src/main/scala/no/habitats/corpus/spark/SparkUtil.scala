@@ -6,14 +6,15 @@ import java.nio.file.{Files, StandardCopyOption}
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
-import no.habitats.corpus.dl4j.{FreebaseW2V, NeuralPrefs}
+import no.habitats.corpus.dl4j.networks.{FeedForwardIterator, RNNIterator}
+import no.habitats.corpus.dl4j.{FreebaseW2V, NeuralEvaluation, NeuralPrefs}
 import no.habitats.corpus.models.{Annotation, Article}
 import no.habitats.corpus.npl.{IPTC, Spotlight, WikiData}
 import org.apache.commons.io.FileUtils
+import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
-import scala.collection._
 import scala.util.Try
 
 object SparkUtil {
@@ -49,7 +50,7 @@ object SparkUtil {
       case "fbw2vids" => FreebaseW2V.cacheWordVectorIds()
 
       case "cacheAnnotated" => annotateAndCacheArticles()
-      case "splitAndCacheAnnotatedW2V" => splitAndCacheArticlesWithW2V()
+      case "splitAndCacheAnnotatedW2V" => splitAndCacheArticlesWithW2V() // REQUIREMENT FOR TRAINING
       case "cacheBalanced" => cacheBalanced()
       case "cacheMinimal" => cacheMinimalArticles()
       case "cacheSuperSampled" => RddFetcher.cacheSuperSampled(Some(100000))
@@ -60,11 +61,11 @@ object SparkUtil {
 
       // Modelling
       case "trainNaiveBayes" => trainNaiveBayes()
-      case "trainRNN" => trainRNN()
-      case "trainRNNBalancedSingle" => trainRNNBalancedSingle()
-      case "trainFFNBalancedSingle" => trainFFNBalancedSingle()
-      case "loadRNN" => NeuralModelLoader.load(Config.category, Config.count)
-      case "testModels" => FreebaseW2V.testAllModels()
+      case "trainRNNSubSampled" => trainRNNSubSampled()
+      case "trainFFNSubSampled" => trainFFNSubSampled()
+      case "trainRNNBalanced" => trainRNNBalanced()
+      case "trainFFNBalanced" => trainFFNBalanced()
+      case "testModels" => testModels()
 
       case _ => Log.r("No job ... Exiting!")
     }
@@ -73,50 +74,55 @@ object SparkUtil {
     //    sc.stop
   }
 
-  def trainRNN() = {
-    for {
-      learningRate <- Seq(0.5, 0.05, 0.005, 0.0005, 0.00005)
-      hiddeNodes <- Seq(333)
-      category <- Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
-      miniBatchSize <- Seq(50)
-      epochs <- Seq(5)
-      (train, test) = {
-        val train = RddFetcher.balanced(IPTC.trim(category) + "_train", true)
-        val validation = RddFetcher.balanced(IPTC.trim(category) + "_validation", false)
-        //        val split: Array[RDD[Article]] = RddFetcher.annotatedW2VRdd.randomSplit(Array(0.8, 0.2), seed = Config.seed)
-        (train, validation)
-      }
-    } yield {
-      val neuralPrefs = NeuralPrefs(learningRate, hiddeNodes, train, test, miniBatchSize, epochs)
-      val n: MultiLayerNetwork = FreebaseW2V.trainBinaryRNN(category, neuralPrefs = neuralPrefs)
-      //      NeuralModelLoader.save(n, category, Config.count)
-    }
-  }
+  lazy val cats: Seq[String] = Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
 
-  def trainRNNBalancedSingle(c: String = Config.category) = trainBalancedSingle(c, FreebaseW2V.trainBinaryRNN)
-
-  def trainFFNBalancedSingle(c: String = Config.category) = trainBalancedSingle(c, FreebaseW2V.trainBinaryFFN)
-
-  def trainBalancedSingle(c: String = Config.category, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork) = {
-    //    val train = RddFetcher.balanced(IPTC.trim(c) + "_train", true)
-    //    val validation = RddFetcher.balanced(IPTC.trim(c) + "_validation", false)
+  def trainRNNSubSampled() = {
     val train = RddFetcher.subTrainW2V
     val validation = RddFetcher.subValidationW2V
+    Config.resultsFileName = "res_rnn.txt"
+    Config.resultsCatsFileName = "res_rnn_cats.txt"
+    cats.foreach(c => trainNeuralNetwork(c, FreebaseW2V.trainBinaryRNN, train, validation))
+  }
+
+  def trainRNNBalanced() = {
+    Config.resultsFileName = "res_rnn.txt"
+    Config.resultsCatsFileName = "res_rnn_cats.txt"
+    cats.foreach(c => {
+      val train = RddFetcher.balanced(IPTC.trim(c) + "_train", true)
+      val validation = RddFetcher.balanced(IPTC.trim(c) + "_validation", false)
+      trainNeuralNetwork(c, FreebaseW2V.trainBinaryRNN, train, validation)
+    })
+  }
+
+  def trainFFNSubSampled() = {
+    val train = RddFetcher.subTrainW2V
+    val validation = RddFetcher.subValidationW2V
+    Config.resultsFileName = "res_ffn.txt"
+    Config.resultsCatsFileName = "res_ffn_cats.txt"
+    cats.foreach(c => trainNeuralNetwork(c, FreebaseW2V.trainBinaryFFN, train, validation))
+  }
+
+  def trainFFNBalanced() = {
+    Config.resultsFileName = "res_ffn.txt"
+    Config.resultsCatsFileName = "res_ffn_cats.txt"
+    cats.foreach(c => {
+      val train = RddFetcher.balanced(IPTC.trim(c) + "_train", true)
+      val validation = RddFetcher.balanced(IPTC.trim(c) + "_validation", false)
+      trainNeuralNetwork(c, FreebaseW2V.trainBinaryRNN, train, validation)
+    })
+  }
+
+  def trainNeuralNetwork(c: String = Config.category, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, train: RDD[Article], validation: RDD[Article]) = {
     for {
       hiddenNodes <- Seq(10)
       //      hiddenNodes <- Seq(1, 5, 10, 20, 50, 100, 200)
       learningRate <- Seq(0.05)
+      minibatchSize = 50
+      histogram = false
+      epochs = 5
     } yield {
-      val neuralPrefs = NeuralPrefs(
-        learningRate = learningRate,
-        hiddenNodes = hiddenNodes,
-        train = train,
-        minibatchSize = 200,
-        validation = validation,
-        histogram = true,
-        epochs = 5
-      )
-      Log.v(neuralPrefs)
+      val neuralPrefs = NeuralPrefs(learningRate = learningRate, hiddenNodes = hiddenNodes, train = train, validation = validation, minibatchSize = minibatchSize, histogram = histogram, epochs = epochs)
+      Log.r(neuralPrefs)
       val net: MultiLayerNetwork = trainNetwork(c, neuralPrefs)
       NeuralModelLoader.save(net, c, Config.count)
       System.gc()
@@ -124,15 +130,63 @@ object SparkUtil {
   }
 
   def trainNaiveBayes() = {
-    Config.resultsFileName = "res_baseline"
-    Config.resultsCatsFileName = "res_baseline_cats"
+    Config.resultsFileName = "res_nb.txt"
+    Config.resultsCatsFileName = "res_nb_cats.txt"
     //    val train = RddFetcher.annotatedTrainW2V
     //    val validation = RddFetcher.annotatedValidationW2V
     val train = RddFetcher.subTrainW2V
     val validation = RddFetcher.subValidationW2V
     val prefs = sc.broadcast(Prefs())
-    val models = ML.multiLabelClassification(prefs, train, validation)
+    val phrases: Array[String] = (train ++ validation).flatMap(_.ann.keySet).collect.distinct.sorted
+    val models = ML.multiLabelClassification(prefs, train, validation, phrases)
     models.foreach { case (c, model) => MLlibModelLoader.save(model, s"nb_${IPTC.trim(c)}.bin") }
+    Log.toFile(phrases, "nb_phrases.txt", Config.modelPath)
+  }
+
+  def testModels() = {
+    Config.resultsFileName = "res_all.txt"
+    Config.resultsCatsFileName = "res_all.txt"
+    val rdd = RddFetcher.subTestW2V
+    rdd.cache()
+    val test = rdd.collect()
+    Log.r("Testing RNN ...")
+    testRNN(test)
+    Log.r("Testing FFN ...")
+    testFFN(test)
+    Log.r("Testing Naive Bayes ...")
+    testNaiveBayes(rdd)
+  }
+
+  def testNaiveBayes(rdd: RDD[Article]): Map[String, NaiveBayesModel] = {
+    val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(IPTC.trim).map(c => (c, MLlibModelLoader.load(s"nb_$c.bin"))).toMap
+    val phrases: Array[String] = Config.dataFile(Config.modelPath + "nb_phrases.txt").getLines().toArray.sorted
+    val prefs = sc.broadcast(Prefs())
+    ML.testModels(rdd, nb, phrases, prefs)
+  }
+
+
+  def testFFN(test: Array[Article]) = {
+    val ffa: Map[String, MultiLayerNetwork] = NeuralModelLoader.bestModels("ffa")
+    val evals: Set[NeuralEvaluation] = ffa.toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
+      val ffnTest = new FeedForwardIterator(test, models._1, 500)
+      val ffnEval = NeuralEvaluation(models._2, ffnTest, i, models._1)
+      ffnEval.log()
+      ffnEval
+    }
+    }.toSet
+    NeuralEvaluation.log(evals, cats)
+  }
+
+  def testRNN(test: Array[Article]) = {
+    val rnn: Map[String, MultiLayerNetwork] = NeuralModelLoader.bestModels("rnn")
+    val evals: Set[NeuralEvaluation] = rnn.toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
+      val ffnTest = new RNNIterator(test, Some(models._1), 50)
+      val rnnEval = NeuralEvaluation(models._2, ffnTest, i, models._1)
+      rnnEval.log()
+      rnnEval
+    }
+    }.toSet
+    NeuralEvaluation.log(evals, cats)
   }
 
   /** Fetch json RDD and compute IPTC and annotations */
@@ -183,7 +237,7 @@ object SparkUtil {
 
   def cacheSubSampled() = {
     val rdds = Map(
-      //      "train" -> RddFetcher.annotatedTrainW2V,
+      "train" -> RddFetcher.annotatedTrainW2V,
       "test" -> RddFetcher.annotatedTestW2V,
       "validation" -> RddFetcher.annotatedValidationW2V
     )

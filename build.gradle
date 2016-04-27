@@ -32,9 +32,6 @@ subprojects {
             exclude group: 'com.sun.jersey.jersey-test-framework', module: 'jersey-test-framework-grizzly2'
             exclude group: 'com.sun.jersey', module: 'jersey-json'
             exclude group: 'com.sun.jersey', module: 'jersey-core'
-//            exclude group: 'com.typesafe.akka', module: 'akka-remote_2.10'
-//            exclude group: 'com.typesafe.akka', module: 'akka-actor_2.10'
-//            exclude group: 'com.typesafe.akka', module: 'akka-slf4j_2.10'
         }
     }
 

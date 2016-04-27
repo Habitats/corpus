@@ -4,9 +4,9 @@ import java.io.{File, FileOutputStream, PrintWriter}
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+import org.apache.commons.io.FileUtils
 import org.apache.spark.Logging
-import org.slf4j.{LoggerFactory, MarkerFactory}
-
+import org.slf4j.MarkerFactory
 
 object Log extends Logging {
   val marker = MarkerFactory.getMarker("CORPUS")
@@ -44,13 +44,12 @@ object Log extends Logging {
     writeLine(m.toString, resultsFile)
   }
 
-  def toFile(m: Traversable[String], fileName: String) = {
-    val resultsFile = new File(Config.dataPath + f"/$fileName")
-    if (!resultsFile.exists) {
-      Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
-      resultsFile.createNewFile
-    }
-    writeLine(m.toString, resultsFile)
+  def toFile(m: Traversable[String], fileName: String, path: String = Config.dataPath) = {
+    val resultsFile = new File(path + f"/$fileName")
+    Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
+    FileUtils.deleteQuietly(resultsFile)
+    resultsFile.createNewFile
+    writeLine(m.mkString("\n"), resultsFile)
   }
 
   def init() = {

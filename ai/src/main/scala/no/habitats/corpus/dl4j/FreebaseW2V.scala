@@ -2,11 +2,16 @@ package no.habitats.corpus.dl4j
 
 import java.io.File
 
+import no.habitats.corpus.Prefs
 import no.habitats.corpus.common.CorpusContext._
-import no.habitats.corpus.common.{Config, Log, NeuralModelLoader, W2VLoader}
+import no.habitats.corpus.common._
 import no.habitats.corpus.dl4j.networks._
-import no.habitats.corpus.spark.{RddFetcher, SparkUtil}
+import no.habitats.corpus.models.Article
+import no.habitats.corpus.npl.IPTC
+import no.habitats.corpus.spark.{ML, RddFetcher, SparkUtil}
 import org.apache.spark.api.java.JavaRDD
+import org.apache.spark.mllib.classification.NaiveBayesModel
+import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.AsyncDataSetIterator
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors
@@ -60,11 +65,10 @@ object FreebaseW2V {
 
   def trainBinaryRNN(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     val net = RNN.createBinary(neuralPrefs)
-
     val trainIter = new RNNIterator(neuralPrefs.train.collect(), Some(label), batchSize = neuralPrefs.minibatchSize)
     val testIter = new RNNIterator(neuralPrefs.validation.collect(), Some(label), batchSize = neuralPrefs.minibatchSize)
-    Log.r(s"Training ${label.mkString(", ")} ...")
-    Log.r2(s"Training ${label.mkString(", ")} ...")
+    Log.r(s"Training $label ...")
+    Log.r2(s"Training $label ...")
     for (i <- 0 until neuralPrefs.epochs) {
       net.fit(trainIter)
       trainIter.reset()
@@ -93,16 +97,5 @@ object FreebaseW2V {
     net
   }
 
-  def testAllModels() = {
-    val models = NeuralModelLoader.bestModels
-    val test = RddFetcher.annotatedTestW2V.collect()
-    var i = 0
-    models.foreach { case (label, net) => {
-      val testIter = new RNNIterator(test, Some(label), 50)
-      val eval = NeuralEvaluation(net, testIter, i, label)
-      eval.log()
-      i += 1
-    }
-    }
-  }
+
 }

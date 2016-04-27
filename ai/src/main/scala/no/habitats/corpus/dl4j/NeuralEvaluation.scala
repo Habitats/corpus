@@ -31,14 +31,14 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
   private lazy val fullStats = Seq[(String, String)](
     "Category" -> f"$label%41s",
     "Epoch" -> f"$epoch%5d",
-    "TP" -> f"${eval.truePositives.get(1)}%5d",
-    "FP" -> f"${eval.falsePositives.get(1)}%5d",
-    "FN" -> f"${eval.falseNegatives.get(1)}%5d",
-    "TN" -> f"${eval.trueNegatives.get(1)}%5d",
-    "Recall" -> f"${eval.recall}%.3f",
-    "Precision" -> f"${eval.precision}%.3f",
-    "Accuracy" -> f"${eval.accuracy}%.3f",
-    "F-score" -> f"${eval.f1}%.3f",
+    "TP" -> f"$tp%5d",
+    "FP" -> f"$fp%5d",
+    "FN" -> f"$fn%5d",
+    "TN" -> f"$tn%5d",
+    "Recall" -> f"$recall%.3f",
+    "Precision" -> f"$precision%.3f",
+    "Accuracy" -> f"$accuracy%.3f",
+    "F-score" -> f"$fscore%.3f",
     "Error" -> f"${net.score}%.10f"
   )
 
@@ -50,9 +50,58 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
       .mkString("\n", "\n", "")
   }
 
+  lazy val precision: Double = eval.precision
+  lazy val recall   : Double = eval.recall
+  lazy val fscore   : Double = eval.f1
+  lazy val accuracy : Double = eval.accuracy
+  lazy val tp       : Int    = eval.truePositives.get(1)
+  lazy val fp       : Int    = eval.falsePositives.get(1)
+  lazy val tn       : Int    = eval.trueNegatives.get(1)
+  lazy val fn       : Int    = eval.falseNegatives.get(1)
+
   def log() = {
-    Log.r2(confusion)
+    //    Log.r2(confusion)
     if (epoch == 0) Log.r(statsHeader)
     Log.r(stats)
+  }
+}
+
+object NeuralEvaluation{
+
+  def log(evals: Set[NeuralEvaluation], cats: Seq[String]) = {
+    // Macro
+    val maRecall = evals.map(_.recall).sum / cats.size
+    val maPrecision = evals.map(_.precision).sum / cats.size
+    val maAccuracy = evals.map(_.accuracy).sum / cats.size
+    val maFscore = evals.map(_.fscore).sum / cats.size
+
+    // Micro
+    val tp = evals.map(_.tp).sum
+    val tn = evals.map(_.tn).sum
+    val fp = evals.map(_.fp).sum
+    val fn = evals.map(_.fn).sum
+    val miRecall    = tp.toDouble / (tp + fn)
+    val miPrecision = tp.toDouble / (tp + fp + 0.00001)
+    val miAccuracy  = (tp + tn).toDouble / (tp + fp + fn + tn)
+    val miFscore    = (2 * tp).toDouble / (2 * tp + fp + fn)
+
+    val stats = Seq[(String, String)](
+      "Ma.Recall" -> f"$maRecall%.3f",
+      "Ma.Precision" -> f"$maPrecision%.3f",
+      "Ma.Accuracy" -> f"$maAccuracy%.3f",
+      "Ma.F-score" -> f"$maFscore%.3f",
+
+      "Mi.Recall" -> f"$miRecall%.3f",
+      "Mi.Precision" -> f"$miPrecision%.3f",
+      "Mi.Accuracy" -> f"$miAccuracy%.3f",
+      "Mi.F-score" -> f"$miFscore%.3f"
+    )
+    Log.r(stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString(""))
+    Log.r(stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString(""))
+
+    //    val recall    = tp.toDouble / (tp + fn)
+    //    val precision = tp.toDouble / (tp + fp + 0.00001)
+    //    val accuracy  = (tp + tn).toDouble / (tp + fp + fn + tn)
+    //    val fscore    = (2 * tp).toDouble / (2 * tp + fp + fn)
   }
 }

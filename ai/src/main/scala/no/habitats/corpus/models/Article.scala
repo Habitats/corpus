@@ -40,16 +40,16 @@ case class Article(id: String,
     f"$id - $hl - $url - IPTC >> $iptcstr >> PREDICTION >> $predstr"
   }
 
-  def toVector(phrases: Seq[String]): Vector = {
+  def toVector(phrases: Array[String]): Vector = {
     toVectorSparse(phrases)
   }
 
-  def toVectorDense(phrases: Seq[String]): Vector = {
+  def toVectorDense(phrases: Array[String]): Vector = {
     val row = phrases.map(w => if (ann.contains(w)) ann(w).tfIdf else 0).toArray
     Vectors.dense(row)
   }
 
-  def toVectorSparse(phrases: Seq[String]): Vector = {
+  def toVectorSparse(phrases: Array[String]): Vector = {
     val values: Seq[(Int, Double)] = for {
       i <- phrases.indices
       w = phrases(i) if ann.contains(w) && ann(w).tfIdf > 0
