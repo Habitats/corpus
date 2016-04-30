@@ -5,7 +5,6 @@
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext
 import no.habitats.corpus.models.{Annotation, Article}
-import no.habitats.corpus.spark._
 import org.junit.runner.RunWith
 import org.scalactic.TolerantNumerics
 import org.scalatest.FunSuite
@@ -25,20 +24,20 @@ class MLTest extends FunSuite {
   val cats = Set(A, B, C, D)
 
   val abcd = Set(A, B, C, D)
-  val abc = Set(A, B, C)
-  val abd = Set(A, B, D)
-  val acd = Set(A, C, D)
-  val bcd = Set(B, C, D)
-  val ab = Set(A, B)
-  val ac = Set(A, C)
-  val ad = Set(A, D)
-  val bc = Set(B, C)
-  val bd = Set(B, D)
-  val cd = Set(C, D)
-  val a = Set(A)
-  val b = Set(B)
-  val c = Set(C)
-  val d = Set(D)
+  val abc  = Set(A, B, C)
+  val abd  = Set(A, B, D)
+  val acd  = Set(A, C, D)
+  val bcd  = Set(B, C, D)
+  val ab   = Set(A, B)
+  val ac   = Set(A, C)
+  val ad   = Set(A, D)
+  val bc   = Set(B, C)
+  val bd   = Set(B, D)
+  val cd   = Set(C, D)
+  val a    = Set(A)
+  val b    = Set(B)
+  val c    = Set(C)
+  val d    = Set(D)
 
   // T + T = TP
   // T + F = FN
@@ -46,7 +45,7 @@ class MLTest extends FunSuite {
   // F + T = FP
 
   test("multi label") {
-    val pred = Set[Article](
+    val pred = Seq[Article](
       Article(id = "a1", iptc = abc, pred = acd),
       Article(id = "a2", iptc = acd, pred = acd),
       Article(id = "a3", iptc = bcd, pred = acd),
@@ -142,8 +141,8 @@ class MLTest extends FunSuite {
     assert(tfidfann3.tfIdf === ans3)
 
     val computed = tc.computed.collect
-    val denseVectors = computed.map(a => (a.id, a.toVectorDense(Seq(A, B, C, D))))
-    val sparseVectors = computed.map(a => (a.id, a.toVectorSparse(Seq(A, B, C, D))))
+    val denseVectors = computed.map(a => (a.id, a.toVectorDense(Array(A, B, C, D))))
+    val sparseVectors = computed.map(a => (a.id, a.toVectorSparse(Array(A, B, C, D))))
     for (i <- computed.indices) {
       val d = denseVectors(i)._2
       val s = sparseVectors(i)._2
