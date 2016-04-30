@@ -3,9 +3,13 @@ package no.habitats.corpus.models
 import java.util.concurrent.atomic.AtomicInteger
 
 import com.nytlabs.corpus.NYTCorpusDocument
+import no.habitats.corpus.common.W2VLoader
 import no.habitats.corpus.npl.IPTC
 import no.habitats.corpus.npl.extractors.OpenNLP
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import org.deeplearning4j.spark.util.MLLibUtil
+import org.nd4j.linalg.api.ndarray.INDArray
+import org.nd4j.linalg.ops.transforms.Transforms
 
 case class Article(id: String,
                    hl: String = null,
@@ -44,6 +48,18 @@ case class Article(id: String,
     toVectorSparse(phrases)
   }
 
+  def toDocumentVector: Vector = {
+    val all = ann.map(_._2.fb).map(W2VLoader.fromId).filter(_.isDefined).map(_.get)
+    // Min: -0.15568943321704865
+    // Max:  0.15866121649742126
+    val min = -0.16
+    val max = 0.16
+    val squashed: INDArray = all.reduce(_.add(_)).div(all.size)
+    val normal = squashed.sub(min).div(max - min)
+    val binary = Transforms.round(normal)
+    MLLibUtil.toVector(binary)
+  }
+
   def toVectorDense(phrases: Array[String]): Vector = {
     val row = phrases.map(w => if (ann.contains(w)) ann(w).tfIdf else 0).toArray
     Vectors.dense(row)
@@ -67,6 +83,12 @@ case class Article(id: String,
 
   def addIptc(broad: Boolean): Article = {
     copy(iptc = if (broad) IPTC.toBroad(desc, 0) else IPTC.toIptc(desc))
+  }
+
+  def toND4JDocumentVector: INDArray = {
+    val vectors = ann.values.map(_.fb).map(W2VLoader.fromId).map(_.get)
+    val combined = vectors.reduce(_.add(_)).div(vectors.size)
+    combined
   }
 }
 

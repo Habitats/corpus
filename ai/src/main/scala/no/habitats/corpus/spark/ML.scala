@@ -1,9 +1,9 @@
 package no.habitats.corpus.spark
 
-import no.habitats.corpus.common.{Config, Log}
+import no.habitats.corpus.common.{Config, Log, W2VLoader}
 import no.habitats.corpus.models.Article
 import no.habitats.corpus.npl.IPTC
-import no.habitats.corpus.{IO, MLStats, Prefs}
+import no.habitats.corpus.{MLStats, Prefs}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.linalg.Vector
@@ -12,21 +12,29 @@ import org.apache.spark.rdd.RDD
 
 object ML {
 
-  def multiLabelClassification(prefs: Broadcast[Prefs], train: RDD[Article], test: RDD[Article], phrases: Array[String]): Map[String, NaiveBayesModel] = {
-    val training = train.map(a => (a.iptc, a.toVector(phrases)))
+  def multiLabelClassification(prefs: Broadcast[Prefs], train: RDD[Article], test: RDD[Article], phrases: Array[String], bow: Boolean): Map[String, NaiveBayesModel] = {
+    W2VLoader.preLoad()
+    val training: RDD[(Set[String], Vector)] = train.map(a => (a.iptc, toVector(phrases, bow, a)))
+    //    Log.v("Max:" + training.map(_._2.toArray.max).max)
+    //    Log.v("Min: " + training.map(_._2.toArray.min).min)
     training.cache
 
     val catModelPairs: Map[String, NaiveBayesModel] = trainModelsNaiveBayedMultiNominal(training, prefs.value.categories)
     //      val catModelPairs = trainModelsSVM(training)
     Log.v("--- Training complete! ")
 
-    testModels(test, catModelPairs, phrases, prefs)
+    testModels(test, catModelPairs, phrases, prefs, bow)
+  }
+
+  /** Created either a BoW or a squashed W2V document vector */
+  def toVector(phrases: Array[String], bow: Boolean, a: Article): Vector = {
+    if (bow) a.toVector(phrases) else a.toDocumentVector
   }
 
   def trainModelsNaiveBayedMultiNominal(training: RDD[(Set[String], Vector)], cats: Seq[String]): Map[String, NaiveBayesModel] = {
     cats.map(c => {
       Log.v(s"Training ... $c ...")
-      val labeledTraining = training
+      val labeledTraining: RDD[LabeledPoint] = training
         .map(a => (if (a._1.contains(c)) 1 else 0, a._2))
         .map(a => LabeledPoint(a._1, a._2))
       val model = NaiveBayes.train(input = labeledTraining, lambda = 1.0, modelType = "multinomial")
@@ -34,13 +42,11 @@ object ML {
     }).toMap
   }
 
-  def testModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], phrases: Array[String], prefs: Broadcast[Prefs]): Map[String, NaiveBayesModel] = {
-    val testing = test.map(t => {
-      val toVector: Vector = t.toVector(phrases)
-      (t, toVector)
-    })
-    val lol = test.collect()
-    val lol2 = testing.collect()
+  def testModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], phrases: Array[String], prefs: Broadcast[Prefs], bow: Boolean): Map[String, NaiveBayesModel] = {
+    W2VLoader.preLoad()
+    val testing: RDD[(Article, Vector)] = test.map(t => (t, toVector(phrases, bow, t)))
+    //    Log.v("Max:" + testing.map(_._2.toArray.max).max)
+    //    Log.v("Min: " + testing.map(_._2.toArray.min).min)
     testing.cache()
     val predicted: RDD[Article] = predictCategories(catModelPairs, testing)
 
@@ -63,7 +69,7 @@ object ML {
     Log.toFile(labelCardinalityDistribution, s"stats/label_cardinality_distribution_${Config.count}.txt")
 
     val cats = IPTC.topCategories.toSet
-    val stats = MLStats(predicted, cats,  prefs)
+    val stats = MLStats(predicted, cats, prefs)
     if (stats.catStats.nonEmpty) {
       val catHeader = stats.catStats.head.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 3}s").format(s._1)).mkString(f"${prefs.value.iteration}%3d# Category stats:\n", "", "\n")
       Log.r2(stats.catStats.map(c => c.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 3}s").format(s._2)).mkString("")).mkString(catHeader, "\n", "\n"))

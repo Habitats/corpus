@@ -1,6 +1,7 @@
 package no.habitats.corpus
 
 import no.habitats.corpus.models.Article
+import no.habitats.corpus.npl.IPTC
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
@@ -112,9 +113,8 @@ case class LabelResult(category: String, tp: Int, fp: Int, fn: Int, tn: Int) {
 
 case class MacroAverage(predicted: Seq[Article], cats: Set[String]) {
   val labelStats: Map[String, LabelResult] = {
-    val predCats = predicted.flatMap(_.iptc)
     val l = for {
-      c <- predCats
+      c <- cats
       tp = predicted.count(p => p.iptc.contains(c) && p.pred.contains(c))
       fp = predicted.count(p => !p.iptc.contains(c) && p.pred.contains(c))
       fn = predicted.count(p => p.iptc.contains(c) && !p.pred.contains(c))

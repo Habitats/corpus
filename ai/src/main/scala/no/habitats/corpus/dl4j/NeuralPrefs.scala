@@ -4,8 +4,8 @@ import no.habitats.corpus.models.Article
 import org.apache.spark.rdd.RDD
 
 case class NeuralPrefs(
-                        learningRate: Double,
-                        hiddenNodes: Int,
+                        learningRate: Double = 0.05,
+                        hiddenNodes: Int = 10,
                         train: RDD[Article],
                         validation: RDD[Article],
                         minibatchSize: Int = 50,

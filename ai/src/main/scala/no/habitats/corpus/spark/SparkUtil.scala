@@ -7,7 +7,7 @@ import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
 import no.habitats.corpus.dl4j.networks.{FeedForwardIterator, RNNIterator}
-import no.habitats.corpus.dl4j.{FreebaseW2V, NeuralEvaluation, NeuralPrefs}
+import no.habitats.corpus.dl4j.{FreebaseW2V, NeuralEvaluation, NeuralPrefs, TSNE}
 import no.habitats.corpus.models.{Annotation, Article}
 import no.habitats.corpus.npl.{IPTC, Spotlight, WikiData}
 import org.apache.commons.io.FileUtils
@@ -58,13 +58,19 @@ object SparkUtil {
 
       // Display stats
       case "iptcDistribution" => calculateIPTCDistribution()
+      case "tnesDocumentVectors" => tnesDocumentVectors()
+      case "tnesWordVectors" => tnesWordVectors()
 
       // Modelling
-      case "trainNaiveBayes" => trainNaiveBayes()
+      case "trainNaiveBayesBoW" => trainNaiveBayes(bow = true)
+      case "trainNaiveBayesW2V" => trainNaiveBayes(bow = false)
       case "trainRNNSubSampled" => trainRNNSubSampled()
       case "trainFFNSubSampled" => trainFFNSubSampled()
+      case "trainFFNSubSampledBoW" => trainFFNSubSampledBoW()
       case "trainRNNBalanced" => trainRNNBalanced()
       case "trainFFNBalanced" => trainFFNBalanced()
+      case "trainRNNSpark" => trainRNNSpark()
+      case "trainFFNSpark" => trainFFNSpark()
       case "testModels" => testModels()
 
       case _ => Log.r("No job ... Exiting!")
@@ -75,6 +81,15 @@ object SparkUtil {
   }
 
   lazy val cats: Seq[String] = Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
+
+  def trainFFNSpark()= {
+    val train = RddFetcher.subTrainW2V
+    val validation = RddFetcher.subValidationW2V
+    Config.resultsFileName = "res_ffn.txt"
+    Config.resultsCatsFileName = "res_ffn_cats.txt"
+    val prefs = NeuralPrefs(train = train, validation = validation)
+    FreebaseW2V.trainSparkFFN("sport", prefs)
+  }
 
   def trainRNNSubSampled() = {
     val train = RddFetcher.subTrainW2V
@@ -129,7 +144,31 @@ object SparkUtil {
     }
   }
 
-  def trainNaiveBayes() = {
+  def trainFFNSubSampledBoW() = {
+    val train = RddFetcher.subTrainW2V
+    val validation = RddFetcher.subValidationW2V
+    Config.resultsFileName = "res_ffn_bow.txt"
+    Config.resultsCatsFileName = "res_ffn_bow_cats.txt"
+    val phrases: Array[String] = (train ++ validation).flatMap(_.ann.keySet).collect.distinct.sorted
+    cats.foreach(c => {
+      for {
+        hiddenNodes <- Seq(10)
+        //      hiddenNodes <- Seq(1, 5, 10, 20, 50, 100, 200)
+        learningRate <- Seq(0.05)
+        minibatchSize = 50
+        histogram = false
+        epochs = 5
+      } yield {
+        val neuralPrefs = NeuralPrefs(learningRate = learningRate, hiddenNodes = hiddenNodes, train = train, validation = validation, minibatchSize = minibatchSize, histogram = histogram, epochs = epochs)
+        Log.r(neuralPrefs)
+        val net: MultiLayerNetwork = FreebaseW2V.trainBinaryFFNBoW(c, neuralPrefs, phrases)
+        NeuralModelLoader.save(net, c, Config.count)
+        System.gc()
+      }
+    })
+  }
+
+  def trainNaiveBayes(bow: Boolean) = {
     Config.resultsFileName = "res_nb.txt"
     Config.resultsCatsFileName = "res_nb_cats.txt"
     //    val train = RddFetcher.annotatedTrainW2V
@@ -149,24 +188,24 @@ object SparkUtil {
     val rdd = RddFetcher.subTestW2V
     rdd.cache()
     val test = rdd.collect()
-    Log.r("Testing RNN ...")
-    testRNN(test)
-    Log.r("Testing FFN ...")
-    testFFN(test)
-    Log.r("Testing Naive Bayes ...")
-    testNaiveBayes(rdd)
+    testRNN(test, "rnn-w2v-sub-10")
+    testRNN(test, "rnn-w2v-balanced-10")
+    testFFN(test, "ffn-w2v")
+    testNaiveBayes(rdd, "nb-bow")
+    testNaiveBayes(rdd, "nb-w2v")
   }
 
-  def testNaiveBayes(rdd: RDD[Article]): Map[String, NaiveBayesModel] = {
-    val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(IPTC.trim).map(c => (c, MLlibModelLoader.load(s"nb_$c.bin"))).toMap
+  def testNaiveBayes(rdd: RDD[Article], name: String): Map[String, NaiveBayesModel] = {
+    Log.r(s"Testing Naive Bayes [$name] ...")
+    val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(c => (c, MLlibModelLoader.load(name, IPTC.trim(c)))).toMap
     val phrases: Array[String] = Config.dataFile(Config.modelPath + "nb_phrases.txt").getLines().toArray.sorted
     val prefs = sc.broadcast(Prefs())
-    ML.testModels(rdd, nb, phrases, prefs)
+    ML.testModels(rdd, nb, phrases, prefs, name.toLowerCase.contains("bow"))
   }
 
-
-  def testFFN(test: Array[Article]) = {
-    val ffa: Map[String, MultiLayerNetwork] = NeuralModelLoader.bestModels("ffa")
+  def testFFN(test: Array[Article], name: String) = {
+    Log.r(s"Testing FFN [$name] ...")
+    val ffa: Map[String, MultiLayerNetwork] = NeuralModelLoader.models(name)
     val evals: Set[NeuralEvaluation] = ffa.toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
       val ffnTest = new FeedForwardIterator(test, models._1, 500)
       val ffnEval = NeuralEvaluation(models._2, ffnTest, i, models._1)
