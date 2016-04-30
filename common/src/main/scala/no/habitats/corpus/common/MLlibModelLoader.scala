@@ -13,8 +13,9 @@ object MLlibModelLoader {
     oos.close
   }
 
-  def load(name: String): NaiveBayesModel = {
-    val fos = new FileInputStream(Config.modelPath + name)
+  def load(name: String, label: String): NaiveBayesModel = {
+    val file = new File(Config.modelPath + name).listFiles().find(_.getName.contains(label)).get
+    val fos = new FileInputStream(file)
     val oos = new ObjectInputStream(fos)
     val newModel = oos.readObject().asInstanceOf[NaiveBayesModel]
     newModel

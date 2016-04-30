@@ -33,6 +33,10 @@ object W2VLoader {
     }
   }
 
+  def preLoad() = {
+    vectors
+  }
+
   def contains(id: String): Boolean = {
     ids.contains(id)
   }

@@ -7,13 +7,12 @@ import org.apache.commons.io.FileUtils
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration
 import org.deeplearning4j.nn.layers.feedforward.dense.DenseLayer
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
-import org.deeplearning4j.util.ModelSerializer
 import org.nd4j.linalg.factory.Nd4j
 
 object NeuralModelLoader {
 
-  def coefficientsPath(name: String ,label: String, count: Int): String = s"coefficients-${name}_${label}_${count}.bin"
-  def confPath(name: String, label: String, count: Int): String =   s"conf-${name}_${label}_${count}.json"
+  def coefficientsPath(name: String, label: String, count: Int): String = s"coefficients-${name}_${label}_${count}.bin"
+  def confPath(name: String, label: String, count: Int): String = s"conf-${name}_${label}_${count}.json"
 
   // Returns ("sport", <model>) pairs
   def bestModels(name: String): Map[String, MultiLayerNetwork] = bestModel("conf-" + name).zip(bestModel("coefficients-" + name))
@@ -23,6 +22,15 @@ object NeuralModelLoader {
       (label, load(conf, coeff))
     }
     }.toMap
+
+  def models(path: String): Map[String, MultiLayerNetwork] = {
+    val fileNames = new File(Config.modelPath + path).listFiles().map(_.getName).sorted
+    val pairs = fileNames.filter(_.startsWith("conf")).zip(fileNames.filter(_.startsWith("coef"))).map { case (conf, coef) => {
+      val label = coef.substring(coef.indexOf("_") + 1, coef.lastIndexOf("_"))
+      (label, load(s"${Config.modelPath}$path/$conf", s"${Config.modelPath}$path/$coef"))
+    }}.toMap
+    pairs
+  }
 
   def bestModel(prefix: String): Seq[String] = {
     new File(Config.modelPath).listFiles
@@ -41,7 +49,7 @@ object NeuralModelLoader {
     Nd4j.write(model.params(), dos)
 
     // write config
-    FileUtils.write(new File(Config.cachePath + confPath(name,label, count)), model.getLayerWiseConfigurations.toJson)
+    FileUtils.write(new File(Config.cachePath + confPath(name, label, count)), model.getLayerWiseConfigurations.toJson)
     dos.close()
   }
 
