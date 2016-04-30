@@ -54,6 +54,7 @@ subprojects {
             exclude group: 'com.sun.jersey', module: 'jersey-core'
         }
         compile 'org.apache.spark:spark-mllib_2.10:1.5.2'
+        compile 'com.github.fommil.netlib:all:1.1.2'
 
         // DL4J
 //        compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.8'
