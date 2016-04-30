@@ -189,6 +189,14 @@ object SparkUtil {
     NeuralEvaluation.log(evals, cats)
   }
 
+  def tnesDocumentVectors() = {
+    TSNE.create(RddFetcher.subTrainW2V, useDocumentVectors = true)
+  }
+
+  def tnesWordVectors() = {
+    TSNE.create(RddFetcher.subTrainW2V, useDocumentVectors = false)
+  }
+
   /** Fetch json RDD and compute IPTC and annotations */
   def annotateAndCacheArticles() = {
     val rdd = RddFetcher.rdd
