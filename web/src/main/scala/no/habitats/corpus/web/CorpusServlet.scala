@@ -72,9 +72,20 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     W2VLoader.featureSize.toString
   }
 
+  get("/file/:file/?") {
+    contentType = formats("html")
+    val file = params.get("file").get
+    val text = Config.testFile(s"npl/${file}").getLines().mkString("\n")
+    detailedInfo(text)
+  }
+
   get("/info/:text/?") {
     contentType = formats("html")
     val text = params.get("text").get
+    detailedInfo(text)
+  }
+
+  def detailedInfo(text: String) = {
     val entities: Seq[Entity] = extract(text).sortBy(_.offset)
     val annotations: Seq[Annotation] = annotate(text).sortBy(_.offset)
     val annotationsWithTypes: Seq[Annotation] = annotateWithTypes(text).sortBy(_.offset)
@@ -134,9 +145,6 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     contentType = formats("html")
     val longArticle = Config.testFile("npl/article.txt").getLines().mkString("\n")
     val shortArticle = Config.testFile("npl/article_short.txt").getLines().mkString("\n")
-    val sport1 = Config.testFile("npl/sports_article.txt").getLines().mkString("\n")
-    val sport2 = Config.testFile("npl/sports_article2.txt").getLines().mkString("\n")
-    val sport3 = Config.testFile("npl/sports_article3.txt").getLines().mkString("\n")
     val fb = "/m/02bv9"
     <html>
       <body>
@@ -145,9 +153,10 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
           <h2>API Examples</h2>
           <li>
             <h3>Detailed Info</h3>
-            <a href={"/info/" + sport1}>Sport example</a> <br/>
-            <a href={"/info/" + sport2}>Sport2 example</a> <br/>
-            <a href={"/info/" + sport3}>Sport3 example</a> <br/>
+            <a href={"/file/example.txt"}>Preprocess example</a> <br/>
+            <a href={"/file/sports_article.txt"}>Sport example</a> <br/>
+            <a href={"/file/sports_article2.txt"}>Sport example2</a> <br/>
+            <a href={"/file/sports_article3.txt"}>Sport example3</a> <br/>
             <a href={"/info/" + shortArticle}>Short example</a> <br/>
             <a href={"/info/" + longArticle}>Long example</a>
           </li>
