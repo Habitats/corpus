@@ -82,6 +82,15 @@ object SparkUtil {
 
   lazy val cats: Seq[String] = Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
 
+  def trainRNNSpark()= {
+    val train = RddFetcher.subTrainW2V
+    val validation = RddFetcher.subValidationW2V
+    Config.resultsFileName = "res_rnn.txt"
+    Config.resultsCatsFileName = "res_rnn_cats.txt"
+    val prefs = NeuralPrefs(train = train, validation = validation)
+    FreebaseW2V.trainSparkRNN("sport", prefs)
+  }
+
   def trainFFNSpark()= {
     val train = RddFetcher.subTrainW2V
     val validation = RddFetcher.subValidationW2V
@@ -129,10 +138,10 @@ object SparkUtil {
 
   def trainNeuralNetwork(c: String = Config.category, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, train: RDD[Article], validation: RDD[Article]) = {
     for {
-      hiddenNodes <- Seq(10)
-      //      hiddenNodes <- Seq(1, 5, 10, 20, 50, 100, 200)
+      hiddenNodes <- Seq(200)
+//      hiddenNodes <- Seq(10)
       learningRate <- Seq(0.05)
-      minibatchSize = 50
+      minibatchSize = 100
       histogram = false
       epochs = 5
     } yield {
@@ -177,9 +186,9 @@ object SparkUtil {
     val validation = RddFetcher.subValidationW2V
     val prefs = sc.broadcast(Prefs())
     val phrases: Array[String] = (train ++ validation).flatMap(_.ann.keySet).collect.distinct.sorted
-    val models = ML.multiLabelClassification(prefs, train, validation, phrases)
-    models.foreach { case (c, model) => MLlibModelLoader.save(model, s"nb_${IPTC.trim(c)}.bin") }
     Log.toFile(phrases, "nb_phrases.txt", Config.modelPath)
+    val models = ML.multiLabelClassification(prefs, train, validation, phrases, bow)
+    models.foreach { case (c, model) => MLlibModelLoader.save(model, s"nb_${if(bow) "bow" else "w2v"}_${IPTC.trim(c)}.bin") }
   }
 
   def testModels() = {
@@ -188,11 +197,11 @@ object SparkUtil {
     val rdd = RddFetcher.subTestW2V
     rdd.cache()
     val test = rdd.collect()
-    testRNN(test, "rnn-w2v-sub-10")
-    testRNN(test, "rnn-w2v-balanced-10")
-    testFFN(test, "ffn-w2v")
-    testNaiveBayes(rdd, "nb-bow")
-    testNaiveBayes(rdd, "nb-w2v")
+//    testRNN(test, "rnn-w2v-sub-10")
+//    testRNN(test, "rnn-w2v-balanced-10")
+//    testFFN(test, "ffn-w2v")
+//    testNaiveBayes(rdd, "nb-bow")
+//    testNaiveBayes(rdd, "nb-w2v")
   }
 
   def testNaiveBayes(rdd: RDD[Article], name: String): Map[String, NaiveBayesModel] = {
@@ -216,8 +225,9 @@ object SparkUtil {
     NeuralEvaluation.log(evals, cats)
   }
 
-  def testRNN(test: Array[Article]) = {
-    val rnn: Map[String, MultiLayerNetwork] = NeuralModelLoader.bestModels("rnn")
+  def testRNN(test: Array[Article], name: String) = {
+    Log.r(s"Testing RNN [$name] ...")
+    val rnn: Map[String, MultiLayerNetwork] = NeuralModelLoader.models(name)
     val evals: Set[NeuralEvaluation] = rnn.toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
       val ffnTest = new RNNIterator(test, Some(models._1), 50)
       val rnnEval = NeuralEvaluation(models._2, ffnTest, i, models._1)

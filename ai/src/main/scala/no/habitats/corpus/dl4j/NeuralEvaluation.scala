@@ -1,6 +1,7 @@
 package no.habitats.corpus.dl4j
 
 import no.habitats.corpus.common.Log
+import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
@@ -10,7 +11,7 @@ import scala.collection.JavaConverters._
 case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, epoch: Int, label: String) {
   private lazy val eval = {
     val e = new Evaluation()
-    testIter.asScala.toList.foreach(t => {
+    testIter.asScala.foreach(t => {
       val features = t.getFeatureMatrix
       val labels = t.getLabels
       if (t.getFeaturesMaskArray != null) {
@@ -42,8 +43,8 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
     "Error" -> f"${net.score}%.10f"
   )
 
-  lazy val statsHeader = fullStats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString("")
-  lazy val stats       = fullStats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString("")
+  lazy val statsHeader = fullStats.map(s => s"%${columnWidth(s)}s".format(s._1)).mkString("")
+  lazy val stats       = fullStats.map(s => s"%${columnWidth(s)}s".format(s._2)).mkString("")
   lazy val confusion   = {
     eval.getConfusionMatrix.toCSV.split("\n")
       .map(_.split(",").zipWithIndex.map { case (k, v) => if (v == 0) f"$k%12s" else f"$k%6s" }.mkString(""))
@@ -66,7 +67,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
   }
 }
 
-object NeuralEvaluation{
+object NeuralEvaluation {
 
   def log(evals: Set[NeuralEvaluation], cats: Seq[String]) = {
     // Macro
@@ -80,10 +81,10 @@ object NeuralEvaluation{
     val tn = evals.map(_.tn).sum
     val fp = evals.map(_.fp).sum
     val fn = evals.map(_.fn).sum
-    val miRecall    = tp.toDouble / (tp + fn)
+    val miRecall = tp.toDouble / (tp + fn)
     val miPrecision = tp.toDouble / (tp + fp + 0.00001)
-    val miAccuracy  = (tp + tn).toDouble / (tp + fp + fn + tn)
-    val miFscore    = (2 * tp).toDouble / (2 * tp + fp + fn)
+    val miAccuracy = (tp + tn).toDouble / (tp + fp + fn + tn)
+    val miFscore = (2 * tp).toDouble / (2 * tp + fp + fn)
 
     val stats = Seq[(String, String)](
       "Ma.Recall" -> f"$maRecall%.3f",
@@ -96,12 +97,10 @@ object NeuralEvaluation{
       "Mi.Accuracy" -> f"$miAccuracy%.3f",
       "Mi.F-score" -> f"$miFscore%.3f"
     )
-    Log.r(stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString(""))
-    Log.r(stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString(""))
+    Log.r(stats.map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
+    Log.r(stats.map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
 
-    //    val recall    = tp.toDouble / (tp + fn)
-    //    val precision = tp.toDouble / (tp + fp + 0.00001)
-    //    val accuracy  = (tp + tn).toDouble / (tp + fp + fn + tn)
-    //    val fscore    = (2 * tp).toDouble / (2 * tp + fp + fn)
   }
+
+  def columnWidth(s: (String, String)): Int = Math.max(s._1.length, s._2.toString.length) + 2
 }
