@@ -5,8 +5,7 @@ import java.io.File
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
 import no.habitats.corpus.dl4j.networks._
-import no.habitats.corpus.spark.SparkUtil
-import org.apache.spark.api.java.JavaRDD
+import no.habitats.corpus.spark.Cacher
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.{AsyncDataSetIterator, DataSetIterator}
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
@@ -18,7 +17,7 @@ import org.nd4j.linalg.dataset.DataSet
 
 import scala.collection.JavaConverters._
 
-object FreebaseW2V {
+object FreebaseW2V extends RddSerializer{
 
   lazy val gModel            = new File(Config.dataPath + "w2v/freebase-vectors-skipgram1000.bin")
   lazy val gVec: WordVectors = WordVectorSerializer.loadGoogleModel(gModel, true)
@@ -29,7 +28,7 @@ object FreebaseW2V {
       .filter(gVec.hasWord).map(fb => (fb, gVec.getWordVector(fb)))
       .map(a => f"${a._1}, ${a._2.toSeq.mkString(", ")}")
 
-    SparkUtil.saveAsText(rdd, "fb_to_w2v")
+    saveAsText(rdd, "fb_to_w2v")
   }
 
   def cacheWordVectorIds() = {
@@ -97,8 +96,8 @@ object FreebaseW2V {
   }
 
   def train(label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): MultiLayerNetwork = {
-    Log.r(s"Training $label ...")
-    Log.r2(s"Training $label ...")
+    //    Log.r(s"Training $label ...")
+    //    Log.r2(s"Training $label ...")
     for (i <- 0 until neuralPrefs.epochs) {
       net.fit(trainIter)
       trainIter.reset()
@@ -109,4 +108,5 @@ object FreebaseW2V {
 
     net
   }
+
 }

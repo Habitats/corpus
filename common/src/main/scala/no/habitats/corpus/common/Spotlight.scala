@@ -1,10 +1,9 @@
-package no.habitats.corpus.npl
+package no.habitats.corpus.common
 
 import dispatch._
 import no.habitats.corpus.common.CorpusContext.sc
-import no.habitats.corpus.common.{Config, Log}
-import no.habitats.corpus.models.{Article, DBPediaAnnotation, Entity}
-import no.habitats.corpus.spark.{RddFetcher, SparkUtil}
+import no.habitats.corpus.common.models.{Article, DBPediaAnnotation, Entity}
+import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
@@ -14,7 +13,7 @@ import scala.concurrent.Await
 import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
-object Spotlight {
+object Spotlight extends RddSerializer {
 
   implicit val formats = Serialization.formats(NoTypeHints)
 
@@ -22,7 +21,7 @@ object Spotlight {
   def combineAndCacheIds() = {
     val dbp = WikiData.dbToWd
     val dbf = WikiData.wdToFb
-    val rdd = RddFetcher.dbpedia(sc)
+    val rdd = dbpedia(sc)
       .map(_.entity.id)
       .map(a => (a, 1))
       .reduceByKey(_ + _)
@@ -33,7 +32,12 @@ object Spotlight {
         f"$count%-8s ${wd.getOrElse("")}%-10s ${fb.getOrElse("")}%-12s $db"
       }
 
-    SparkUtil.saveAsText(rdd, Config.dbpedia)
+    saveAsText(rdd, Config.dbpedia)
+  }
+
+  def dbpedia(sc: SparkContext, name: String = Config.dbpedia): RDD[DBPediaAnnotation] = {
+    val rdd = sc.textFile(name).map(DBPediaAnnotation.fromSingleJson)
+    if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(Config.count)) else rdd
   }
 
   /** Entity extraction using DBPedia Spotlight REST API */
@@ -83,7 +87,7 @@ object Spotlight {
       }
     }
 
-    SparkUtil.saveAsText(entities, "dbpedia_json_" + confidence)
+    saveAsText(entities, "dbpedia_json_" + confidence)
   }
 }
 

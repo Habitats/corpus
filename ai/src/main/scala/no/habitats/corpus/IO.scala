@@ -3,8 +3,8 @@ package no.habitats.corpus
 import java.io._
 import java.nio.file.{FileSystems, Files}
 
+import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common.{Config, Log}
-import no.habitats.corpus.models.Article
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
 import org.json4s.NoTypeHints

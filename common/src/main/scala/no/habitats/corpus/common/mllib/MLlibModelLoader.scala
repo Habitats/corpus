@@ -1,8 +1,9 @@
-package no.habitats.corpus.common
+package no.habitats.corpus.common.mllib
 
 import java.io._
 
-import org.apache.spark.mllib.classification.{ClassificationModel, NaiveBayesModel}
+import no.habitats.corpus.common.Config
+import org.apache.spark.mllib.classification.NaiveBayesModel
 
 object MLlibModelLoader {
 

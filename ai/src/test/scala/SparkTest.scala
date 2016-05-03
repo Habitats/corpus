@@ -1,4 +1,4 @@
-import no.habitats.corpus.spark.RddFetcher
+import no.habitats.corpus.spark.Fetcher
 import no.habitats.corpus.Corpus
 import no.habitats.corpus.common.Config
 import org.junit.runner.RunWith
@@ -25,7 +25,7 @@ class SparkTest extends FunSuite with Spark {
     val limit = 1000
     //    sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = limit, filter = ".xml"))
     sc.parallelize(
-      RddFetcher.rdd.take(limit)
+      Fetcher.rdd.take(limit)
     )
       .map(Corpus.toDBPediaAnnotated)
       .saveAsTextFile(Config.cachePath + "nyt_with_all")

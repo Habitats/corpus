@@ -1,39 +1,14 @@
-package no.habitats.corpus.models
+package no.habitats.corpus.common
 
 import java.io.File
 
-import no.habitats.corpus.common.Config
-import no.habitats.corpus.models.Annotation.NONE
-import no.habitats.corpus.npl.WikiData
+import no.habitats.corpus.common.models.{Annotation, DBPediaAnnotation, Entity}
 
 import scala.collection.mutable.ListBuffer
 import scala.io.{BufferedSource, Codec, Source}
 
-case class Annotation(articleId: String,
-                      phrase: String, // phrase
-                      mc: Int, // mention count
-                      offset: Int = -1,
-                      fb: String = NONE, // Freebase ID
-                      wd: String = NONE, // WikiData ID
-                      db: String = NONE,
-                      tfIdf: Double = -1 // term frequency, inverse document frequency
-                     ) extends JSonable {
-
-  lazy val id: String = {
-    if (fb != NONE) fb
-    else if (wd != NONE) wd
-    else if (db != NONE) db
-    else phrase
-  }
-
-  // Create annotation from WikiDAta ID
-  def fromWd(phrase: String): Annotation = copy(phrase = wd + " - " + phrase)
-
-  override def toString: String = f"id: $id%20s > fb: $fb%10s > wb: $wd%10s > offset: $offset%5d > phrase: $phrase%50s > mc: $mc%3d > TF-IDF: $tfIdf%.10f"
-}
-
-object Annotation {
-  val NONE = "NONE"
+object AnnotationUtils {
+  val NONE = Config.NONE
   lazy val dw = WikiData.dbToWd
   lazy val wf = WikiData.wdToFb
   lazy val fw = WikiData.fbToWd

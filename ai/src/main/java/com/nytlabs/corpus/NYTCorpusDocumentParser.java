@@ -45,6 +45,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import no.habitats.corpus.common.models.NYTCorpusDocument;
+
 /**
  * NYTCorpusDocumentParser <BR> Created: Jun 17, 2008 <BR> Author: Evan Sandhaus (sandhes@nytimes.com)<BR> <P> Class for parsing New York
  * Times articles from NITF files. <P>

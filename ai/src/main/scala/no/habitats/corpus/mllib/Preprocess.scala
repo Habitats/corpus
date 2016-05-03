@@ -1,9 +1,8 @@
-package no.habitats.corpus.spark
+package no.habitats.corpus.mllib
 
 import no.habitats.corpus._
-import no.habitats.corpus.common.Log
-import no.habitats.corpus.models.{Annotation, Article}
-import no.habitats.corpus.npl.WikiData
+import no.habitats.corpus.common.models.{Annotation, Article}
+import no.habitats.corpus.common.{Log, WikiData}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 

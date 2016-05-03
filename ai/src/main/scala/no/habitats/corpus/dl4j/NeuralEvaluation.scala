@@ -4,9 +4,11 @@ import no.habitats.corpus.common.Log
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.eval.Evaluation
+import org.deeplearning4j.nn.conf.layers.{DenseLayer, GravesLSTM}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.collection.JavaConverters._
+import scala.util.Try
 
 case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, epoch: Int, label: String) {
   private lazy val eval = {
@@ -40,8 +42,15 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
     "Precision" -> f"$precision%.3f",
     "Accuracy" -> f"$accuracy%.3f",
     "F-score" -> f"$fscore%.3f",
-    "Error" -> f"${net.score}%.10f"
+    "Error" -> f"${net.score}%.10f",
+    "LR" -> f"${net.getLayerWiseConfigurations.getConf(0).getLayer.getLearningRate}",
+    "Hidden" -> f"$numHidden"
   )
+
+  val numHidden = {
+    val numLayers = net.getLayerWiseConfigurations.getConfs.size
+    (0 until numLayers - 1).map(net.getLayerWiseConfigurations.getConf).map(_.getLayer).map(l => Try(l.asInstanceOf[DenseLayer].getNOut).getOrElse(l.asInstanceOf[GravesLSTM].getNOut)).mkString(", ")
+  }
 
   lazy val statsHeader = fullStats.map(s => s"%${columnWidth(s)}s".format(s._1)).mkString("")
   lazy val stats       = fullStats.map(s => s"%${columnWidth(s)}s".format(s._2)).mkString("")

@@ -1,11 +1,6 @@
-package no.habitats.corpus.models
+package no.habitats.corpus.common.models
 
-import java.util.concurrent.atomic.AtomicInteger
-
-import com.nytlabs.corpus.NYTCorpusDocument
-import no.habitats.corpus.common.W2VLoader
-import no.habitats.corpus.npl.IPTC
-import no.habitats.corpus.npl.extractors.OpenNLP
+import no.habitats.corpus.common.{IPTC, W2VLoader}
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.api.ndarray.INDArray
@@ -73,14 +68,6 @@ case class Article(id: String,
     Vectors.sparse(phrases.size, values)
   }
 
-  lazy val names = OpenNLP.nameFinderCounts(body)
-
-  def addNames(): Article = {
-    val index = new AtomicInteger(ann.size)
-    val updatedAnn = names.map { case (name, (count, kind)) => Annotation.fromName(id, index.incrementAndGet(), name, count, kind) }
-    copy(ann = updatedAnn.map(t => t.phrase -> t).toMap)
-  }
-
   def addIptc(broad: Boolean): Article = {
     copy(iptc = if (broad) IPTC.toBroad(desc, 0) else IPTC.toIptc(desc))
   }
@@ -92,29 +79,4 @@ case class Article(id: String,
   }
 }
 
-object Article {
 
-  import scala.collection.JavaConverters._
-
-  implicit def stringToOption(s: String): Option[String] = Option(s)
-  implicit def intToOption(s: Integer): Option[String] = if (s != null) Some(s.toString) else None
-  implicit def getEither(s: (String, String)): String = if (s._1 != null) s._1 else s._2
-
-  def allDescriptors(a: NYTCorpusDocument): Set[String] = {
-    val tax = a.getTaxonomicClassifiers.asScala.map(_.split("/").last).toSet
-    val desc = (a.getDescriptors.asScala ++ a.getOnlineDescriptors.asScala ++ a.getGeneralOnlineDescriptors.asScala).toSet
-    desc.union(tax).map(_.toLowerCase)
-  }
-
-  def apply(a: NYTCorpusDocument): Article = {
-    new Article(
-      id = a.getGuid.toString,
-      hl = (a.getHeadline, a.getOnlineHeadline),
-      body = a.getBody,
-      wc = if (a.getWordCount != null) a.getWordCount else if (a.getBody != null) a.getBody.split("\\s+").length else 0,
-      desc = allDescriptors(a),
-      date = a.getPublicationDate.getTime.toString,
-      url = a.getUrl.toString
-    )
-  }
-}

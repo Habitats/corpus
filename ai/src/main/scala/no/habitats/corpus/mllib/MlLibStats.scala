@@ -1,13 +1,10 @@
-package no.habitats.corpus
+package no.habitats.corpus.mllib
 
-import no.habitats.corpus.models.Article
-import no.habitats.corpus.npl.IPTC
+import no.habitats.corpus._
+import no.habitats.corpus.common.models.Article
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
-/**
-  * Created by mail on 01.03.2016.
-  */
 case class MLStats(predicted: RDD[Article], cats: Set[String], prefs: Broadcast[Prefs]) {
   predicted.cache()
   lazy val totalCats        = predicted.map(_.iptc.size).sum

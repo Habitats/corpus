@@ -1,18 +1,16 @@
-package no.habitats.corpus.npl
+package no.habitats.corpus.common
 
 import java.io.{File, PrintWriter}
 
 import no.habitats.corpus.common.CorpusContext.sc
-import no.habitats.corpus.common.{Config, Log}
-import no.habitats.corpus.models.Annotation
-import no.habitats.corpus.spark.SparkUtil
+import no.habitats.corpus.common.models.Annotation
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 
 import scala.io.Source
 
-object WikiData {
+object WikiData extends RddSerializer {
   implicit val formats = Serialization.formats(NoTypeHints)
   implicit def toJson(url: String): JValue = parse(Source.fromURL(url).mkString)
 
@@ -118,7 +116,7 @@ object WikiData {
       .map { case a :: b :: c :: Nil => (resToId(a), c.substring(1, c.length - 1)) }
       .map { case (wikiId, fbId) => wikiId + " " + fbId }
 
-    SparkUtil.saveAsText(rdd, "wiki_to_fb")
+    saveAsText(rdd, "wiki_to_fb")
   }
 
   def extractWikiIDFromDbpediaDump() = {
@@ -128,6 +126,7 @@ object WikiData {
       .map { case a :: b :: c :: Nil => (resToId(a), resToId(c)) }
       .map { case (wikiId, dbpediaId) => wikiId + " " + dbpediaId }
 
-    SparkUtil.saveAsText(rdd, "dbpedia_to_wiki")
+    saveAsText(rdd, "dbpedia_to_wiki")
   }
+
 }

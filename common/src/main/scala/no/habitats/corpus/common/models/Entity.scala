@@ -1,4 +1,4 @@
-package no.habitats.corpus.models
+package no.habitats.corpus.common.models
 
 case class Entity(
                    id: String,

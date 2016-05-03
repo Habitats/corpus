@@ -10,7 +10,8 @@ subprojects {
         mavenLocal()
         mavenCentral()
 //        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-        flatDir(dirs: 'models')
+        flatDir(dirs: 'models') // Yes you need both. Don't ask why.
+        flatDir(dirs: 'ai/models')
     }
 
     compileScala {
@@ -67,13 +68,6 @@ subprojects {
         compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.9-SNAPSHOT'
         compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT'
         compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
-
-        compile fileTree('models/binary')
-        compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging
-        compile 'javax.mail:javax.mail-api:1.5.5'
-        compile 'org.glassfish.jersey.core:jersey-server:2.22.2'
-        compile 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.22.2'
-        compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.22.2'
 
         // These are required for json4s to work. Something imported a deprecated version.
         compile 'com.fasterxml.jackson.core:jackson-core:2.6.3'

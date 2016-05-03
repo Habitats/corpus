@@ -1,5 +1,5 @@
 dependencies {
-    compile project(':ai')
+    compile project(':common')
     compile 'org.scalatra:scalatra_2.10:2.4.0'
     compile 'org.scalatra:scalatra-json_2.10:2.4.0'
     compile 'org.scalatra.scalate:scalate-core_2.10:1.7.1'

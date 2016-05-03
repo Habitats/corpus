@@ -1,7 +1,6 @@
-package no.habitats.corpus
+package no.habitats.corpus.mllib
 
-import no.habitats.corpus.common.Config
-import no.habitats.corpus.npl.IPTC
+import no.habitats.corpus.common.{Config, IPTC}
 
 case class Prefs(iteration: Int = 0,
                  limit: Int = Int.MaxValue,

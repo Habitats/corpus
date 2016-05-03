@@ -3,9 +3,8 @@ package no.habitats.corpus.dl4j
 import java.io.File
 import java.util
 
-import no.habitats.corpus.common.{Config, Log, W2VLoader}
-import no.habitats.corpus.models.Article
-import no.habitats.corpus.npl.IPTC
+import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.{Config, IPTC, Log, W2VLoader}
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.plot.Tsne
 import org.nd4j.linalg.api.buffer.DataBuffer._

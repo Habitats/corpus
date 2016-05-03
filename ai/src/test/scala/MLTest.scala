@@ -4,7 +4,8 @@
 
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext
-import no.habitats.corpus.models.{Annotation, Article}
+import no.habitats.corpus.common.models.{Annotation, Article}
+import no.habitats.corpus.mllib.{ExampleBased, MacroAverage, Measure, MicroAverage}
 import org.junit.runner.RunWith
 import org.scalactic.TolerantNumerics
 import org.scalatest.FunSuite

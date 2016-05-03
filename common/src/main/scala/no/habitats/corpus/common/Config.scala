@@ -10,6 +10,7 @@ import scala.util.{Failure, Success, Try}
 object Config {
 
   val seed = 123
+  val NONE = "NONE"
 
   // Required data (need to be lazy, otherwise dataPath is null)
   lazy val nytCorpus                 = dataPath + "nyt/nyt_corpus.json"
@@ -28,6 +29,8 @@ object Config {
   lazy val freebaseToWikidata        = dataPath + "wikidata/fb_to_wd_all.txt"
   lazy val wikidataToFreebase        = dataPath + "wikidata/wd_to_fb.txt"
   lazy val wikidataToDbPedia         = dataPath + "wikidata/wikidata_to_dbpedia.txt"
+
+  lazy val cats: Seq[String] = Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
 
   def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.json"
 

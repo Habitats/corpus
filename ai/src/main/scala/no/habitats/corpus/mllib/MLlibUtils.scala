@@ -1,16 +1,14 @@
-package no.habitats.corpus.spark
+package no.habitats.corpus.mllib
 
-import no.habitats.corpus.common.{Config, Log, W2VLoader}
-import no.habitats.corpus.models.Article
-import no.habitats.corpus.npl.IPTC
-import no.habitats.corpus.{MLStats, Prefs}
+import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.{Config, IPTC, Log, W2VLoader}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.mllib.regression.LabeledPoint
 import org.apache.spark.rdd.RDD
 
-object ML {
+object MlLibUtils {
 
   def multiLabelClassification(prefs: Broadcast[Prefs], train: RDD[Article], test: RDD[Article], phrases: Array[String], bow: Boolean): Map[String, NaiveBayesModel] = {
     W2VLoader.preLoad()
@@ -23,7 +21,7 @@ object ML {
     //      val catModelPairs = trainModelsSVM(training)
     Log.v("--- Training complete! ")
 
-    testModels(test, catModelPairs, phrases, prefs, bow)
+    testMLlibModels(test, catModelPairs, phrases, prefs, bow)
   }
 
   /** Created either a BoW or a squashed W2V document vector */
@@ -42,7 +40,7 @@ object ML {
     }).toMap
   }
 
-  def testModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], phrases: Array[String], prefs: Broadcast[Prefs], bow: Boolean): Map[String, NaiveBayesModel] = {
+  def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], phrases: Array[String], prefs: Broadcast[Prefs], bow: Boolean): Map[String, NaiveBayesModel] = {
     W2VLoader.preLoad()
     val testing: RDD[(Article, Vector)] = test.map(t => (t, toVector(phrases, bow, t)))
     //    Log.v("Max:" + testing.map(_._2.toArray.max).max)

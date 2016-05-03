@@ -1,9 +1,7 @@
-package no.habitats.corpus
+package no.habitats.corpus.common
 
-import no.habitats.corpus.common.W2VLoader
-import no.habitats.corpus.dl4j.NeuralPredictor
-import no.habitats.corpus.models.{Annotation, Article, DBPediaAnnotation, Entity}
-import no.habitats.corpus.npl.Spotlight
+import no.habitats.corpus.common.dl4j.NeuralPredictor
+import no.habitats.corpus.common.models.{Annotation, Article, DBPediaAnnotation, Entity}
 import org.nd4j.linalg.api.ndarray.INDArray
 
 trait CorpusAPI {
@@ -41,7 +39,7 @@ trait CorpusAPI {
     val db = for {
       entities <- Spotlight.fetchAnnotations(text).groupBy(_.id).values
       db = new DBPediaAnnotation("NO_ID", mc = entities.size, entities.minBy(_.offset))
-      ann = Annotation.fromDbpedia(db)
+      ann = AnnotationUtils.fromDbpedia(db)
     } yield ann
     db.toSeq
   }
@@ -56,8 +54,8 @@ trait CorpusAPI {
     val db = for {
       entities <- Spotlight.fetchAnnotations(text).groupBy(_.id).values
       db = new DBPediaAnnotation("NO_ID", mc = entities.size, entities.minBy(_.offset))
-      ann = Annotation.fromDbpedia(db)
-      types <- Seq(ann) ++ Annotation.fromDBpediaType(db)
+      ann = AnnotationUtils.fromDbpedia(db)
+      types <- Seq(ann) ++ AnnotationUtils.fromDBpediaType(db)
     } yield types
     db.toSeq
   }

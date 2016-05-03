@@ -1,8 +1,7 @@
 package no.habitats.corpus.web
 
-import no.habitats.corpus.CorpusAPI
-import no.habitats.corpus.common.{Config, Log, W2VLoader}
-import no.habitats.corpus.models.{Annotation, Entity}
+import no.habitats.corpus.common.models.{Annotation, Entity}
+import no.habitats.corpus.common.{Config, CorpusAPI, Log, W2VLoader}
 import org.json4s.{DefaultFormats, Formats}
 import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{CorsSupport, ScalatraServlet}

@@ -1,8 +1,9 @@
-package no.habitats.corpus.common
+package no.habitats.corpus.common.dl4j
 
 import java.io._
 import java.nio.file.{Files, Paths}
 
+import no.habitats.corpus.common.{Config, Log}
 import org.apache.commons.io.FileUtils
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration
 import org.deeplearning4j.nn.layers.feedforward.dense.DenseLayer

@@ -2,9 +2,8 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
-import no.habitats.corpus.common.W2VLoader
-import no.habitats.corpus.models.Article
-import no.habitats.corpus.npl.IPTC
+import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.{IPTC, W2VLoader}
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor

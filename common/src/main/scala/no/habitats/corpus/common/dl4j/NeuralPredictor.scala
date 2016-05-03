@@ -1,7 +1,7 @@
-package no.habitats.corpus.dl4j
+package no.habitats.corpus.common.dl4j
 
-import no.habitats.corpus.common.{Log, NeuralModelLoader, W2VLoader}
-import no.habitats.corpus.models.{Annotation, Article}
+import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.{Config, Log, W2VLoader}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
@@ -13,7 +13,7 @@ case class NeuralPredictor(net: MultiLayerNetwork, article: Article, label: Stri
 
     // Filter out all ID's with matching vectors
     val tokens = article.ann.values
-      .filter(_.fb != Annotation.NONE)
+      .filter(_.fb != Config.NONE)
       .map(_.fb)
       .filter(W2VLoader.contains)
       .toList
