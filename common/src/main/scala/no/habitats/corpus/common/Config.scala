@@ -12,23 +12,13 @@ object Config {
   val seed = 123
   val NONE = "NONE"
 
-  // Required data (need to be lazy, otherwise dataPath is null)
-  lazy val nytCorpus                 = dataPath + "nyt/nyt_corpus.json"
-  lazy val nytCorpusDbpediaAnnotated = dataPath + "nyt/nyt_corpus_annotated_0.5.json"
-  lazy val nytCorpusW2VAnnotated     = dataPath + "nyt/nyt_corpus_annotated_w2v_0.5_min10.json"
-  lazy val annotatedTestW2V          = dataPath + "nyt/nyt_test_w2v_5.json"
-  lazy val annotatedValidationW2V    = dataPath + "nyt/nyt_validation_w2v_5.json"
-  lazy val annotatedTrainW2V         = dataPath + "nyt/nyt_train_w2v_5.json"
-  lazy val subTestW2V                = dataPath + "nyt/subsampled_test.json"
-  lazy val subValidationW2V          = dataPath + "nyt/subsampled_validation.json"
-  lazy val subTrainW2V               = dataPath + "nyt/subsampled_train.json"
-  lazy val freebaseToWord2Vec        = dataPath + "nyt/fb_w2v_0.5.txt"
-  lazy val freebaseToWord2VecIDs     = dataPath + "nyt/fb_w2v_0.5_ids.txt"
-  lazy val dbpedia                   = dataPath + "nyt/dbpedia-all-0.5.json"
-  lazy val combinedIds               = dataPath + "nyt/combined_ids_0.5.txt"
-  lazy val freebaseToWikidata        = dataPath + "wikidata/fb_to_wd_all.txt"
-  lazy val wikidataToFreebase        = dataPath + "wikidata/wd_to_fb.txt"
-  lazy val wikidataToDbPedia         = dataPath + "wikidata/wikidata_to_dbpedia.txt"
+  lazy val freebaseToWord2Vec          = dataPath + "nyt/fb_w2v_0.5.txt"
+  lazy val freebaseToWord2VecIDs       = dataPath + "nyt/fb_w2v_0.5_ids.txt"
+  lazy val dbpedia                     = dataPath + "nyt/dbpedia-all-0.5.json"
+  lazy val combinedIds                 = dataPath + "nyt/combined_ids_0.5.txt"
+  lazy val freebaseToWikidata          = dataPath + "wikidata/fb_to_wd_all.txt"
+  lazy val wikidataToFreebase          = dataPath + "wikidata/wd_to_fb.txt"
+  lazy val wikidataToDbPedia           = dataPath + "wikidata/wikidata_to_dbpedia.txt"
 
   lazy val cats: Seq[String] = Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
 

@@ -72,7 +72,7 @@ object IO {
 
 object JsonSingle {
   implicit val formats  = Serialization.formats(NoTypeHints)
-  lazy     val jsonFile = new File(Config.nytCorpus)
+  lazy     val jsonFile = new File(Config.dataPath + "nyt_corpus.json")
 
   def cacheRawNYTtoJson(count: Int = Config.count, articles: Seq[Article] = Nil) = {
     jsonFile.delete

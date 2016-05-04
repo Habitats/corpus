@@ -129,7 +129,25 @@ object Cacher extends RddSerializer{
     saveAsText(splits(2), "nyt_test_shuffled")
   }
 
-  def cacheSubSampled() = {
+  def cacheSubSampledFiltered() = {
+    val rdds = Map(
+      "train" -> Fetcher.annotatedTrainW2V,
+      "test" -> Fetcher.annotatedTestW2V,
+      "validation" -> Fetcher.annotatedValidationW2V
+    )
+    rdds.foreach { case (k, v) => cacheSingleSubSampled(v, k) }
+  }
+
+  def cacheSubSampledShuffled() = {
+    val rdds = Map(
+      "train" -> Fetcher.annotatedTrainW2V,
+      "test" -> Fetcher.annotatedTestW2V,
+      "validation" -> Fetcher.annotatedValidationW2V
+    )
+    rdds.foreach { case (k, v) => cacheSingleSubSampled(v, k) }
+  }
+
+  def cacheSubSampledOrdered() = {
     val rdds = Map(
       "train" -> Fetcher.annotatedTrainW2V,
       "test" -> Fetcher.annotatedTestW2V,
