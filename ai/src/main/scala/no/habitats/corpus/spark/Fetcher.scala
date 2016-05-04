@@ -28,21 +28,27 @@ object Fetcher {
   // Filtered NYT Corpus articles
   lazy val nytCorpusW2VAnnotated      : RDD[Article] = fetch("nyt/nyt_corpus_annotated_w2v_0.5_min10.json")
   // Articles filtered before split
+  lazy val annotatedTestW2V           : RDD[Article] = fetch("nyt/nyt_test_w2v_5.json", 0.2)
   lazy val annotatedTrainW2V          : RDD[Article] = fetch("nyt/nyt_train_w2v_5.json", 0.6)
   lazy val annotatedValidationW2V     : RDD[Article] = fetch("nyt/nyt_validation_w2v_5.json", 0.2)
-  lazy val annotatedTestW2V           : RDD[Article] = fetch("nyt/nyt_test_w2v_5.json", 0.2)
   // Articles split in chronological order based on ID
+  lazy val annotatedTestOrdered       : RDD[Article] = fetch("nyt/nyt_test_ordered.json", 0.2)
   lazy val annotatedTrainOrdered      : RDD[Article] = fetch("nyt/nyt_train_ordered.json", 0.6)
   lazy val annotatedValidationOrdered : RDD[Article] = fetch("nyt/nyt_validation_ordered.json", 0.2)
-  lazy val annotatedTestOrdered       : RDD[Article] = fetch("nyt/nyt_test_ordered.json", 0.2)
   // Articles split randomly
+  lazy val annotatedTestShuffled      : RDD[Article] = fetch("nyt/nyt_test_shuffled.json", 0.2)
   lazy val annotatedTrainShuffled     : RDD[Article] = fetch("nyt/nyt_train_shuffled.json", 0.6)
   lazy val annotatedValidationShuffled: RDD[Article] = fetch("nyt/nyt_validation_shuffled.json", 0.2)
-  lazy val annotatedTestShuffled      : RDD[Article] = fetch("nyt/nyt_test_shuffled.json", 0.2)
   // Articles sub-sampled based on the minimal category
-  lazy val subTrainW2V                : RDD[Article] = fetch("nyt/subsampled_train.json", 0.6)
-  lazy val subValidationW2V           : RDD[Article] = fetch("nyt/subsampled_validation.json", 0.2)
-  lazy val subTestW2V                 : RDD[Article] = fetch("nyt/subsampled_test.json", 0.2)
+  lazy val subTestW2V                 : RDD[Article] = fetch("nyt/subsampled_test_w2v.json", 0.2)
+  lazy val subTrainW2V                : RDD[Article] = fetch("nyt/subsampled_train_w2v.json", 0.6)
+  lazy val subValidationW2V           : RDD[Article] = fetch("nyt/subsampled_validation_w2v.json", 0.2)
+  lazy val subTestOrdered             : RDD[Article] = fetch("nyt/subsampled_test_ordered.json", 0.2)
+  lazy val subTrainOrdered            : RDD[Article] = fetch("nyt/subsampled_train_ordered.json", 0.6)
+  lazy val subValidationOrdered       : RDD[Article] = fetch("nyt/subsampled_validation_ordered.json", 0.2)
+  lazy val subTestShuffled            : RDD[Article] = fetch("nyt/subsampled_test_shuffled.json", 0.2)
+  lazy val subTrainShuffled           : RDD[Article] = fetch("nyt/subsampled_train_shuffled.json", 0.6)
+  lazy val subValidationShuffled      : RDD[Article] = fetch("nyt/subsampled_validation_shuffled.json", 0.2)
 
   def limit(rdd: RDD[Article], fraction: Double = 1): RDD[Article] = {
     val num = (Config.count * fraction).toInt

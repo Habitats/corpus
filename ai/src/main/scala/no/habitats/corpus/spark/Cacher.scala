@@ -93,11 +93,13 @@ object Cacher extends RddSerializer{
     val combined: RDD[Article] = superSampled.reduce(_ ++ _).sortBy(a => Math.random)
 
     saveAsText(combined.map(JsonSingle.toSingleJson), "supersampled" + maxLimit.map("_" + _).getOrElse(""))
+    rdd.unpersist()
   }
 
   def cacheSingleSubSampled(rdd: RDD[Article], name: String) = {
     rdd.cache()
     val pairs = IPTC.topCategories.map(c => (c, rdd.filter(_.iptc.contains(c))))
+    rdd.unpersist()
     val counts = pairs.map { case (k, v) => (k, v.count) }.toMap
     val min = counts.values.min.toInt
     val subSampled = pairs.map { case (k, v) => sc.parallelize(v.take(min)) }
@@ -131,27 +133,27 @@ object Cacher extends RddSerializer{
 
   def cacheSubSampledFiltered() = {
     val rdds = Map(
-      "train" -> Fetcher.annotatedTrainW2V,
-      "test" -> Fetcher.annotatedTestW2V,
-      "validation" -> Fetcher.annotatedValidationW2V
+      "train_w2v" -> Fetcher.annotatedTrainW2V,
+      "test_w2v" -> Fetcher.annotatedTestW2V,
+      "validation_w2v" -> Fetcher.annotatedValidationW2V
     )
     rdds.foreach { case (k, v) => cacheSingleSubSampled(v, k) }
   }
 
   def cacheSubSampledShuffled() = {
     val rdds = Map(
-      "train" -> Fetcher.annotatedTrainW2V,
-      "test" -> Fetcher.annotatedTestW2V,
-      "validation" -> Fetcher.annotatedValidationW2V
+      "train_shuffled" -> Fetcher.annotatedTrainShuffled,
+      "test_shuffled" -> Fetcher.annotatedTestShuffled,
+      "validation_shuffled" -> Fetcher.annotatedValidationShuffled
     )
     rdds.foreach { case (k, v) => cacheSingleSubSampled(v, k) }
   }
 
   def cacheSubSampledOrdered() = {
     val rdds = Map(
-      "train" -> Fetcher.annotatedTrainW2V,
-      "test" -> Fetcher.annotatedTestW2V,
-      "validation" -> Fetcher.annotatedValidationW2V
+      "train_ordered" -> Fetcher.annotatedTrainOrdered,
+      "test_ordered" -> Fetcher.annotatedTestOrdered,
+      "validation_ordered" -> Fetcher.annotatedValidationOrdered
     )
     rdds.foreach { case (k, v) => cacheSingleSubSampled(v, k) }
   }

@@ -7,8 +7,8 @@ import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.ops.transforms.Transforms
 
 case class Article(id: String,
-                   hl: String = null,
-                   body: String = null,
+                   hl: String = "",
+                   body: String = "",
                    wc: Int = -1,
                    date: Option[String] = None,
                    iptc: Set[String] = Set(),
