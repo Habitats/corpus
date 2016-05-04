@@ -15,7 +15,6 @@ case class TC(rdd: RDD[Article]) {
   val documentCount          = rdd.count
 
   lazy val computed: RDD[Article] = {
-    rdd.cache()
     rdd.map(a => {
       val newAnnotations = a.ann.map(annotation => {
         val res = tfidf(annotation._2)
