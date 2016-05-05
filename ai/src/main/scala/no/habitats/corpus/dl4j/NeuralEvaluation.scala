@@ -60,14 +60,14 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
       .mkString("\n", "\n", "")
   }
 
-  lazy val precision: Double = eval.precision
-  lazy val recall   : Double = eval.recall
-  lazy val fscore   : Double = eval.f1
-  lazy val accuracy : Double = eval.accuracy
-  lazy val tp       : Int    = eval.truePositives.get(1)
-  lazy val fp       : Int    = eval.falsePositives.get(1)
-  lazy val tn       : Int    = eval.trueNegatives.get(1)
-  lazy val fn       : Int    = eval.falseNegatives.get(1)
+  lazy val precision: Double = Try(eval.precision).getOrElse(0)
+  lazy val recall   : Double = Try(eval.recall).getOrElse(0)
+  lazy val fscore   : Double = Try(eval.f1).getOrElse(0)
+  lazy val accuracy : Double = Try(eval.accuracy).getOrElse(0)
+  lazy val tp       : Int    = Try(eval.truePositives.get(1).toInt).getOrElse(0)
+  lazy val fp       : Int    = Try(eval.falsePositives.get(1).toInt).getOrElse(0)
+  lazy val tn       : Int    = Try(eval.trueNegatives.get(1).toInt).getOrElse(0)
+  lazy val fn       : Int    = Try(eval.falseNegatives.get(1).toInt).getOrElse(0)
 
   def log() = {
     //    Log.r2(confusion)
