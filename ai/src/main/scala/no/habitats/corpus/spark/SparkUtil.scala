@@ -1,5 +1,7 @@
 package no.habitats.corpus.spark
 
+import java.io.File
+
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
@@ -17,7 +19,6 @@ object SparkUtil {
   def sparkTest() = {
     Log.v(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
   }
-
 
   def main(args: Array[String]) = {
     Config.setArgs(args)
@@ -54,16 +55,19 @@ object SparkUtil {
         //        Cacher.cacheSubSampledOrdered()
         Cacher.cacheSubSampledShuffled()
       case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
+      case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
 
       // Display stats
       case "iptcDistribution" => calculateIPTCDistribution()
       case "tnesDocumentVectors" => tnesDocumentVectors()
       case "tnesWordVectors" => tnesWordVectors()
       case "stats" =>
-//        stats(Fetcher.subTrainW2V, "filtered")
-//        stats(Fetcher.subTrainOrdered, "ordered")
-//        stats(Fetcher.subTestShuffled, "shuffled")
-              stats(Fetcher.annotatedRdd, "all")
+        //        stats(Fetcher.subTrainW2V, "filtered")
+        //        stats(Fetcher.subTrainOrdered, "ordered")
+        //        stats(Fetcher.subTestShuffled, "shuffled")
+        //        stats(Fetcher.annotatedRdd, "all")
+        timeStats()
+        lengthStats()
 
       // Modelling
       case "trainNaiveBayesBoW" => Trainer.trainNaiveBayes(bow = true)
@@ -76,7 +80,10 @@ object SparkUtil {
       case "trainRNNSpark" => Trainer.trainRNNSpark()
       case "trainFFNSpark" => Trainer.trainFFNSpark()
 
+      // Testing
       case "testModels" => Tester.testModels()
+      case "testLengths" => Tester.testLengths()
+      case "testTimeDecay" => Tester.testTimeDecay()
 
       case _ => Log.r("No job ... Exiting!")
     }
@@ -195,6 +202,20 @@ object SparkUtil {
     })
   }
 
+  def lengthStats() = borderStats("test_length", _.body.length)
+  def timeStats() = borderStats("test_time", _.id.toInt)
+
+  def borderStats(filter: String, criterion: Article => Double) = {
+    val groups: Array[String] = new File(Config.dataPath + "nyt").listFiles.map(_.getName).filter(_.contains(filter))
+    for (i <- groups) {
+      val r0 = Fetcher.fetch(s"nyt/$i").map(criterion)
+      r0.cache
+      val min = r0.min
+      val max = r0.max
+      Log.v(f"Border stats for $filter - count: ${r0.count}%7d - min: $min%7d - max: $max%7d")
+    }
+  }
+
   def prettyTime(ms: Long): String = {
     var x = ms / 1000
     val seconds = x % 60 match {
@@ -220,7 +241,7 @@ object SparkUtil {
       case e if e == 1 => f" $e day"
       case e if e > 0 => f" $e days"
     }
-    f"$days$hours$minutes$seconds ($ms ms)"
+    s"$days$hours$minutes$seconds ($ms ms)"
   }
 }
 

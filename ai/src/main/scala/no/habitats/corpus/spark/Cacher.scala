@@ -1,18 +1,12 @@
 package no.habitats.corpus.spark
 
-import java.io.File
-import java.nio.file.{Files, StandardCopyOption}
-
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
-import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common._
-import org.apache.commons.io.FileUtils
+import no.habitats.corpus.common.models.Article
 import org.apache.spark.rdd.RDD
 
-import scala.collection.Map
-
-object Cacher extends RddSerializer{
+object Cacher extends RddSerializer {
 
   /** Fetch json RDD and compute IPTC and annotations */
   def annotateAndCacheArticles() = {
@@ -53,29 +47,23 @@ object Cacher extends RddSerializer{
       .map(a => (a.id, a.iptc))
       .groupBy(_._2.contains(label))
       .map { case (c, ids) => (c, ids.map(_._1).toSet) }
-      .collectAsMap()
+      .collect.toMap
     val idLabeled: Set[String] = labels(true)
     val idOther: Set[String] = labels(false).take(idLabeled.size)
     // Need to shuffle the examples for training purposes
     all.filter(a => idLabeled.contains(a.id) || idOther.contains(a.id))
   }
 
-  def cacheAndSplitLength() = {
-    cacheAndSplitLengths(Fetcher.annotatedTestW2V)
-    cacheAndSplitLengths(Fetcher.annotatedValidationW2V)
-    cacheAndSplitLengths(Fetcher.annotatedTrainW2V)
-  }
+  def cacheAndSplitTime() = cacheAndSplit(Fetcher.annotatedTestOrdered, 10, a => a.id.toInt, "nyt_test_time")
 
-  def cacheAndSplitLengths(rdd: RDD[Article]) = {
-    val count = rdd.count
-    val minIds = rdd.takeOrdered((count * 0.33).toInt)(Ordering.by(_.body.length * -1)).map(_.id).toSet
-    val maxIds = rdd.takeOrdered((count * 0.33).toInt)(Ordering.by(_.body.length)).map(_.id).toSet
-    val min = rdd.filter(a => minIds.contains(a.id)).map(JsonSingle.toSingleJson)
-    val mid = rdd.filter(a => !minIds.contains(a.id) && !maxIds.contains(a.id)).map(JsonSingle.toSingleJson)
-    val max = rdd.filter(a => maxIds.contains(a.id)).map(JsonSingle.toSingleJson)
-    saveAsText(min, "nyt_length_min.json")
-    saveAsText(mid, "nyt_length_mid.json")
-    saveAsText(max, "nyt_length_max.json")
+  def cacheAndSplitLength() = cacheAndSplit(Fetcher.annotatedTestOrdered, 10, a => a.body.length, "nyt_test_lengths")
+
+  def cacheAndSplit(rdd: RDD[Article], parts: Int, criterion: Article => Double, name: String) = {
+    val count = rdd.count.toInt
+    val bucketSize = count / parts
+    val ordered = rdd.sortBy(criterion).map(_.id).collect()
+    val ids: Map[Int, Set[String]] = (0 until parts).map(p => (p, ordered.slice(p * bucketSize - 1, (p + 1) * bucketSize).toSet)).toMap
+    ids.map { case (k, v) => (k, rdd.filter(a => v.contains(a.id)).map(JsonSingle.toSingleJson)) }.foreach { case (k, v) => saveAsText(v, s"${name}_$k") }
   }
 
   def cacheSuperSampled(maxLimit: Option[Int] = None) = {
@@ -157,7 +145,5 @@ object Cacher extends RddSerializer{
     )
     rdds.foreach { case (k, v) => cacheSingleSubSampled(v, k) }
   }
-
-
 
 }
