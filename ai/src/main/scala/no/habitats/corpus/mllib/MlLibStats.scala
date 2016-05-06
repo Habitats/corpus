@@ -1,6 +1,5 @@
 package no.habitats.corpus.mllib
 
-import no.habitats.corpus._
 import no.habitats.corpus.common.models.Article
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD

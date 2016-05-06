@@ -1,6 +1,6 @@
-import no.habitats.corpus.spark.Fetcher
 import no.habitats.corpus.Corpus
 import no.habitats.corpus.common.Config
+import no.habitats.corpus.spark.Fetcher
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
