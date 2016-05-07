@@ -19,12 +19,12 @@ class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize:
     val articles = allArticles.slice(cursor, cursor + num)
 
     // [miniBatchSize, inputSize, timeSeriesLength]
-    val features = Nd4j.create(articles.size,inputColumns )
+    val features = Nd4j.create(articles.size, inputColumns)
     val labels = Nd4j.create(articles.size, totalOutcomes)
 
     for (i <- articles.toList.indices) {
       // We want to preserve order
-      features.putRow(i, if(phrases.isEmpty) articles(i).toND4JDocumentVector else MLLibUtil.toVector(articles(i).toVector(phrases)))
+      features.putRow(i, if (phrases.isEmpty) articles(i).toND4JDocumentVector else MLLibUtil.toVector(articles(i).toVector(phrases)))
 
       // binary
       val v = if (articles(i).iptc.contains(label)) 1 else 0
@@ -37,7 +37,7 @@ class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize:
   override def batch(): Int = Math.min(batchSize, Math.max(allArticles.size - counter, 0))
   override def cursor(): Int = counter
   override def totalExamples(): Int = allArticles.size
-  override def inputColumns(): Int = if(phrases.isEmpty) W2VLoader.featureSize else phrases.size
+  override def inputColumns(): Int = if (phrases.isEmpty) W2VLoader.featureSize else phrases.size
   override def setPreProcessor(preProcessor: DataSetPreProcessor): Unit = throw new UnsupportedOperationException
   override def getLabels: util.List[String] = util.Arrays.asList(label, "not_" + label)
   override def totalOutcomes(): Int = 2

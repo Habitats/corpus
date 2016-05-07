@@ -71,14 +71,14 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
 
   def log() = {
     //    Log.r2(confusion)
-    if (epoch == 0) Log.r(statsHeader)
-    Log.r(stats)
+    if (epoch == 0) Log.r2(statsHeader)
+    Log.r2(stats)
   }
 }
 
 object NeuralEvaluation {
 
-  def log(evals: Set[NeuralEvaluation], cats: Seq[String]) = {
+  def log(evals: Set[NeuralEvaluation], cats: Seq[String], iteration: Int) = {
     // Macro
     val maRecall = evals.map(_.recall).sum / cats.size
     val maPrecision = evals.map(_.precision).sum / cats.size
@@ -106,7 +106,8 @@ object NeuralEvaluation {
       "Mi.Accuracy" -> f"$miAccuracy%.3f",
       "Mi.F-score" -> f"$miFscore%.3f"
     )
-    Log.r(stats.map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
+    if (iteration == 0)
+      Log.r(stats.map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
     Log.r(stats.map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
 
   }

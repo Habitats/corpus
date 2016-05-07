@@ -9,7 +9,6 @@ import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import util.Samples
 
-
 @RunWith(classOf[JUnitRunner])
 class CorpusTest extends FunSuite with Samples {
 

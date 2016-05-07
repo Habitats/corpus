@@ -4,7 +4,6 @@ import no.habitats.corpus.common.Log
 import no.habitats.corpus.web.CorpusServlet
 import org.scalatra.LifeCycle
 
-
 class ScalatraBootstrap extends LifeCycle {
 
   override def init(context: ServletContext) {

@@ -5,7 +5,7 @@ import java.io.File
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{Config, Log}
+import no.habitats.corpus.common.{AnnotationUtils, Config, Log, W2VLoader}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkContext, SparkException}
 
@@ -23,29 +23,25 @@ object Fetcher {
 
   // Raw NYT Corpus articles without annotations
   lazy val rdd                        : RDD[Article] = fetch("nyt/nyt_corpus.json")
+  lazy val rddMini                    : RDD[Article] = fetch("nyt/nyt_corpus_minimal.json")
   // Processed NYT Corpus articles with annotations
   lazy val annotatedRdd               : RDD[Article] = fetch("nyt/nyt_corpus_annotated_0.5.json")
-  // Filtered NYT Corpus articles
-  lazy val nytCorpusW2VAnnotated      : RDD[Article] = fetch("nyt/nyt_corpus_annotated_w2v_0.5_min10.json")
-  // Articles filtered before split
-  lazy val annotatedTestW2V           : RDD[Article] = fetch("nyt/nyt_test_w2v_5.json", 0.2)
-  lazy val annotatedTrainW2V          : RDD[Article] = fetch("nyt/nyt_train_w2v_5.json", 0.6)
-  lazy val annotatedValidationW2V     : RDD[Article] = fetch("nyt/nyt_validation_w2v_5.json", 0.2)
+  lazy val annotatedRddMini           : RDD[Article] = fetch("nyt/nyt_corpus_annotated_0.5_minimal.json")
   // Articles split in chronological order based on ID
   lazy val annotatedTestOrdered       : RDD[Article] = fetch("nyt/nyt_test_ordered.json", 0.2)
   lazy val annotatedTrainOrdered      : RDD[Article] = fetch("nyt/nyt_train_ordered.json", 0.6)
   lazy val annotatedValidationOrdered : RDD[Article] = fetch("nyt/nyt_validation_ordered.json", 0.2)
+  lazy val annotatedTrainOrderedTypes : RDD[Article] = fetch("nyt/nyt_train_ordered_types.json", 0.6)
   // Articles split randomly
   lazy val annotatedTestShuffled      : RDD[Article] = fetch("nyt/nyt_test_shuffled.json", 0.2)
   lazy val annotatedTrainShuffled     : RDD[Article] = fetch("nyt/nyt_train_shuffled.json", 0.6)
   lazy val annotatedValidationShuffled: RDD[Article] = fetch("nyt/nyt_validation_shuffled.json", 0.2)
   // Articles sub-sampled based on the minimal category
-  lazy val subTestW2V                 : RDD[Article] = fetch("nyt/subsampled_test_w2v.json", 0.2)
-  lazy val subTrainW2V                : RDD[Article] = fetch("nyt/subsampled_train_w2v.json", 0.6)
-  lazy val subValidationW2V           : RDD[Article] = fetch("nyt/subsampled_validation_w2v.json", 0.2)
   lazy val subTestOrdered             : RDD[Article] = fetch("nyt/subsampled_test_ordered.json", 0.2)
   lazy val subTrainOrdered            : RDD[Article] = fetch("nyt/subsampled_train_ordered.json", 0.6)
   lazy val subValidationOrdered       : RDD[Article] = fetch("nyt/subsampled_validation_ordered.json", 0.2)
+  lazy val subTrainOrderedTypes       : RDD[Article] = fetch("nyt/subsampled_train_ordered_types.json", 0.6)
+
   lazy val subTestShuffled            : RDD[Article] = fetch("nyt/subsampled_test_shuffled.json", 0.2)
   lazy val subTrainShuffled           : RDD[Article] = fetch("nyt/subsampled_train_shuffled.json", 0.6)
   lazy val subValidationShuffled      : RDD[Article] = fetch("nyt/subsampled_validation_shuffled.json", 0.2)
@@ -58,6 +54,13 @@ object Fetcher {
 
   def fetch(name: String, fraction: Double = 1): RDD[Article] = {
     limit(sc.textFile(Config.dataPath + name, (Config.partitions * fraction).toInt).map(JsonSingle.fromSingleJson), fraction)
+  }
+
+  def filter(rdd: RDD[Article]): RDD[Article] = {
+    rdd
+      .filter(_.iptc.nonEmpty)
+      .map(_.filterAnnotation(an => an.fb != AnnotationUtils.NONE && W2VLoader.contains(an.fb)))
+      .filter(_.ann.nonEmpty)
   }
 
   def balanced(label: String, train: Boolean): RDD[Article] = fetch(Config.balanced(label), if (train) 0.6 else 0.2)

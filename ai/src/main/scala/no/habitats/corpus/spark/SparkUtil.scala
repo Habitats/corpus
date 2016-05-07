@@ -5,7 +5,7 @@ import java.io.File
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
-import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.models.{Article, DBPediaAnnotation}
 import no.habitats.corpus.dl4j.{FreebaseW2V, TSNE}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
@@ -31,7 +31,7 @@ object SparkUtil {
 
     Config.job match {
       // Misc
-      case "test" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
+      case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "misc" => misc()
 
@@ -46,44 +46,68 @@ object SparkUtil {
       case "fbw2vids" => FreebaseW2V.cacheWordVectorIds()
 
       case "cacheAnnotated" => Cacher.annotateAndCacheArticles()
+      case "cacheAnnotatedWithTypes" => Cacher.annotateAndCacheArticlesWithTypes()
       case "splitAndCache" => Cacher.splitAndCache() // REQUIREMENT FOR TRAINING
       case "cacheBalanced" => Cacher.cacheBalanced()
-      case "cacheMinimal" => Cacher.cacheMinimalArticles()
+      case "cacheMinimal" => Cacher.cacheMinimalArticles(Fetcher.annotatedRdd, "nyt_corpus_annotated")
       case "cacheSuperSampled" => Cacher.cacheSuperSampled(Some(100000))
       case "cacheSubSampled" =>
-        //        Cacher.cacheSubSampledFiltered()
-        //        Cacher.cacheSubSampledOrdered()
+        Cacher.cacheSubSampledOrdered()
         Cacher.cacheSubSampledShuffled()
       case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
       case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
+      case "cache" =>
+        Cacher.cacheAndSplitLength()
+        Cacher.cacheAndSplitTime()
+        Cacher.cacheSubSampledOrdered()
+        Cacher.cacheSubSampledShuffled()
 
       // Display stats
       case "iptcDistribution" => calculateIPTCDistribution()
       case "tnesDocumentVectors" => tnesDocumentVectors()
       case "tnesWordVectors" => tnesWordVectors()
       case "stats" =>
-        //        stats(Fetcher.subTrainW2V, "filtered")
-        //        stats(Fetcher.subTrainOrdered, "ordered")
-        //        stats(Fetcher.subTestShuffled, "shuffled")
-        //        stats(Fetcher.annotatedRdd, "all")
+//        stats(Fetcher.annotatedRddMini, "filtered")
+//        Corpus.preloadAnnotations()
+//        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
         timeStats()
         lengthStats()
 
       // Modelling
       case "trainNaiveBayesBoW" => Trainer.trainNaiveBayes(bow = true)
       case "trainNaiveBayesW2V" => Trainer.trainNaiveBayes(bow = false)
+
       case "trainRNNSubSampled" => Trainer.trainRNNSubSampled()
-      case "trainFFNSubSampled" => Trainer.trainFFNSubSampled()
-      case "trainFFNSubSampledBoW" => Trainer.trainFFNSubSampledBoW()
       case "trainRNNBalanced" => Trainer.trainRNNBalanced()
-      case "trainFFNBalanced" => Trainer.trainFFNBalanced()
       case "trainRNNSpark" => Trainer.trainRNNSpark()
+
+      case "trainFFNSubSampled" => Trainer.trainFFNSubSampled()
+      case "trainFFNOrdered" => Trainer.trainFFNOrdered()
+      case "trainFFNShuffled" => Trainer.trainFFNSubShuffled()
+      case "trainFFNSubSampledBoW" => Trainer.trainFFNSubSampledBoW()
+      case "trainFFNBalanced" => Trainer.trainFFNBalanced()
       case "trainFFNSpark" => Trainer.trainFFNSpark()
+
+      case "train" =>
+        Trainer.trainFFNOrdered()
+        Trainer.trainFFNSubShuffled()
+        Trainer.trainFFNOrderedTypes()
 
       // Testing
       case "testModels" => Tester.testModels()
       case "testLengths" => Tester.testLengths()
       case "testTimeDecay" => Tester.testTimeDecay()
+      case "test" =>
+        Tester.testModels()
+        // Ex 1
+        Tester.testEmbeddedVeBoW()
+        // Ex 2
+        Tester.testTypesInclusion()
+        // Ex 3
+        Tester.testLengths()
+        // Ex 4
+        Tester.testShuffledVsOrdered()
+        Tester.testTimeDecay()
 
       case _ => Log.r("No job ... Exiting!")
     }
@@ -98,11 +122,11 @@ object SparkUtil {
   }
 
   def tnesDocumentVectors() = {
-    TSNE.create(Fetcher.subTrainW2V, useDocumentVectors = true)
+    TSNE.create(Fetcher.subTrainOrdered, useDocumentVectors = true)
   }
 
   def tnesWordVectors() = {
-    TSNE.create(Fetcher.subTrainW2V, useDocumentVectors = false)
+    TSNE.create(Fetcher.subTrainOrdered, useDocumentVectors = false)
   }
 
   def computeAndCacheDBPediaAnnotationsToJson() = {
@@ -131,7 +155,7 @@ object SparkUtil {
 
   def stats(rdd: RDD[Article], name: String) = {
     rdd.cache()
-    val statsFile = s"stats/${name}_general_stats.txt"
+    val statsFile = s"res/stats_${name}_general.txt"
 
     // Annotations per IPTC
     val annCounts = rdd.flatMap(a => a.iptc.map(c => (c, a.ann.size))).reduceByKey(_ + _).collectAsMap
@@ -160,19 +184,19 @@ object SparkUtil {
 
     val annotationsIptc: RDD[Int] = rdd.map(_.ann.size)
     Log.toFile(statsToPretty(annotationsIptc.stats(), "Annotations per article"), statsFile)
-    Log.toFile(pairs(annotationsIptc), s"stats/${name}_annotations_per_article.txt")
+    Log.toFile(pairs(annotationsIptc), s"res/stats_${name}_annotations_per_article.txt")
 
     val articlesIptc: RDD[Int] = rdd.map(_.iptc.size)
     Log.toFile(statsToPretty(articlesIptc.stats(), "IPTC"), statsFile)
-    Log.toFile(pairs(articlesIptc), s"stats/${name}_iptc_per_article.txt")
+    Log.toFile(pairs(articlesIptc), s"res/stats_${name}_iptc_per_article.txt")
 
-    val articleLength: RDD[Int] = rdd.filter(_.body != null).map(_.body.length)
+    val articleLength: RDD[Int] = rdd.map(_.wc)
     Log.toFile(statsToPretty(articleLength.stats(), "Article length"), statsFile)
-    Log.toFile(pairs(articleLength), s"stats/${name}_article_length.txt")
+    Log.toFile(pairs(articleLength), s"res/stats_${name}_article_length.txt")
 
     val mentionAnnotation: RDD[Int] = rdd.flatMap(_.ann.values.map(_.id)).map(id => (id, 1)).reduceByKey(_ + _).values
     Log.toFile(statsToPretty(mentionAnnotation.stats(), "Mentions per annotation"), statsFile)
-    Log.toFile(pairs(mentionAnnotation), s"stats/${name}_mention_per_annotation.txt")
+    Log.toFile(pairs(mentionAnnotation), s"res/stats_${name}_mention_per_annotation.txt")
   }
 
   /////////////////////
@@ -202,7 +226,7 @@ object SparkUtil {
     })
   }
 
-  def lengthStats() = borderStats("test_length", _.body.length)
+  def lengthStats() = borderStats("test_length", _.wc)
   def timeStats() = borderStats("test_time", _.id.toInt)
 
   def borderStats(filter: String, criterion: Article => Double) = {
@@ -210,9 +234,9 @@ object SparkUtil {
     for (i <- groups) {
       val r0 = Fetcher.fetch(s"nyt/$i").map(criterion)
       r0.cache
-      val min = r0.min
-      val max = r0.max
-      Log.v(f"Border stats for $filter - count: ${r0.count}%7d - min: $min%7d - max: $max%7d")
+      val min = r0.min.toInt
+      val max = r0.max.toInt
+      Log.v(f"Border stats for $filter - count: ${r0.count.toInt}%7d - min: $min%7d - max: $max%7d")
     }
   }
 

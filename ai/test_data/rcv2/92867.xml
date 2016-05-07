@@ -1,47 +1,66 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <newsitem date="1997-04-21" id="root" itemid="92867" xml:lang="no">
-<title></title>
-<headline> Norsk Hydro - Resultat pr område i 1. kv. </headline>
-<byline></byline>
-<dateline></dateline>
-<text>
-<p>     OSLO, 21 apr (Reuter) - Norsk Hydro melder om følgende </p>
-<p> driftsresultat og driftsinntekter per område i 1. kvartal </p>
-<p> (mln kr): </p>
-<p>       1.kv-97    Ventet  1.kv-96 </p>
-<p> DRIFTSRESULTAT: </p>
-<p> Landbruk       856  705      889 Olje og gass      1.924     1.706    1.497 Lettmetall     396  390      689 Petrokjemi      59  111  87 Andre virk.og uf.kost.   -90  -29      -46 SUM     3.145     2.883    3.116       1.kv-97       1.kv-96 </p>
-<p> DRIFTSINNTEKTER: </p>
-<p> Landbruk    10.704    9.414 Olje og gass      4.742    4.107 Lettmetall   6.193    6.120 Petrokjemi   1.293    1.362 Andre virksomheter     1.323    1.299 Internt salg     -1.006     -922 SUM    23.249   21.380 </p>
-<p>     --Redaksjonen: 22 93 69 75. </p>
-<p> (c) Reuters Limited 1997. </p></text>
-<copyright>(c) Reuters Limited 1997 </copyright>
-<metadata>
-<codes class="bip:countries:1.0">
-<code code="EURZ">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="NORW">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="SCANDZ">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="WEURZ">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code></codes>
-<codes class="bip:topics:1.0">
-<code code="NOHYD">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="I1">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="I13">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="C15">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="C151">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="CCAT">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code></codes>
-<dc element="dc.publisher" value="Reuters Holdings Plc"></dc>
-<dc element="dc.datepublished" value="1997-04-21"></dc>
-<dc element="dc.source" value="Reuters - Nyheter på norsk"></dc>
-<dc element="dc.creator.location" value=""></dc>
-<dc element="dc.creator.location.country.name" value=""></dc></metadata></newsitem>
+  <title></title>
+  <headline>Norsk Hydro - Resultat pr område i 1. kv.</headline>
+  <byline></byline>
+  <dateline></dateline>
+  <text>
+    <p>OSLO, 21 apr (Reuter) - Norsk Hydro melder om følgende</p>
+    <p>driftsresultat og driftsinntekter per område i 1. kvartal</p>
+    <p>(mln kr):</p>
+    <p>1.kv-97 Ventet 1.kv-96</p>
+    <p>DRIFTSRESULTAT:</p>
+    <p>Landbruk 856 705 889 Olje og gass 1.924 1.706 1.497 Lettmetall 396 390 689 Petrokjemi 59 111 87 Andre virk.og uf.kost. -90 -29 -46
+      SUM 3.145 2.883 3.116 1.kv-97 1.kv-96
+    </p>
+    <p>DRIFTSINNTEKTER:</p>
+    <p>Landbruk 10.704 9.414 Olje og gass 4.742 4.107 Lettmetall 6.193 6.120 Petrokjemi 1.293 1.362 Andre virksomheter 1.323 1.299 Internt
+      salg -1.006 -922 SUM 23.249 21.380
+    </p>
+    <p>--Redaksjonen: 22 93 69 75.</p>
+    <p>(c) Reuters Limited 1997.</p>
+  </text>
+  <copyright>(c) Reuters Limited 1997</copyright>
+  <metadata>
+    <codes class="bip:countries:1.0">
+      <code code="EURZ">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="NORW">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="SCANDZ">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="WEURZ">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+    </codes>
+    <codes class="bip:topics:1.0">
+      <code code="NOHYD">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="I1">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="I13">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="C15">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="C151">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="CCAT">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+    </codes>
+    <dc element="dc.publisher" value="Reuters Holdings Plc"></dc>
+    <dc element="dc.datepublished" value="1997-04-21"></dc>
+    <dc element="dc.source" value="Reuters - Nyheter på norsk"></dc>
+    <dc element="dc.creator.location" value=""></dc>
+    <dc element="dc.creator.location.country.name" value=""></dc>
+  </metadata>
+</newsitem>

@@ -1,43 +1,65 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <newsitem date="1997-04-21" id="root" itemid="92864" xml:lang="no">
-<title></title>
-<headline> Smedvig - Hydro-kontrakter signert, 2,2 mrd+1 mrd. </headline>
-<byline></byline>
-<dateline></dateline>
-<text>
-<p> OSLO, 21 april (Reuter) - Langtidskontrakten med Norsk Hydro for boring med West Future II ble inngått som intensjonsavtale og meddelt i pressemelding av 6. februar. Kontraktsverdien for den faste perioden er beregnet til cirka 2,2 mrd kr, ifølge Oslo Børs. </p>
-<p> Smedvig har i tillegg inngått avtale om en opsjon for Norsk Hydro til å benytte boreriggen West Alpha. Opsjonen gir Norsk Hydro rett til å disponere West Alpha i tre år med oppstart direkte av riggens nåværende forpliktelser. Dagraten i opsjonsperioden er fastsatt slik at en eventuell kontraktsverdi vil beløpe seg til en mrd kr. Opsjonen må erklæres innen 31. desember 1997, skriver Smedvig i en presselding. </p>
-<p> - Redaksjonen: 22 93 69 77. </p>
-<p> (c) Reuters Limited 1997. </p></text>
-<copyright>(c) Reuters Limited 1997 </copyright>
-<metadata>
-<codes class="bip:countries:1.0">
-<code code="EURZ">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="NORW">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="SCANDZ">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="WEURZ">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code></codes>
-<codes class="bip:topics:1.0">
-<code code="NOHYD">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="SMDRIL">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="I1">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="I13">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="C24">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="C33">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="CCAT">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code></codes>
-<dc element="dc.publisher" value="Reuters Holdings Plc"></dc>
-<dc element="dc.datepublished" value="1997-04-21"></dc>
-<dc element="dc.source" value="Reuters - Nyheter på norsk"></dc>
-<dc element="dc.creator.location" value=""></dc>
-<dc element="dc.creator.location.country.name" value=""></dc></metadata></newsitem>
+  <title></title>
+  <headline>Smedvig - Hydro-kontrakter signert, 2,2 mrd+1 mrd.</headline>
+  <byline></byline>
+  <dateline></dateline>
+  <text>
+    <p>OSLO, 21 april (Reuter) - Langtidskontrakten med Norsk Hydro for boring med West Future II ble inngått som intensjonsavtale og
+      meddelt i pressemelding av 6. februar. Kontraktsverdien for den faste perioden er beregnet til cirka 2,2 mrd kr, ifølge Oslo Børs.
+    </p>
+    <p>Smedvig har i tillegg inngått avtale om en opsjon for Norsk Hydro til å benytte boreriggen West Alpha. Opsjonen gir Norsk Hydro rett
+      til å disponere West Alpha i tre år med oppstart direkte av riggens nåværende forpliktelser. Dagraten i opsjonsperioden er fastsatt
+      slik at en eventuell kontraktsverdi vil beløpe seg til en mrd kr. Opsjonen må erklæres innen 31. desember 1997, skriver Smedvig i en
+      presselding.
+    </p>
+    <p>- Redaksjonen: 22 93 69 77.</p>
+    <p>(c) Reuters Limited 1997.</p>
+  </text>
+  <copyright>(c) Reuters Limited 1997</copyright>
+  <metadata>
+    <codes class="bip:countries:1.0">
+      <code code="EURZ">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="NORW">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="SCANDZ">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="WEURZ">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+    </codes>
+    <codes class="bip:topics:1.0">
+      <code code="NOHYD">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="SMDRIL">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="I1">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="I13">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="C24">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="C33">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="CCAT">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+    </codes>
+    <dc element="dc.publisher" value="Reuters Holdings Plc"></dc>
+    <dc element="dc.datepublished" value="1997-04-21"></dc>
+    <dc element="dc.source" value="Reuters - Nyheter på norsk"></dc>
+    <dc element="dc.creator.location" value=""></dc>
+    <dc element="dc.creator.location.country.name" value=""></dc>
+  </metadata>
+</newsitem>

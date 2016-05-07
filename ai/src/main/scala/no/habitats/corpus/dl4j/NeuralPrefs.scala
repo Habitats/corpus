@@ -14,4 +14,3 @@ case class NeuralPrefs(
                       ) {
   override def toString(): String = s"Hidden: $hiddenNodes - LR: $learningRate - Epochs: $epochs - Minibatch: $minibatchSize - Histogram: $histogram"
 }
-

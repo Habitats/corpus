@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory
 class NLPTest extends FunSuite {
 
   val log = LoggerFactory.getLogger(getClass)
-  lazy val test = Config.testFile("npl/article.txt").getLines().mkString(" ")
+  lazy val test  = Config.testFile("npl/article.txt").getLines().mkString(" ")
   lazy val test2 = Config.testFile("npl/article_short.txt").getLines().mkString(" ")
 
   test("extraction") {

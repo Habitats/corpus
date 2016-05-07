@@ -12,83 +12,144 @@ import no.habitats.corpus.dl4j.networks.{FeedForwardIterator, RNNIterator}
 import no.habitats.corpus.mllib.{MlLibUtils, Prefs}
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
+import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
-/**
-  * Created by mail on 03.05.2016.
-  */
+import scala.util.Try
+
 object Tester {
 
   def testModels() = {
-    Config.resultsFileName = "res_all.txt"
-    Config.resultsCatsFileName = "res_all.txt"
-    val rdd = Fetcher.subTestW2V
+    Config.resultsFileName = "test_all.txt"
+    Config.resultsCatsFileName = "test_all.txt"
+    Log.h("Testing models")
+    val rdd = Fetcher.subTestOrdered.map(_.toMinimal)
     rdd.cache()
     val test = rdd.collect()
-    testRNN(test, "rnn-w2v-sub-10")
-    //    testRNN(test, "rnn-w2v-balanced-10")
-    testFFN(test, "ffn-w2v")
-    //    testNaiveBayes(rdd, "nb-bow")
-    //    testNaiveBayes(rdd, "nb-w2v")
+    RecurrentTester("rnn-w2v-sub-10").test(test)
+    RecurrentTester("rnn-w2v-balanced-10").test(test)
+    FeedforwardTester("ffn-w2v").test(test)
+
+    NaiveBayesTester("nb-w2v").test(test)
+    NaiveBayesTester("nb-bow").test(test)
+  }
+
+  def testEmbeddedVeBoW() = {
+    Config.resultsFileName = "test_embedded_vs_bow.txt"
+    Config.resultsCatsFileName = "test_embedded_vs_bow.txt"
+    Log.h("Testing embedded vs. BoW")
+    val rdd = Fetcher.subTestOrdered.map(_.toMinimal)
+    val test = rdd.collect()
+
+    RecurrentTester("rnn-w2v-sub-10").test(test)
+    FeedforwardTester("ffn-w2v").test(test)
+    NaiveBayesTester("nb-w2v").test(test)
+    NaiveBayesTester("nb-bow").test(test)
+  }
+
+  def testTypesInclusion() = {
+    Config.resultsFileName = "test_type_inclusion.txt"
+    Config.resultsCatsFileName = "test_type_inclusion.txt"
+    Log.h("Testing type inclusion")
+    val rddOrdered = Fetcher.subTestOrdered.map(_.toMinimal)
+    val testOrdered = rddOrdered.collect()
+
+    Log.r("Annotations with types ...")
+    FeedforwardTester("ffn-w2v-ordered-types").test(testOrdered)
+
+    //    Log.r("Normal annotations ...")
+    //    FeedforwardTester("ffn-w2v-ordered").test(testOrdered)
+  }
+
+  def testShuffledVsOrdered() = {
+    Config.resultsFileName = "test_shuffled_vs_ordered.txt"
+    Config.resultsCatsFileName = "test_shuffled_vs_ordered.txt"
+    Log.h("Testing shuffled vs. ordered")
+
+    // Shuffled
+    Log.r("Shuffled ...")
+    val rddShuffled = Fetcher.subTestShuffled.map(_.toMinimal)
+    val testShuffled = rddShuffled.collect()
+    FeedforwardTester("ffn-w2v-shuffled").test(testShuffled)
+
+//    // Ordered
+//    Log.r("Ordered ...")
+//    val rddOrdered = Fetcher.subTestOrdered.map(_.toMinimal)
+//    val testOrdered = rddOrdered.collect()
+//    FeedforwardTester("ffn-w2v-ordered").test(testOrdered)
   }
 
   def testLengths() = {
-    Config.resultsFileName = "res_lengths.txt"
-    Config.resultsCatsFileName = "res_lengths.txt"
-    testBuckets("length", testFFN)
+    Config.resultsFileName = "test_lengths.txt"
+    Config.resultsCatsFileName = "test_lengths_cats.txt"
+    Log.h("Testing Lengths")
+    testBuckets("length", FeedforwardTester("ffn-w2v-ordered"), _.wc)
+    testBuckets("length", NaiveBayesTester("nb-bow"), _.id.toInt)
+    testBuckets("length", NaiveBayesTester("nb-w2v"), _.id.toInt)
   }
 
   def testTimeDecay() = {
-    Config.resultsFileName = "res_time.txt"
-    Config.resultsCatsFileName = "res_time.txt"
-    testBuckets("time", testFFN)
+    Config.resultsFileName = "test_time_decay.txt"
+    Config.resultsCatsFileName = "test_time_decay_cats.txt"
+    Log.h("Testing Time Decay")
+    testBuckets("time", FeedforwardTester("ffn-w2v-ordered"), _.id.toInt)
+    testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
+    testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
   }
 
   /** Test model on every test set matching name */
-  def testBuckets(name: String, test: (Array[Article], String) => Unit) = {
+  def testBuckets(name: String, tester: Testable, criterion: Article => Double) = {
     val rdds: Array[(Int, RDD[Article])] = new File(Config.dataPath + "nyt").listFiles
       .map(_.getName).filter(_.contains(s"test_$name"))
-      .map(n => (n.filter(_.isDigit).head.toString.toInt, n))
-      .map { case (k, v) => (k, Fetcher.fetch(s"nyt/$v")) }
-    rdds.foreach { case (k, v) => {
-      val collect: Array[Article] = v.collect()
-      Log.r(s"${name} group: $k -  min: ${collect.map(_.body.length).min} - max: ${collect.map(_.body.length).max}")
-      test(collect, "ffn-w2v")
+      .map(n => (n.split("[._]").filter(s => Try(s.toInt).isSuccess).head.toInt, n))
+      .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$n")) }
+    rdds.foreach { case (index, n) => {
+      val collect: Array[Article] = n.collect()
+      Log.r2(s"${name} group: $index -  min: ${Try(collect.map(criterion).min).getOrElse("N/A")} - max: ${Try(collect.map(criterion).max).getOrElse("N/A")}")
+      tester.test(collect, iteration = index)
     }
     }
   }
+}
 
-  def testNaiveBayes(rdd: RDD[Article], name: String): Map[String, NaiveBayesModel] = {
-    Log.r(s"Testing Naive Bayes [$name] ...")
-    val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(c => (c, MLlibModelLoader.load(name, IPTC.trim(c)))).toMap
-    val phrases: Array[String] = Config.dataFile(Config.modelPath + "nb_phrases.txt").getLines().toArray.sorted
-    val prefs = sc.broadcast(Prefs())
-    MlLibUtils.testMLlibModels(rdd, nb, phrases, prefs, name.toLowerCase.contains("bow"))
-  }
+sealed trait Testable {
+  val modelName: String
 
-  def testFFN(test: Array[Article], modelName: String) = {
-    Log.r(s"Testing FFN [$modelName] ...")
-    val ffa: Map[String, MultiLayerNetwork] = NeuralModelLoader.models(modelName)
-    val evals: Set[NeuralEvaluation] = ffa.toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
-      val ffnTest = new FeedForwardIterator(test, models._1, 500)
-      val ffnEval = NeuralEvaluation(models._2, ffnTest, i, models._1)
-      ffnEval.log()
-      ffnEval
-    }
-    }.toSet
-    NeuralEvaluation.log(evals, Config.cats)
-  }
-
-  def testRNN(test: Array[Article], name: String) = {
-    Log.r(s"Testing RNN [$name] ...")
-    val rnn: Map[String, MultiLayerNetwork] = NeuralModelLoader.models(name)
-    val evals: Set[NeuralEvaluation] = rnn.toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
-      val ffnTest = new RNNIterator(test, Some(models._1), 50)
+  def iter(test: Array[Article], label: String): DataSetIterator = ???
+  def models(modelName: String): Map[String, MultiLayerNetwork] = ???
+  def test(test: Array[Article], iteration: Int = 0) = {
+    if (iteration == 0) Log.r(s"Testing $modelName ...")
+    val evals: Set[NeuralEvaluation] = models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
+      val ffnTest = iter(test, models._1)
       val rnnEval = NeuralEvaluation(models._2, ffnTest, i, models._1)
       rnnEval.log()
       rnnEval
     }
     }.toSet
-    NeuralEvaluation.log(evals, Config.cats)
+    NeuralEvaluation.log(evals, Config.cats, iteration)
+  }
+}
+
+case class FeedforwardTester(modelName: String) extends Testable {
+  lazy val ffa: Map[String, MultiLayerNetwork] = NeuralModelLoader.models(modelName)
+
+  override def iter(test: Array[Article], label: String): DataSetIterator = new FeedForwardIterator(test, label, 500)
+  override def models(modelName: String): Map[String, MultiLayerNetwork] = ffa
+}
+
+case class RecurrentTester(modelName: String) extends Testable {
+  lazy val rnn: Map[String, MultiLayerNetwork] = NeuralModelLoader.models(modelName)
+
+  override def iter(test: Array[Article], label: String): DataSetIterator = new RNNIterator(test, Some(label), 50)
+  override def models(modelName: String): Map[String, MultiLayerNetwork] = rnn
+}
+
+case class NaiveBayesTester(modelName: String) extends Testable {
+  def test(rdd: Array[Article]) = {
+    Log.r(s"Testing Naive Bayes [$modelName] ...")
+    val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(c => (c, MLlibModelLoader.load(modelName, IPTC.trim(c)))).toMap
+    val phrases: Array[String] = Config.dataFile(Config.modelPath + "nb_phrases.txt").getLines().toArray.sorted
+    val prefs = sc.broadcast(Prefs())
+    MlLibUtils.testMLlibModels(sc.parallelize(rdd), nb, phrases, prefs, modelName.toLowerCase.contains("bow"))
   }
 }

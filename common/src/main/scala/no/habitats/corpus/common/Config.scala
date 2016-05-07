@@ -12,13 +12,13 @@ object Config {
   val seed = 123
   val NONE = "NONE"
 
-  lazy val freebaseToWord2Vec          = dataPath + "nyt/fb_w2v_0.5.txt"
-  lazy val freebaseToWord2VecIDs       = dataPath + "nyt/fb_w2v_0.5_ids.txt"
-  lazy val dbpedia                     = dataPath + "nyt/dbpedia-all-0.5.json"
-  lazy val combinedIds                 = dataPath + "nyt/combined_ids_0.5.txt"
-  lazy val freebaseToWikidata          = dataPath + "wikidata/fb_to_wd_all.txt"
-  lazy val wikidataToFreebase          = dataPath + "wikidata/wd_to_fb.txt"
-  lazy val wikidataToDbPedia           = dataPath + "wikidata/wikidata_to_dbpedia.txt"
+  lazy val freebaseToWord2Vec    = dataPath + "nyt/fb_w2v_0.5.txt"
+  lazy val freebaseToWord2VecIDs = dataPath + "nyt/fb_w2v_0.5_ids.txt"
+  lazy val dbpedia               = dataPath + "nyt/dbpedia-all-0.5.json"
+  lazy val combinedIds           = dataPath + "nyt/combined_ids_0.5.txt"
+  lazy val freebaseToWikidata    = dataPath + "wikidata/fb_to_wd_all.txt"
+  lazy val wikidataToFreebase    = dataPath + "wikidata/wd_to_fb.txt"
+  lazy val wikidataToDbPedia     = dataPath + "wikidata/wikidata_to_dbpedia.txt"
 
   lazy val cats: Seq[String] = Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
 

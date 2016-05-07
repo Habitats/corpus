@@ -16,7 +16,7 @@ public class RNNEX {
     Random   random = Nd4j.getRandom();
     INDArray ret    = Nd4j.create(1000, 1000);
     INDArray linear = ret.linearView();
-    System.out.println("Length: "+linear.length());
+    System.out.println("Length: " + linear.length());
     for (int i = 0; i < linear.length(); i++) {
       linear.putScalar(i, random.nextGaussian());
     }

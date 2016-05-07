@@ -421,7 +421,7 @@ public class NYTCorpusDocumentParser {
 
   public NYTCorpusDocument parseNYTCorpusDocumentFromString(String s) {
     s = s.replace("<!DOCTYPE nitf " + "SYSTEM \"http://www.nitf.org/" + "IPTC/NITF/3.3/specification/dtd/nitf-3-3.dtd\">", "");
-    Document document = parseStringToDOM(s, "UTF-8");
+    Document          document    = parseStringToDOM(s, "UTF-8");
     NYTCorpusDocument ldcDocument = new NYTCorpusDocument();
     return create(document, ldcDocument);
   }
@@ -429,8 +429,8 @@ public class NYTCorpusDocumentParser {
   private NYTCorpusDocument create(Document document, NYTCorpusDocument ldcDocument) {
     NodeList children = document.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
       if (name.equals(NITF_TAG)) {
         handleNITFNode(child, ldcDocument);
       }
@@ -442,8 +442,8 @@ public class NYTCorpusDocumentParser {
   private void handleNITFNode(Node node, NYTCorpusDocument ldcDocument) {
     NodeList children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
       if (name.equals(HEAD_TAG)) {
         handleHeadNode(child, ldcDocument);
       } else if (name.equals(BODY_TAG)) {
@@ -455,8 +455,8 @@ public class NYTCorpusDocumentParser {
   private void handleBodyNode(Node node, NYTCorpusDocument ldcDocument) {
     NodeList children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
       if (name.equals(BODY_HEAD_TAG)) {
         handleBodyHead(child, ldcDocument);
       } else if (name.equals(BODY_CONTENT_TAG)) {
@@ -470,8 +470,8 @@ public class NYTCorpusDocumentParser {
   private void handleBodyHead(Node node, NYTCorpusDocument ldcDocument) {
     NodeList children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
       if (name.equals(DATELINE_TAG)) {
         handleDatelineNode(ldcDocument, child);
       } else if (name.equals(ABSTRACT_TAG)) {
@@ -492,8 +492,8 @@ public class NYTCorpusDocumentParser {
   private void handleAbstractNode(Node node, NYTCorpusDocument ldcDocument) {
     NodeList children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
       if (name.equals(P_TAG)) {
         String abstractText = getAllText(child).trim();
         ldcDocument.setArticleAbstract(abstractText);
@@ -516,9 +516,9 @@ public class NYTCorpusDocumentParser {
   private void handleHeadlineNode(Node node, NYTCorpusDocument ldcDocument) {
     NodeList children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
-      String text = getAllText(child).trim();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
+      String text  = getAllText(child).trim();
       if (name.equals(HL1_TAG)) {
         ldcDocument.setHeadline(text);
       } else if (name.equals(HL2_TAG)) {
@@ -533,8 +533,8 @@ public class NYTCorpusDocumentParser {
   private void handleBodyContent(Node node, NYTCorpusDocument ldcDocument) {
     NodeList children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
       if (name.equals(BLOCK_TAG)) {
         handleBlockNode(child, ldcDocument);
       }
@@ -559,8 +559,8 @@ public class NYTCorpusDocumentParser {
   private void handleBodyEnd(Node node, NYTCorpusDocument ldcDocument) {
     NodeList children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
       if (name.equals(TAGLINE_TAG)) {
         String classAttribute = getAttributeValue(child, CLASS_ATTRIBUTE);
         if (classAttribute != null && classAttribute.equals(AUTHOR_INFO_ATTRIBUTE)) {
@@ -574,8 +574,8 @@ public class NYTCorpusDocumentParser {
   private void handleHeadNode(Node node, NYTCorpusDocument ldcDocument) {
     NodeList children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
       if (name.equals(META_TAG)) {
         handleMetaNode(child, ldcDocument);
       } else if (name.equals(DOCDATA_TAG)) {
@@ -589,8 +589,8 @@ public class NYTCorpusDocumentParser {
   private void handleDocdataNode(Node node, NYTCorpusDocument ldcDocument) {
     NodeList children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
       if (name.equals(DOC_ID_TAG)) {
         handleDocumentIdNode(ldcDocument, child);
       } else if (name.equals(SERIES_TAG)) {
@@ -646,9 +646,9 @@ public class NYTCorpusDocumentParser {
 
     NodeList children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
-      String value = getAllText(child).trim();
+      Node   child          = children.item(i);
+      String name           = child.getNodeName();
+      String value          = getAllText(child).trim();
       String classAttribute = getAttributeValue(child, CLASS_ATTRIBUTE);
 
       if (name.equals(CLASSIFIER_TAG)) {
@@ -719,7 +719,7 @@ public class NYTCorpusDocumentParser {
       return;
     }
 
-    String name = attributes.getNamedItem(NAME_ATTRIBUTE).getNodeValue();
+    String name    = attributes.getNamedItem(NAME_ATTRIBUTE).getNodeValue();
     String content = attributes.getNamedItem(CONTENT_ATTRIBUTE).getNodeValue();
     try {
       if (name.equals(DSK_ATTRIBUTE)) {
@@ -776,11 +776,11 @@ public class NYTCorpusDocumentParser {
    * @return The parsed document or null if an error occurs.
    */
   private Document loadNonValidating(File file) {
-    Document document;
+    Document     document;
     StringBuffer sb = new StringBuffer();
     try {
       BufferedReader in = new BufferedReader(new InputStreamReader(new FileInputStream(file), "UTF8"));
-      String line;
+      String         line;
       while ((line = in.readLine()) != null) {
         sb.append(line + "\n");
       }
@@ -840,8 +840,8 @@ public class NYTCorpusDocumentParser {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setValidating(false);
-      InputStream is = new ByteArrayInputStream(s.getBytes(encoding));
-      Document doc = factory.newDocumentBuilder().parse(is);
+      InputStream is  = new ByteArrayInputStream(s.getBytes(encoding));
+      Document    doc = factory.newDocumentBuilder().parse(is);
       return doc;
     } catch (SAXParseException e) {
 //      e.printStackTrace();
@@ -863,8 +863,8 @@ public class NYTCorpusDocumentParser {
     try {
       DocumentBuilderFactory factory = DocumentBuilderFactory.newInstance();
       factory.setValidating(false);
-      InputStream is = new ByteArrayInputStream(s.getBytes(encoding));
-      Document doc = factory.newDocumentBuilder().parse(is);
+      InputStream is  = new ByteArrayInputStream(s.getBytes(encoding));
+      Document    doc = factory.newDocumentBuilder().parse(is);
       return doc;
     } catch (SAXParseException e) {
 //      e.printStackTrace();
@@ -906,11 +906,11 @@ public class NYTCorpusDocumentParser {
   }
 
   private String parseBlock(Node node) {
-    StringBuffer sb = new StringBuffer();
-    NodeList children = node.getChildNodes();
+    StringBuffer sb       = new StringBuffer();
+    NodeList     children = node.getChildNodes();
     for (int i = 0; i < children.getLength(); i++) {
-      Node child = children.item(i);
-      String name = child.getNodeName();
+      Node   child = children.item(i);
+      String name  = child.getNodeName();
       if (name.equals(P_TAG)) {
         sb.append(getAllText(child).trim() + "\n");
       }
@@ -936,8 +936,8 @@ public class NYTCorpusDocumentParser {
   }
 
   private String getAllText(Node node) {
-    List<Node> textNodes = getNodesByTagName(node, "#text");
-    StringBuffer sb = new StringBuffer();
+    List<Node>   textNodes = getNodesByTagName(node, "#text");
+    StringBuffer sb        = new StringBuffer();
     for (Node textNode : textNodes) {
       sb.append(textNode.getNodeValue().trim() + " ");
     }

@@ -9,5 +9,5 @@ import no.habitats.corpus.common.{AnnotationUtils, Config}
 trait Samples {
 
   lazy val annotations: Map[String, Seq[Annotation]] = AnnotationUtils.fromGoogle(new File(Config.testPath + "/google-annotations/nyt-mini.txt"))
-  lazy val articles = Corpus.articlesFromXML(Config.testPath + "/nyt/")
+  lazy val articles                                  = Corpus.articlesFromXML(Config.testPath + "/nyt/")
 }

@@ -10,7 +10,6 @@ import org.scalatest.junit.JUnitRunner
 import org.slf4j.LoggerFactory
 import util.Samples
 
-
 @RunWith(classOf[JUnitRunner])
 class IOTest extends FunSuite with Samples {
 
@@ -51,6 +50,5 @@ class IOTest extends FunSuite with Samples {
   //    binaryCacheFile.delete
   //    println(s"Binary loading: ${System.currentTimeMillis() - start} ms")
   //  }
-
 
 }

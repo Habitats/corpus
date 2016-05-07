@@ -1,42 +1,55 @@
 <?xml version="1.0" encoding="UTF-8"?>
 
 <newsitem date="1997-04-21" id="root" itemid="92861" xml:lang="no">
-<title></title>
-<headline> Kitron til notering. </headline>
-<byline></byline>
-<dateline></dateline>
-<text>
-<p>     OSLO, 21 april (Reuter) - Kitron noteres fra i dag av, </p>
-<p> ifølge Oslo Børs. </p>
-<p> V.nr. 307220.9 </p>
-<p> Ticker     KIT </p>
-<p> Børspost   50 </p>
-<p> Aksjekap.  NOK 10.000.000,- </p>
-<p> Pål.  NOK 10,0 Liste SMB </p>
-<p>     --Redaksjonen: 22 93 69 72. </p>
-<p> (c) Reuters Limited 1997. </p></text>
-<copyright>(c) Reuters Limited 1997 </copyright>
-<metadata>
-<codes class="bip:countries:1.0">
-<code code="EURZ">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="NORW">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="SCANDZ">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="WEURZ">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code></codes>
-<codes class="bip:topics:1.0">
-<code code="KITNRW">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="I7902">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="C14">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code>
-<code code="CCAT">
-<editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail></code></codes>
-<dc element="dc.publisher" value="Reuters Holdings Plc"></dc>
-<dc element="dc.datepublished" value="1997-04-21"></dc>
-<dc element="dc.source" value="Reuters - Nyheter på norsk"></dc>
-<dc element="dc.creator.location" value=""></dc>
-<dc element="dc.creator.location.country.name" value=""></dc></metadata></newsitem>
+  <title></title>
+  <headline>Kitron til notering.</headline>
+  <byline></byline>
+  <dateline></dateline>
+  <text>
+    <p>OSLO, 21 april (Reuter) - Kitron noteres fra i dag av,</p>
+    <p>ifølge Oslo Børs.</p>
+    <p>V.nr. 307220.9</p>
+    <p>Ticker KIT</p>
+    <p>Børspost 50</p>
+    <p>Aksjekap. NOK 10.000.000,-</p>
+    <p>Pål. NOK 10,0 Liste SMB</p>
+    <p>--Redaksjonen: 22 93 69 72.</p>
+    <p>(c) Reuters Limited 1997.</p>
+  </text>
+  <copyright>(c) Reuters Limited 1997</copyright>
+  <metadata>
+    <codes class="bip:countries:1.0">
+      <code code="EURZ">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="NORW">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="SCANDZ">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="WEURZ">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+    </codes>
+    <codes class="bip:topics:1.0">
+      <code code="KITNRW">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="I7902">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="C14">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+      <code code="CCAT">
+        <editdetail action="confirmed" attribution="Reuters BIP Coding Group" date="1997-04-21"></editdetail>
+      </code>
+    </codes>
+    <dc element="dc.publisher" value="Reuters Holdings Plc"></dc>
+    <dc element="dc.datepublished" value="1997-04-21"></dc>
+    <dc element="dc.source" value="Reuters - Nyheter på norsk"></dc>
+    <dc element="dc.creator.location" value=""></dc>
+    <dc element="dc.creator.location.country.name" value=""></dc>
+  </metadata>
+</newsitem>

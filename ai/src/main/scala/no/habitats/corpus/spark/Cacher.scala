@@ -10,25 +10,33 @@ object Cacher extends RddSerializer {
 
   /** Fetch json RDD and compute IPTC and annotations */
   def annotateAndCacheArticles() = {
-    val rdd = Fetcher.rdd
-      .map(Corpus.toIPTC)
-      .map(Corpus.toDBPediaAnnotated)
-    saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_with_all")
+    Corpus.preloadAnnotations()
+    val rdd = Fetcher.rddMini.map(Corpus.toDBPediaAnnotated)
+    saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_corpus_annotated")
   }
 
-  def cacheMinimalArticles() = {
-    val minimal = Fetcher.annotatedRdd
+  def annotateAndCacheArticlesWithTypes() = {
+    Corpus.preloadTypes()
+    val rdd = Fetcher.annotatedTrainOrdered.map(Corpus.toDBPediaAnnotatedWithTypes)
+    saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_train_ordered_types")
+    val rdd2 = Fetcher.subTrainOrdered.map(Corpus.toDBPediaAnnotatedWithTypes)
+    saveAsText(rdd2.map(JsonSingle.toSingleJson), "subsampled_train_ordered_types")
+  }
+
+  def cacheMinimalArticles(rdd: RDD[Article], name: String) = {
+    val minimal = rdd
       .filter(_.iptc.nonEmpty)
-      .map(_.filterAnnotation(an => an.fb != AnnotationUtils.NONE && W2VLoader.contains(an.fb)))
+      .map(_.filterAnnotation(an => an.fb != Config.NONE && W2VLoader.contains(an.fb)))
+      .map(_.toMinimal)
       .filter(_.ann.nonEmpty)
-      .map(a => f"${a.id} ${a.iptc.map(IPTC.trim).mkString(",")} ${a.ann.map(_._2.fb).mkString(",")}")
-    saveAsText(minimal, "minimal")
+      .map(JsonSingle.toSingleJson)
+    saveAsText(minimal, name + "_minimal")
   }
 
   def cacheBalanced() = {
-    val train = Fetcher.annotatedTrainW2V
-    val validation = Fetcher.annotatedValidationW2V
-    val test = Fetcher.annotatedTestW2V
+    val train = Fetcher.annotatedTrainOrdered
+    val validation = Fetcher.annotatedValidationOrdered
+    val test = Fetcher.annotatedTestOrdered
     val splits = Seq("train" -> train, "validation" -> validation, "test" -> test)
     splits.foreach { case (kind, rdd) =>
       rdd.cache()
@@ -54,20 +62,22 @@ object Cacher extends RddSerializer {
     all.filter(a => idLabeled.contains(a.id) || idOther.contains(a.id))
   }
 
-  def cacheAndSplitTime() = cacheAndSplit(Fetcher.annotatedTestOrdered, 10, a => a.id.toInt, "nyt_test_time")
+  def cacheAndSplitTime() = cacheAndSplit(Fetcher.annotatedValidationOrdered, 10, a => a.id.toInt, "nyt_test_time")
 
-  def cacheAndSplitLength() = cacheAndSplit(Fetcher.annotatedTestOrdered, 10, a => a.body.length, "nyt_test_lengths")
+  def cacheAndSplitLength() = cacheAndSplit(Fetcher.annotatedTestOrdered, 10, a => a.wc, "nyt_test_length")
 
   def cacheAndSplit(rdd: RDD[Article], parts: Int, criterion: Article => Double, name: String) = {
+    rdd.cache()
     val count = rdd.count.toInt
     val bucketSize = count / parts
     val ordered = rdd.sortBy(criterion).map(_.id).collect()
     val ids: Map[Int, Set[String]] = (0 until parts).map(p => (p, ordered.slice(p * bucketSize - 1, (p + 1) * bucketSize).toSet)).toMap
     ids.map { case (k, v) => (k, rdd.filter(a => v.contains(a.id)).map(JsonSingle.toSingleJson)) }.foreach { case (k, v) => saveAsText(v, s"${name}_$k") }
+    rdd.unpersist()
   }
 
   def cacheSuperSampled(maxLimit: Option[Int] = None) = {
-    val rdd = Fetcher.annotatedTrainW2V
+    val rdd = Fetcher.annotatedTrainOrdered
     rdd.cache()
     var pairs = IPTC.topCategories.map(c => (c, rdd.filter(_.iptc.contains(c))))
     val counts = pairs.map { case (k, v) => (k, v.count) }.toMap
@@ -96,7 +106,8 @@ object Cacher extends RddSerializer {
   }
 
   def splitAndCache() = {
-    val rdd = TC(Fetcher.annotatedRdd).computed
+    val rdd = TC(Fetcher.annotatedRddMini).computed
+    rdd.cache()
 
     // Ordered split
     val numArticles = rdd.count()
@@ -114,18 +125,10 @@ object Cacher extends RddSerializer {
 
     // Shuffled splits
     val splits = rdd.map(JsonSingle.toSingleJson).sortBy(a => Math.random).randomSplit(Array(0.6, 0.2, 0.2), Config.seed)
+    rdd.unpersist()
     saveAsText(splits(0), "nyt_train_shuffled")
     saveAsText(splits(1), "nyt_validation_shuffled")
     saveAsText(splits(2), "nyt_test_shuffled")
-  }
-
-  def cacheSubSampledFiltered() = {
-    val rdds = Map(
-      "train_w2v" -> Fetcher.annotatedTrainW2V,
-      "test_w2v" -> Fetcher.annotatedTestW2V,
-      "validation_w2v" -> Fetcher.annotatedValidationW2V
-    )
-    rdds.foreach { case (k, v) => cacheSingleSubSampled(v, k) }
   }
 
   def cacheSubSampledShuffled() = {

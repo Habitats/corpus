@@ -45,7 +45,6 @@ object MlLibUtils {
     val testing: RDD[(Article, Vector)] = test.map(t => (t, toVector(phrases, bow, t)))
     //    Log.v("Max:" + testing.map(_._2.toArray.max).max)
     //    Log.v("Min: " + testing.map(_._2.toArray.min).min)
-    testing.cache()
     val predicted: RDD[Article] = predictCategories(catModelPairs, testing)
 
     Log.v("--- Predictions complete! ")

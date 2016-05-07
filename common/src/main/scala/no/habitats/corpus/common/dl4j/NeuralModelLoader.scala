@@ -19,7 +19,7 @@ object NeuralModelLoader {
   def bestModels(name: String): Map[String, MultiLayerNetwork] = bestModel("conf-" + name).zip(bestModel("coefficients-" + name))
     .map { case (conf, coeff) => {
       val name = conf.split("[/\\\\]").last
-      val label = name.substring(name.indexOf("_") + 1, name.lastIndexOf("_"))
+      val label = name.substring(name.indexOf("_") + 1, name.lastIndexOf("_")).split("_").head
       (label, load(conf, coeff))
     }
     }.toMap
@@ -27,9 +27,10 @@ object NeuralModelLoader {
   def models(path: String): Map[String, MultiLayerNetwork] = {
     val fileNames = new File(Config.modelPath + path).listFiles().map(_.getName).sorted
     val pairs = fileNames.filter(_.startsWith("conf")).zip(fileNames.filter(_.startsWith("coef"))).map { case (conf, coef) => {
-      val label = coef.substring(coef.indexOf("_") + 1, coef.lastIndexOf("_"))
+      val label = coef.substring(coef.indexOf("_") + 1, coef.lastIndexOf("_")).split("_").head
       (label, load(s"${Config.modelPath}$path/$conf", s"${Config.modelPath}$path/$coef"))
-    }}.toMap
+    }
+    }.toMap
     pairs
   }
 

@@ -70,6 +70,15 @@ object Log extends Logging {
     writeLine(f(m), resultsFile(Config.resultsCatsFileName))
   }
 
+  def h(m: Any) = {
+    writeLine("", resultsFile(Config.resultsFileName))
+    r(m)
+    if (Config.resultsFileName != Config.resultsCatsFileName) {
+      writeLine("", resultsFile(Config.resultsCatsFileName))
+      r2(m)
+    }
+  }
+
   def v(m: Any) = log(m)
 
   def e(m: Any) = log("ERROR: " + m)

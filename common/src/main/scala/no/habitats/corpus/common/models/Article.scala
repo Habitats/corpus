@@ -43,6 +43,8 @@ case class Article(id: String,
     toVectorSparse(phrases)
   }
 
+  def toMinimal: Article = copy(body = "", desc = Set(), date = None, hl = "")
+
   def toDocumentVector: Vector = {
     val all = ann.map(_._2.fb).map(W2VLoader.fromId).filter(_.isDefined).map(_.get)
     // Min: -0.15568943321704865

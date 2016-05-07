@@ -3,15 +3,10 @@ package no.habitats.corpus.common
 import java.io.File
 import java.nio.file.{Files, StandardCopyOption}
 
-import no.habitats.corpus.common.CorpusContext._
-import no.habitats.corpus.common.models.Article
 import org.apache.commons.io.FileUtils
 import org.apache.spark.rdd.RDD
 
-import scala.collection.Map
-
 trait RddSerializer {
-
 
   protected def saveAsText(rdd: RDD[String], name: String) = {
     val path = Config.cachePath + s"${name.replaceAll("[,\\s+]+", "_")}"

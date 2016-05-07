@@ -13,11 +13,10 @@ import org.nd4j.linalg.lossfunctions.LossFunctions
 
 object FeedForward {
 
-
   def create(neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
-    val numInputs   = 1000
-    val numOutputs  = 2
-    val firstLayer  = 700
+    val numInputs = 1000
+    val numOutputs = 2
+    val firstLayer = 700
     val secondLayer = 500
 
     val conf = new NeuralNetConfiguration.Builder()
@@ -61,8 +60,8 @@ object FeedForward {
   }
 
   def createBoW(neuralPrefs: NeuralPrefs, numInputs: Int): MultiLayerNetwork = {
-    val numOutputs  = 2
-    val firstLayer  = (numInputs * 0.5).toInt
+    val numOutputs = 2
+    val firstLayer = (numInputs * 0.5).toInt
 
     val conf = new NeuralNetConfiguration.Builder()
       .seed(Config.seed)
