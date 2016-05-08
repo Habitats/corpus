@@ -1,6 +1,6 @@
 package no.habitats.corpus.web
 
-import no.habitats.corpus.common.Config
+import no.habitats.corpus.common.{Config, CorpusContext}
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
 import org.scalatra.servlet.ScalatraListener

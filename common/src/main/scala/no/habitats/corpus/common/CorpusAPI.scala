@@ -1,5 +1,6 @@
 package no.habitats.corpus.common
 
+import edu.umd.cs.findbugs.annotations.Confidence
 import no.habitats.corpus.common.dl4j.NeuralPredictor
 import no.habitats.corpus.common.models.{Annotation, Article, DBPediaAnnotation, Entity}
 import org.nd4j.linalg.api.ndarray.INDArray
@@ -12,8 +13,8 @@ trait CorpusAPI {
     * @param text to predict
     * @return IPTC categories
     */
-  def predict(text: String): Set[String] = {
-    val annotations: Seq[Annotation] = annotate(text)
+  def predict(text: String, confidence: Double): Set[String] = {
+    val annotations: Seq[Annotation] = annotate(text, confidence)
     val article = new Article(id = "NO_ID", body = text, ann = annotations.map(v => (v.id, v)).toMap)
 
     NeuralPredictor.predict(article)
@@ -25,8 +26,8 @@ trait CorpusAPI {
     * @param text
     * @return Collection of entities
     */
-  def extract(text: String): Seq[Entity] = {
-    Spotlight.fetchAnnotations(text)
+  def extract(text: String, confidence: Double): Seq[Entity] = {
+    Spotlight.fetchAnnotations(text, confidence)
   }
 
   /**
@@ -35,9 +36,9 @@ trait CorpusAPI {
     * @param text
     * @return Collection of annotations
     */
-  def annotate(text: String): Seq[Annotation] = {
+  def annotate(text: String, confidence: Double): Seq[Annotation] = {
     val db = for {
-      entities <- Spotlight.fetchAnnotations(text).groupBy(_.id).values
+      entities <- Spotlight.fetchAnnotations(text, confidence).groupBy(_.id).values
       db = new DBPediaAnnotation("NO_ID", mc = entities.size, entities.minBy(_.offset))
       ann = AnnotationUtils.fromDbpedia(db)
     } yield ann
@@ -50,9 +51,9 @@ trait CorpusAPI {
     * @param text
     * @return Collection of annotations
     */
-  def annotateWithTypes(text: String): Seq[Annotation] = {
+  def annotateWithTypes(text: String, confidence: Double): Seq[Annotation] = {
     val db = for {
-      entities <- Spotlight.fetchAnnotations(text).groupBy(_.id).values
+      entities <- Spotlight.fetchAnnotations(text,confidence).groupBy(_.id).values
       db = new DBPediaAnnotation("NO_ID", mc = entities.size, entities.minBy(_.offset))
       ann = AnnotationUtils.fromDbpedia(db)
       types <- Seq(ann) ++ AnnotationUtils.fromDBpediaType(db)
@@ -66,8 +67,8 @@ trait CorpusAPI {
     * @param text
     * @return Collection of INDArray's representing each 1000d vector
     */
-  def extractFreebaseW2V(text: String): Seq[INDArray] = {
-    val annotated = annotate(text)
+  def extractFreebaseW2V(text: String, confidence: Double): Seq[INDArray] = {
+    val annotated = annotate(text,confidence)
     annotated
       .map(_.fb)
       .map(W2VLoader.fromId)

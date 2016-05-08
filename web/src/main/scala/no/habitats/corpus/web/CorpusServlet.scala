@@ -7,6 +7,7 @@ import org.scalatra.json.JacksonJsonSupport
 import org.scalatra.{CorsSupport, ScalatraServlet}
 
 import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSupport with CorpusAPI {
   protected implicit def executor = ExecutionContext.Implicits.global
@@ -21,40 +22,55 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     contentType = formats("json")
   }
 
-  get("/predict/:text/?") {
+  def parseParams: (String, Double) = {
+    val params: Seq[String] = multiParams("splat").mkString.split("/")
+    val text: String = params.head
+    val confidence: Double = Try(params(1).toDouble).getOrElse(0.5)
+    (text, confidence)
+  }
+
+  get("/predict/*") {
     contentType = formats("txt")
-    val text = params.get("text").get
     Log.v("hello!")
-    predict(text).mkString("\n")
+    val (text, confidence) = parseParams
+    predict(text, confidence).mkString("\n")
   }
 
-  get("/extract/:text/?") {
+  get("/extract/*") {
     contentType = formats("txt")
-    val text = params.get("text").get
-    extract(text).map(_.toJson).mkString("\n")
+    val (text, confidence) = parseParams
+    extract(text, confidence).map(_.toJson).mkString("\n")
   }
 
-  get("/annotate/:text/?") {
+  get("/annotate/*") {
     contentType = formats("txt")
-    val text = params.get("text").get
-    annotate(text).map(_.toJson).mkString("\n")
+    val (text, confidence) = parseParams
+    annotate(text, confidence).map(_.toJson).mkString("\n")
   }
 
-  get("/annotate_types/:text/?") {
+  get("/annotate_types/*") {
     contentType = formats("txt")
-    val text = params.get("text").get
-    annotateWithTypes(text).map(_.toJson).mkString("\n")
+    val (text, confidence) = parseParams
+    annotateWithTypes(text, confidence).map(_.toJson).mkString("\n")
   }
 
-  get("/w2v/:text/?") {
-    contentType = formats("txt")
-    val text = params.get("text").get
-    extractFreebaseW2V(text).map(_.toString).mkString("\n")
+  get("/file/*") {
+    contentType = formats("html")
+    val (file, confidence) = parseParams
+    val text = Config.testFile(s"npl/${file}").getLines().mkString("\n")
+    detailedInfo(text, confidence)
   }
 
-  get("/vec/m/:id/?") {
+  get("/info/*") {
+    contentType = formats("html")
+    val (text, confidence) = parseParams
+    detailedInfo(text, confidence)
+  }
+
+  get("/w2v/*") {
     contentType = formats("txt")
-    val id = "/m/" + params.get("id").get
+    val (text, confidence) = parseParams
+    extractFreebaseW2V(text, confidence).map(_.toString).mkString("\n")
   }
 
   get("/vec/m/:id/?") {
@@ -71,23 +87,11 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     W2VLoader.featureSize.toString
   }
 
-  get("/file/:file/?") {
-    contentType = formats("html")
-    val file = params.get("file").get
-    val text = Config.testFile(s"npl/${file}").getLines().mkString("\n")
-    detailedInfo(text)
-  }
 
-  get("/info/:text/?") {
-    contentType = formats("html")
-    val text = params.get("text").get
-    detailedInfo(text)
-  }
-
-  def detailedInfo(text: String) = {
-    val entities: Seq[Entity] = extract(text).sortBy(_.offset)
-    val annotations: Seq[Annotation] = annotate(text).sortBy(_.offset)
-    val annotationsWithTypes: Seq[Annotation] = annotateWithTypes(text).sortBy(_.offset)
+  def detailedInfo(text: String, confidence: Double) = {
+    val entities: Seq[Entity] = extract(text, confidence).sortBy(_.offset)
+    val annotations: Seq[Annotation] = annotate(text,confidence).sortBy(_.offset)
+    val annotationsWithTypes: Seq[Annotation] = annotateWithTypes(text,confidence).sortBy(_.offset)
     val w2v: Seq[String] = annotationsWithTypes.map(_.fb).map(fb => {
       val vec = freebaseToWord2Vec(fb) match {
         case Some(w2v) => w2v.toString
@@ -96,7 +100,7 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
       f"$fb%10s -> $vec"
     })
 
-    val predictions: Set[String] = predict(text)
+    val predictions: Set[String] = predict(text,confidence)
     <html>
       <body>
         <h1>Detailed info</h1>
