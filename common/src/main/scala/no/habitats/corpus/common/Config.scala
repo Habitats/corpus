@@ -27,7 +27,7 @@ object Config {
   private var args           : Arguments = Arguments()
   private var sparkConfig    : String    = null
   private var corpusConfig   : String    = null
-  private val localConfigRoot: String    = sys.env("DROPBOX_HOME") + "/code/projects/corpus/ai/src/main/resources/"
+  private val localConfigRoot: String    = sys.env("DROPBOX_HOME") + "/code/projects/corpus/common/src/main/resources/"
 
   val corpusApiURL = "http://corpus.habitats.no:8090/vec"
 

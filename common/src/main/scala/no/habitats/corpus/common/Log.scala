@@ -12,7 +12,6 @@ object Log extends Logging {
   val marker = MarkerFactory.getMarker("CORPUS")
 
   def resultsFile(name: String) = {
-    new File(Config.cachePath + "res/").mkdirs()
     val resultsFile = new File(s"${Config.dataPath}res/$name")
     resultsFile.getParentFile.mkdirs
     if (!resultsFile.exists) {
@@ -59,6 +58,11 @@ object Log extends Logging {
   def f(m: Any): String = LocalDateTime.now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + " > " + m
 
   def i(m: Any) = log(m)
+
+  def r(m: Any, file: String) = {
+    i(m)
+    writeLine(f(m), resultsFile(file))
+  }
 
   def r(m: Any) = {
     i(m)

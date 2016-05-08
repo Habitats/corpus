@@ -46,6 +46,10 @@ object Fetcher {
   lazy val subTrainShuffled           : RDD[Article] = fetch("nyt/subsampled_train_shuffled.json", 0.6)
   lazy val subValidationShuffled      : RDD[Article] = fetch("nyt/subsampled_validation_shuffled.json", 0.2)
 
+  def ordered(sub: Boolean = true) = if(sub) (subTrainOrdered, subValidationOrdered) else (annotatedTrainOrdered, annotatedValidationOrdered)
+  def shuffled(sub: Boolean = true) = if(sub) (subTrainShuffled, subValidationShuffled) else (annotatedTrainShuffled, annotatedValidationShuffled)
+  def types(sub: Boolean = true) = if(sub) (subTrainOrderedTypes, subValidationOrdered) else (annotatedTrainOrderedTypes, annotatedValidationOrdered)
+
   def limit(rdd: RDD[Article], fraction: Double = 1): RDD[Article] = {
     val num = (Config.count * fraction).toInt
     if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(num))

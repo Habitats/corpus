@@ -1,7 +1,5 @@
 package no.habitats.corpus.spark
 
-import java.time.LocalDateTime
-
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
 import no.habitats.corpus.common.dl4j.NeuralModelLoader
@@ -20,35 +18,32 @@ import scala.collection.JavaConverters._
 
 object Trainer {
 
-  def trainRNNSubSpark() = {
-    val train = Fetcher.subTrainOrdered
-    val validation = Fetcher.subValidationOrdered
+  def trainRNNSpark() = {
+    val (train, validation) = Fetcher.ordered(true)
     Config.resultsFileName = "train_rnn.txt"
-    Config.resultsCatsFileName = "train_rnn.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
     val prefs = NeuralPrefs(train = train, validation = validation)
     trainSparkRNN("sport", prefs)
   }
 
-  def trainFFNSubSpark() = {
-    val train = Fetcher.subTrainOrdered
-    val validation = Fetcher.subValidationOrdered
+  def trainFFNSpark() = {
+    val (train, validation) = Fetcher.ordered(true)
     Config.resultsFileName = "train_ffn.txt"
-    Config.resultsCatsFileName = "train_ffn.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
     val prefs = NeuralPrefs(train = train, validation = validation)
     trainSparkFFN("sport", prefs)
   }
 
-  def trainRNNSubSampled() = {
-    val train = Fetcher.subTrainOrdered
-    val validation = Fetcher.subValidationOrdered
+  def trainRNNSampled() = {
+    val (train, validation) = Fetcher.ordered(true)
     Config.resultsFileName = "train_rnn.txt"
-    Config.resultsCatsFileName = "train_rnn.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
     Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryRNN, train, validation))
   }
 
   def trainRNNBalanced() = {
     Config.resultsFileName = "train_rnn.txt"
-    Config.resultsCatsFileName = "train_rnn.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
     Config.cats.foreach(c => {
       val train = Fetcher.balanced(IPTC.trim(c) + "_train", true)
       val validation = Fetcher.balanced(IPTC.trim(c) + "_validation", false)
@@ -56,49 +51,61 @@ object Trainer {
     })
   }
 
-  def trainFFNSubOrdered() = {
-    val train = Fetcher.subTrainOrdered
-    val validation = Fetcher.subValidationOrdered
+  def trainFFNOrdered(sub: Boolean = true) = {
+    val (train, validation) = Fetcher.ordered(sub)
     Config.resultsFileName = "train_ffn_ordered.txt"
-    Config.resultsCatsFileName = "train_ffn_ordered_cats.txt"
-    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 1)
+    Config.resultsCatsFileName = Config.resultsFileName
+    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 1)
     Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs))
   }
 
-  def trainFFNSubOrderedTypes() = {
-    val train = Fetcher.subTrainOrderedTypes
-    val validation = Fetcher.subValidationOrdered
+  def trainFFNOrderedTypes(sub: Boolean = true) = {
+    val (train, validation) = Fetcher.types(sub)
     Config.resultsFileName = "train_ffn_ordered_types.txt"
-    Config.resultsCatsFileName = "train_ffn_ordered_types_cats.txt"
-    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 1)
+    Config.resultsCatsFileName = Config.resultsFileName
+    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 1)
     Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs))
   }
 
-  def trainFFNSubShuffled() = {
-    val train = Fetcher.subTrainShuffled
-    val validation = Fetcher.subValidationShuffled
+  def trainFFNShuffled(sub: Boolean = true) = {
+    val (train, validation) = Fetcher.shuffled(sub)
     Config.resultsFileName = "train_ffn_shuffled.txt"
-    Config.resultsCatsFileName = "train_ffn_shuffled_cats.txt"
-    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 1)
+    Config.resultsCatsFileName = Config.resultsFileName
+    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 1)
     Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs))
-  }
-
-  def trainFFNSubSampled() = {
-    val train = Fetcher.subTrainOrdered
-    val validation = Fetcher.subValidationOrdered
-    Config.resultsFileName = "train_ffn.txt"
-    Config.resultsCatsFileName = "train_ffn_cats.txt"
-    Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, train, validation))
   }
 
   def trainFFNBalanced() = {
     Config.resultsFileName = "train_ffn.txt"
-    Config.resultsCatsFileName = "train_ffn_cats.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
     Config.cats.foreach(c => {
       val train = Fetcher.balanced(IPTC.trim(c) + "_train", true)
       val validation = Fetcher.balanced(IPTC.trim(c) + "_validation", false)
       trainNeuralNetwork(c, trainBinaryRNN, train, validation)
     })
+  }
+
+  def train(name: String, train: RDD[Article], validation: RDD[Article], spark: Boolean = false) = {
+    Config.resultsFileName = s"train_${name}.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
+    if (name.startsWith("ffn")) {
+      val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 1)
+      Config.cats.foreach(c => trainNeuralNetwork(c, if (!spark) trainBinaryFFN else trainSparkFFN, prefs))
+    } else if (name.startsWith("rnn")) {
+      val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 100, epochs = 1, hiddenNodes = 20)
+      Config.cats.foreach(c => trainNeuralNetwork(c, if (!spark) trainBinaryRNN else trainSparkRNN, prefs))
+    }
+  }
+
+  def trainAll() = {
+    train("ffn_ordered", Fetcher.annotatedTrainOrdered, Fetcher.annotatedValidationOrdered)
+    train("ffn_shuffled", Fetcher.annotatedTrainShuffled, Fetcher.annotatedValidationShuffled)
+
+    train("ffn_sub_ordered", Fetcher.subTrainOrdered, Fetcher.subValidationOrdered)
+    train("ffn_sub_shuffled", Fetcher.subTrainShuffled, Fetcher.subValidationShuffled)
+    train("ffn_sub_ordered_types", Fetcher.subTrainOrderedTypes, Fetcher.subValidationOrdered)
+
+    train("rnn_sub_ordered", Fetcher.subTrainOrdered, Fetcher.subValidationOrdered)
   }
 
   def trainSparkRNN(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
@@ -163,7 +170,6 @@ object Trainer {
   def trainNeuralNetwork(c: String, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, train: RDD[Article], validation: RDD[Article]): Unit = {
     for {
       hiddenNodes <- Seq(300)
-      //      hiddenNodes <- Seq(20, 50, 100)
       learningRate <- Seq(0.05)
       minibatchSize = 100
       //            c <- cats
@@ -177,19 +183,17 @@ object Trainer {
 
   def trainNeuralNetwork(c: String, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, neuralPrefs: NeuralPrefs) = {
     val net: MultiLayerNetwork = trainNetwork(c, neuralPrefs)
-    NeuralModelLoader.save(net, c + "_" + (System.currentTimeMillis()/1000).toString.substring(5), Config.count)
+    NeuralModelLoader.save(net, c + "_" + (System.currentTimeMillis() / 1000).toString.substring(5), Config.count)
     System.gc()
   }
 
   def trainFFNSubSampledBoW() = {
-    val train = Fetcher.subTrainOrdered
-    val validation = Fetcher.subValidationOrdered
+    val (train, validation) = Fetcher.ordered(true)
     Config.resultsFileName = "train_ffn_bow.txt"
     Config.resultsCatsFileName = "train_ffn_bow_cats.txt"
     val phrases: Array[String] = (train ++ validation).flatMap(_.ann.keySet).collect.distinct.sorted
 
     for {
-    //        hiddenNodes <- Seq(10)
       hiddenNodes <- Seq(20, 50, 100)
       learningRate <- Seq(0.05, 0.025, 0.01, 0.005)
       minibatchSize = 100
@@ -206,13 +210,11 @@ object Trainer {
     }
   }
 
-  def trainNaiveBayes(bow: Boolean) = {
+  def trainNaiveBayes(bow: Boolean, sub: Boolean = false) = {
     Config.resultsFileName = "train_nb.txt"
     Config.resultsCatsFileName = "train_nb_cats.txt"
-    //    val train = RddFetcher.annotatedTrainW2V
-    //    val validation = RddFetcher.annotatedValidationW2V
-    val train = Fetcher.subTrainOrdered
-    val validation = Fetcher.subValidationOrdered
+
+    val (train, validation) = Fetcher.ordered(true)
     val prefs = sc.broadcast(Prefs())
     val phrases: Array[String] = (train ++ validation).flatMap(_.ann.keySet).collect.distinct.sorted
     Log.toFile(phrases, "nb_phrases.txt", Config.modelPath)

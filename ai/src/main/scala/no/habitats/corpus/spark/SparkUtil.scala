@@ -77,21 +77,20 @@ object SparkUtil {
       case "trainNaiveBayesBoW" => Trainer.trainNaiveBayes(bow = true)
       case "trainNaiveBayesW2V" => Trainer.trainNaiveBayes(bow = false)
 
-      case "trainRNNSubSampled" => Trainer.trainRNNSubSampled()
+      case "trainRNNSubSampled" => Trainer.trainRNNSampled()
       case "trainRNNBalanced" => Trainer.trainRNNBalanced()
       case "trainRNNSpark" => Trainer.trainRNNSpark()
 
-      case "trainFFNSubSampled" => Trainer.trainFFNSubSampled()
-      case "trainFFNOrdered" => Trainer.trainFFNOrdered()
-      case "trainFFNShuffled" => Trainer.trainFFNSubShuffled()
+      case "trainFFNOrdered" => Trainer.trainFFNOrdered(false)
+      case "trainFFNShuffled" => Trainer.trainFFNShuffled()
       case "trainFFNSubSampledBoW" => Trainer.trainFFNSubSampledBoW()
       case "trainFFNBalanced" => Trainer.trainFFNBalanced()
       case "trainFFNSpark" => Trainer.trainFFNSpark()
 
       case "train" =>
-        Trainer.trainFFNOrdered()
-        Trainer.trainFFNSubShuffled()
-        Trainer.trainFFNOrderedTypes()
+//        Trainer.trainFFNOrdered(false)
+//        Trainer.trainFFNShuffled(false)
+        Trainer.trainFFNOrderedTypes(false)
 
       // Testing
       case "testModels" => Tester.testModels()

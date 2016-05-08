@@ -5,7 +5,7 @@ shadowJar {
     zip64 = true
 }
 
-mainClassName = 'no.habitats.corpus.spark.SparkUtil'
+mainClassName = 'no.habitats.corpus.ai.spark.SparkUtil'
 
 dependencies {
     compile project(':common')
@@ -22,10 +22,6 @@ dependencies {
     compile fileTree('models/binary')
     compile('edu.stanford.nlp:stanford-corenlp:3.6.0') { exclude group: 'xml-apis' }
     compile ':stanford-corenlp-3.6.0-models@jar'
-    compile 'xml-apis:xml-apis:1.4.01'
     compile 'com.google.protobuf:protobuf-java:2.6.1'
     compile 'com.google.guava:guava:19.0'
-
-    // Async HTTP
-    compile 'net.databinder.dispatch:dispatch-core_2.10:0.11.3'
 }
