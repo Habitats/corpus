@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<configuration>
+
+  <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+      <Pattern>%d{HH:mm:ss.SSS} %replace(%marker %-5level){'CORPUS ERROR', 'CORPUS'} - %msg%n
+      </Pattern>
+    </encoder>
+  </appender>
+
+
+  <appender name="FILE" class="ch.qos.logback.core.FileAppender">
+    <file>log/corpus.log</file>
+    <append>true</append>
+    <!-- encoders are assigned the type ch.qos.logback.classic.encoder.PatternLayoutEncoder
+      by default -->
+    <encoder>
+      <pattern>%-4relative [%thread] %-5level %logger{35} - %msg%n
+      </pattern>
+    </encoder>
+  </appender>
+
+  <logger name="org.apache.catalina.core" level="DEBUG"/>
+  <logger name="org.deeplearning4j" level="INFO"/>
+  <logger name="org.deeplearning4j.ui.weights.HistogramIterationListener" level="WARN"/>
+  <logger name="log4j.logger.spark" level="WARN"/>
+  <logger name="log4j.logger.spark.scheduler" level="WARN"/>
+  <logger name="log4j.logger.spark.CacheTracker" level="WARN"/>
+  <logger name="log4j.logger.spark.CacheTrackerActor" level="WARN"/>
+  <logger name="log4j.logger.spark.MapOutputTrackerActor" level="WARN"/>
+  <logger name="log4j.logger.spark.MapOutputTracker" level="WARN"/>
+  <logger name="org.apache.hadoop.conf" level="WARN"/>
+  <logger name="org.nd4j" level="INFO"/>
+  <logger name="org.eclipse.jetty" level="INFO"/>
+  <logger name="opennlp.uima.util" level="OFF"/>
+
+  <root level="WARN">
+    <appender-ref ref="STDOUT"/>
+    <appender-ref ref="FILE"/>
+  </root>
+</configuration>
