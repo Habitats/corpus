@@ -58,28 +58,30 @@ object Spotlight extends RddSerializer {
       case JArray(e) => e
       case _ => Nil
     }
+    def ex(j: Any): String = {val JString(s) = j; s}
     val entities = for {
       resource <- resources
-      JString(uri) = resource \ "@URI"
-      JString(offset) = resource \ "@offset"
-      JString(similarityScore) = resource \ "@similarityScore"
-      JString(types) = resource \ "@types"
-      JString(support) = resource \ "@support"
-      JString(name) = resource \ "@surfaceForm"
+      uri <- resource \ "@URI" if uri != JNull
+      offset <- resource \ "@offset" if offset != JNull
+      similarityScore <- resource \ "@similarityScore" if similarityScore != JNull
+      types <- resource \ "@types" if types != JNull
+      support <- resource \ "@support" if support != JNull
+      name <- resource \ "@surfaceForm" if name != JNull
     } yield {
-      Entity(uri.split("/").last, name, offset.toInt, similarityScore.toDouble, support.toInt, types.split(",|:").filter(_.startsWith("Q")).toSet)
+      Entity(ex(uri).split("/").last, ex(name), ex(offset).toInt, ex(similarityScore).toDouble, ex(support).toInt, ex(types).split(",|:").filter(_.startsWith("Q")).toSet)
     }
 
     entities
   }
 
   /** Store DBPedia annotations */
-  def cacheDbpedia(rdd: RDD[Article], confidence: Double) = {
+  def cacheDbpedia(rdd: RDD[Article], confidence: Double, w2vFilter: Boolean = false) = {
     Log.v("Calculating dbpedia ...")
     val entities = rdd.flatMap { article =>
       for {
         entities <- fetchAnnotations(article.hl + "_" + article.body, confidence).groupBy(_.id).values
-        db = new DBPediaAnnotation(article.id, mc = entities.size, entities.minBy(_.offset))
+        entity = entities.minBy(_.offset) if w2vFilter && WikiData.dbToWd.get(entity.id).flatMap(WikiData.wdToFb.get).exists(W2VLoader.contains)
+        db = new DBPediaAnnotation(article.id, mc = entities.size, entity)
         json = DBPediaAnnotation.toSingleJson(db)
       } yield {
         if (Math.random < 0.0001) Log.v(article.id)

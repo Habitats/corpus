@@ -22,12 +22,13 @@ class SparkTest extends FunSuite with Spark {
   }
 
   test("load some articles the new way") {
+    val db = Corpus.dbpediaAnnotations
     val limit = 1000
     //    sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = limit, filter = ".xml"))
     sc.parallelize(
       Fetcher.rdd.take(limit)
     )
-      .map(Corpus.toDBPediaAnnotated)
+      .map(a => Corpus.toDBPediaAnnotated(a, db))
       .saveAsTextFile(Config.cachePath + "nyt_with_all")
   }
 }

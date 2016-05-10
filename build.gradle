@@ -24,4 +24,12 @@ subprojects {
         targetCompatibility = "1.7"
     }
 
+    dependencies {
+        testCompile group: 'junit', name: 'junit', version: '4.11'
+        testCompile 'org.scalatest:scalatest_2.10:3.0.0-M7'
+        compile "org.scala-lang:scala-library:2.10.5"
+        compile "org.scala-lang:scala-compiler:2.10.5"
+        compile "org.scala-lang:scala-reflect:2.10.5"
+    }
+
 }

@@ -5,10 +5,12 @@ import java.io.File
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
-import no.habitats.corpus.common.models.{Article, DBPediaAnnotation}
-import no.habitats.corpus.dl4j.{FreebaseW2V, TSNE}
+import no.habitats.corpus.common.dl4j.FreebaseW2V
+import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.dl4j.TSNE
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
+import org.bytedeco.javacpp.Pointer
 
 import scala.collection.Map
 
@@ -33,19 +35,24 @@ object SparkUtil {
       // Misc
       case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
-      case "misc" => misc()
+      case "misc" =>
+        Cacher.scrambler()
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
-      case "computeDbAnnotations" => computeAndCacheDBPediaAnnotationsToJson()
+      case "computeDbAnnotations" => Cacher.computeAndCacheDBPediaAnnotationsToJson(Fetcher.miniCorpus)
+      case "computeDbAnnotationsConfidence" => Cacher.annotateAndCacheArticlesConfidence()
 
       case "wdToFbFromDump" => WikiData.extractFreebaseFromWikiDump()
       case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
       case "combineIds" => Spotlight.combineAndCacheIds()
-      case "fbw2v" => FreebaseW2V.cacheWordVectors()
-      case "fbw2vids" => FreebaseW2V.cacheWordVectorIds()
+      case "fbw2v" => FreebaseW2V.cacheWordVectors(Fetcher.miniMini25, 0.25)
+      case "cacheDocumentVectors" =>
+        W2VLoader.setLoader(0.50, true)
+        W2VLoader.cacheDocumentVectors(Fetcher.annotatedRddMini)
 
       case "cacheAnnotated" => Cacher.annotateAndCacheArticles()
+      case "cacheMiniCorpus" => Cacher.cacheMiniCorpus()
       case "cacheAnnotatedWithTypes" => Cacher.annotateAndCacheArticlesWithTypes()
       case "splitAndCache" => Cacher.splitAndCache() // REQUIREMENT FOR TRAINING
       case "cacheBalanced" => Cacher.cacheBalanced()
@@ -57,21 +64,22 @@ object SparkUtil {
       case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
       case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
       case "cache" =>
-        Cacher.cacheAndSplitLength()
-        Cacher.cacheAndSplitTime()
-        Cacher.cacheSubSampledOrdered()
-        Cacher.cacheSubSampledShuffled()
+        Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".json"), s.toString))
+      //        Cacher.cacheAndSplitLength()
+      //        Cacher.cacheAndSplitTime()
+      //        Cacher.cacheSubSampledOrdered()
+      //        Cacher.cacheSubSampledShuffled()
 
       // Display stats
       case "iptcDistribution" => calculateIPTCDistribution()
       case "tnesDocumentVectors" => tnesDocumentVectors()
       case "tnesWordVectors" => tnesWordVectors()
       case "stats" =>
-//        stats(Fetcher.annotatedRddMini, "filtered")
-//        Corpus.preloadAnnotations()
-//        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
-        timeStats()
-        lengthStats()
+                stats(Fetcher.annotatedRddMini, "filtered")
+        //        Corpus.preloadAnnotations()
+        //        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
+//        timeStats()
+//        lengthStats()
 
       // Modelling
       case "trainNaiveBayesBoW" => Trainer.trainNaiveBayes(bow = true)
@@ -88,9 +96,10 @@ object SparkUtil {
       case "trainFFNSpark" => Trainer.trainFFNSpark()
 
       case "train" =>
-//        Trainer.trainFFNOrdered(false)
-//        Trainer.trainFFNShuffled(false)
-        Trainer.trainFFNOrderedTypes(false)
+        Trainer.trainFFNOrdered(false)
+      //        Trainer.trainFFNShuffled(false)
+      //        Trainer.trainFFNOrderedTypes(false)
+      //        Trainer.trainFFNConfidence()
 
       // Testing
       case "testModels" => Tester.testModels()
@@ -126,11 +135,6 @@ object SparkUtil {
 
   def tnesWordVectors() = {
     TSNE.create(Fetcher.subTrainOrdered, useDocumentVectors = false)
-  }
-
-  def computeAndCacheDBPediaAnnotationsToJson() = {
-    Spotlight.cacheDbpedia(Fetcher.rdd, 0.5)
-    Spotlight.cacheDbpedia(Fetcher.rdd, 0.75)
   }
 
   def printArticles(count: Int) = {

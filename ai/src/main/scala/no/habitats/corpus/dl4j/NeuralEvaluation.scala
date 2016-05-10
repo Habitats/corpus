@@ -44,6 +44,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
     "F-score" -> f"$fscore%.3f",
     "Error" -> f"${net.score}%.10f",
     "LR" -> f"${net.getLayerWiseConfigurations.getConf(0).getLayer.getLearningRate}",
+    "MBS" -> f"${testIter.batch}",
     "Hidden" -> f"$numHidden"
   )
 

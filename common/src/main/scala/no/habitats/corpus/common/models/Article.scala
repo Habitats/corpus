@@ -15,6 +15,7 @@ case class Article(id: String,
                    url: Option[String] = None,
                    desc: Set[String] = Set(),
                    pred: Set[String] = Set(),
+                   confidence: Double = 0.5,
                    ann: Map[String, Annotation] = Map()) extends JSonable {
 
   override def toString: String = {
@@ -45,20 +46,20 @@ case class Article(id: String,
 
   def toMinimal: Article = copy(body = "", desc = Set(), date = None, hl = "")
 
-  def toDocumentVector: Vector = {
-    val all = ann.map(_._2.fb).map(W2VLoader.fromId).filter(_.isDefined).map(_.get)
+  lazy val toDocumentVector: Vector = {
+    val all = ann.map(_._2.fb).flatMap(W2VLoader.fromId)
     // Min: -0.15568943321704865
     // Max:  0.15866121649742126
     val min = -0.16
     val max = 0.16
-    val squashed: INDArray = all.reduce(_.add(_)).div(all.size)
-    val normal = squashed.sub(min).div(max - min)
+    val squashed: INDArray = all.reduce(_.addi(_)).divi(all.size)
+    val normal = squashed.subi(min).divi(max - min)
     val binary = Transforms.round(normal)
     MLLibUtil.toVector(binary)
   }
 
   def toVectorDense(phrases: Array[String]): Vector = {
-    val row = phrases.map(w => if (ann.contains(w)) ann(w).tfIdf else 0).toArray
+    val row = phrases.map(w => if (ann.contains(w)) ann(w).tfIdf else 0)
     Vectors.dense(row)
   }
 
@@ -74,11 +75,7 @@ case class Article(id: String,
     copy(iptc = if (broad) IPTC.toBroad(desc, 0) else IPTC.toIptc(desc))
   }
 
-  def toND4JDocumentVector: INDArray = {
-    val vectors = ann.values.map(_.fb).map(W2VLoader.fromId).map(_.get)
-    val combined = vectors.reduce(_.add(_)).div(vectors.size)
-    combined
-  }
+  lazy val toND4JDocumentVector: INDArray = W2VLoader.fetchCachedDocumentVector(id).getOrElse(W2VLoader.calculateDocumentVector(ann))
 }
 
 

@@ -1,5 +1,7 @@
 package no.habitats.corpus.dl4j
 
+import no.habitats.corpus.common.Log
+import org.bytedeco.javacpp.Pointer
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
@@ -10,6 +12,7 @@ object NeuralTrainer {
   def train(label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): MultiLayerNetwork = {
     //    Log.r(s"Training $label ...")
     //    Log.r2(s"Training $label ...")
+    Log.v("Free bytes: " + Pointer.totalBytes())
     for (i <- 0 until neuralPrefs.epochs) {
       net.fit(trainIter)
       trainIter.reset()

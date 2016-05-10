@@ -24,7 +24,7 @@ object TSNE {
     Nd4j.factory.setDType(Type.DOUBLE)
 
     Log.v("Load & Vectorize data....")
-    W2VLoader.preLoad()
+    W2VLoader.setLoader(0.5, iKnowWhatImDoing = true)
     val weights = useDocumentVectors match {
       case true => stackDocumentVectors(rdd)
       case false => stackWordVectors(rdd)

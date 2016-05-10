@@ -18,6 +18,8 @@ import scala.collection.JavaConverters._
 
 object Trainer {
 
+  implicit def collect(rdd: RDD[Article]): Array[Article] = rdd.collect()
+
   def trainRNNSpark() = {
     val (train, validation) = Fetcher.ordered(true)
     Config.resultsFileName = "train_rnn.txt"
@@ -38,7 +40,7 @@ object Trainer {
     val (train, validation) = Fetcher.ordered(true)
     Config.resultsFileName = "train_rnn.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryRNN, train, validation))
+    Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryRNN, train, validation, "sampled"))
   }
 
   def trainRNNBalanced() = {
@@ -47,7 +49,21 @@ object Trainer {
     Config.cats.foreach(c => {
       val train = Fetcher.balanced(IPTC.trim(c) + "_train", true)
       val validation = Fetcher.balanced(IPTC.trim(c) + "_validation", false)
-      trainNeuralNetwork(c, trainBinaryRNN, train, validation)
+      trainNeuralNetwork(c, trainBinaryRNN, train, validation, "sampled")
+    })
+  }
+
+  def trainFFNConfidence() = {
+    def train(confidence: Int): Array[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.json").collect
+    def validation(confidence: Int): Array[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.json").collect
+    Config.resultsFileName = "train_ffn_confidence.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
+    val prefs = NeuralPrefs(learningRate = 0.05, train = null, validation = null, minibatchSize = 1000, epochs = 20)
+    W2VLoader.setLoader(0.25, iKnowWhatImDoing = true)
+    W2VLoader.preload()
+    Seq(25, 50, 75, 100).foreach(confidence => {
+      Log.r(s"Training with confidence ${confidence} ...")
+      Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs.copy(train = train(confidence), validation = validation(confidence)), confidence.toString))
     })
   }
 
@@ -55,16 +71,24 @@ object Trainer {
     val (train, validation) = Fetcher.ordered(sub)
     Config.resultsFileName = "train_ffn_ordered.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 1)
-    Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs))
+    W2VLoader.setLoader(0.5, true)
+    W2VLoader.preload()
+    val prefs = NeuralPrefs(learningRate = 0.025, train = train, validation = validation, minibatchSize = 1000, epochs = 5)
+    for {
+      lr <- Seq(1.0, 0.5, 0.25)
+      mbs <- Seq(1000)
+    } yield Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs.copy(learningRate = lr, minibatchSize = mbs)))
   }
 
   def trainFFNOrderedTypes(sub: Boolean = true) = {
     val (train, validation) = Fetcher.types(sub)
     Config.resultsFileName = "train_ffn_ordered_types.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 1)
-    Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs))
+    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 2)
+    for{
+      lr <- Seq(0.05, 0.025, 0.1)
+      mbs <- Seq(500, 1000, 2000)
+    } yield  Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs.copy(learningRate = lr, minibatchSize = mbs)))
   }
 
   def trainFFNShuffled(sub: Boolean = true) = {
@@ -81,7 +105,7 @@ object Trainer {
     Config.cats.foreach(c => {
       val train = Fetcher.balanced(IPTC.trim(c) + "_train", true)
       val validation = Fetcher.balanced(IPTC.trim(c) + "_validation", false)
-      trainNeuralNetwork(c, trainBinaryRNN, train, validation)
+      trainNeuralNetwork(c, trainBinaryRNN, train, validation, "balanced")
     })
   }
 
@@ -112,8 +136,8 @@ object Trainer {
     var net = RNN.createBinary(neuralPrefs)
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
-    val trainIter: List[DataSet] = new RNNIterator(neuralPrefs.train.collect(), Some(label), batchSize = neuralPrefs.minibatchSize).asScala.toList
-    val testIter = new AsyncDataSetIterator(new RNNIterator(neuralPrefs.validation.collect(), Some(label), batchSize = neuralPrefs.minibatchSize))
+    val trainIter: List[DataSet] = new RNNIterator(neuralPrefs.train, Some(label), batchSize = neuralPrefs.minibatchSize).asScala.toList
+    val testIter = new AsyncDataSetIterator(new RNNIterator(neuralPrefs.validation, Some(label), batchSize = neuralPrefs.minibatchSize))
     val rddTrain: RDD[DataSet] = sc.parallelize(trainIter)
 
     Log.v("Starting training ...")
@@ -131,8 +155,8 @@ object Trainer {
     var net = FeedForward.create(neuralPrefs)
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
-    val testIter: DataSetIterator = new FeedForwardIterator(neuralPrefs.validation.collect(), label, batchSize = neuralPrefs.minibatchSize)
-    val trainIter: List[DataSet] = new FeedForwardIterator(neuralPrefs.train.collect(), label, batchSize = neuralPrefs.minibatchSize).asScala.toList
+    val testIter: DataSetIterator = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize)
+    val trainIter: List[DataSet] = new FeedForwardIterator(neuralPrefs.train, label, batchSize = neuralPrefs.minibatchSize).asScala.toList
     val rddTrain: RDD[DataSet] = sc.parallelize(trainIter)
 
     Log.v("Starting training ...")
@@ -148,26 +172,26 @@ object Trainer {
 
   def trainBinaryRNN(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     val net = RNN.createBinary(neuralPrefs)
-    val trainIter = new RNNIterator(neuralPrefs.train.collect(), Some(label), batchSize = neuralPrefs.minibatchSize)
-    val testIter = new RNNIterator(neuralPrefs.validation.collect(), Some(label), batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new RNNIterator(neuralPrefs.train, Some(label), batchSize = neuralPrefs.minibatchSize)
+    val testIter = new RNNIterator(neuralPrefs.validation, Some(label), batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
 
   def trainBinaryFFN(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     val net = FeedForward.create(neuralPrefs)
-    val trainIter = new FeedForwardIterator(neuralPrefs.train.collect(), label, batchSize = neuralPrefs.minibatchSize)
-    val testIter = new FeedForwardIterator(neuralPrefs.validation.collect(), label, batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new FeedForwardIterator(neuralPrefs.train, label, batchSize = neuralPrefs.minibatchSize)
+    val testIter = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
 
   def trainBinaryFFNBoW(label: String, neuralPrefs: NeuralPrefs, phrases: Array[String]): MultiLayerNetwork = {
     val net = FeedForward.createBoW(neuralPrefs, phrases.size)
-    val trainIter = new FeedForwardIterator(neuralPrefs.train.collect(), label, batchSize = neuralPrefs.minibatchSize, phrases = phrases)
-    val testIter = new FeedForwardIterator(neuralPrefs.validation.collect(), label, batchSize = neuralPrefs.minibatchSize, phrases = phrases)
+    val trainIter = new FeedForwardIterator(neuralPrefs.train, label, batchSize = neuralPrefs.minibatchSize, phrases = phrases)
+    val testIter = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize, phrases = phrases)
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
 
-  def trainNeuralNetwork(c: String, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, train: RDD[Article], validation: RDD[Article]): Unit = {
+  def trainNeuralNetwork(c: String, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, train: RDD[Article], validation: RDD[Article], name: String): Unit = {
     for {
       hiddenNodes <- Seq(300)
       learningRate <- Seq(0.05)
@@ -177,13 +201,13 @@ object Trainer {
       epochs = 1
     } yield {
       val neuralPrefs = NeuralPrefs(learningRate = learningRate, hiddenNodes = hiddenNodes, train = train, validation = validation, minibatchSize = minibatchSize, histogram = histogram, epochs = epochs)
-      trainNeuralNetwork(c, trainNetwork, neuralPrefs)
+      trainNeuralNetwork(c, trainNetwork, neuralPrefs, name)
     }
   }
 
-  def trainNeuralNetwork(c: String, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, neuralPrefs: NeuralPrefs) = {
+  def trainNeuralNetwork(c: String, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, neuralPrefs: NeuralPrefs, name: String = "") = {
     val net: MultiLayerNetwork = trainNetwork(c, neuralPrefs)
-    NeuralModelLoader.save(net, c + "_" + (System.currentTimeMillis() / 1000).toString.substring(5), Config.count)
+    NeuralModelLoader.save(net, name + "_" + c + "_" + (System.currentTimeMillis() / 1000).toString.substring(5), Config.count)
     System.gc()
   }
 

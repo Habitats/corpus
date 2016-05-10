@@ -6,8 +6,8 @@ import org.apache.spark.rdd.RDD
 case class NeuralPrefs(
                         learningRate: Double = 0.05,
                         hiddenNodes: Int = 10,
-                        train: RDD[Article],
-                        validation: RDD[Article],
+                        train: Array[Article],
+                        validation: Array[Article],
                         minibatchSize: Int = 50,
                         epochs: Int = 5,
                         histogram: Boolean = false

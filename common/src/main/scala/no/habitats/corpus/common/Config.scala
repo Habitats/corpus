@@ -12,15 +12,22 @@ object Config {
   val seed = 123
   val NONE = "NONE"
 
-  lazy val freebaseToWord2Vec    = dataPath + "nyt/fb_w2v_0.5.txt"
-  lazy val freebaseToWord2VecIDs = dataPath + "nyt/fb_w2v_0.5_ids.txt"
-  lazy val dbpedia               = dataPath + "nyt/dbpedia-all-0.5.json"
-  lazy val combinedIds           = dataPath + "nyt/combined_ids_0.5.txt"
-  lazy val freebaseToWikidata    = dataPath + "wikidata/fb_to_wd_all.txt"
-  lazy val wikidataToFreebase    = dataPath + "wikidata/wd_to_fb.txt"
-  lazy val wikidataToDbPedia     = dataPath + "wikidata/wikidata_to_dbpedia.txt"
+  lazy val freebaseToWord2VecIDs100 = dataPath + "nyt/confidence/fb_w2v_100.txt"
+  lazy val dbpedia                  = dataPath + "nyt/dbpedia-all-0.5.json"
+  lazy val dbpediaMini25            = dataPath + "nyt/dbpedia_mini_json_0.25.json"
+  lazy val dbpediaMini50            = dataPath + "nyt/dbpedia_mini_json_0.50.json"
+  lazy val dbpediaMini75            = dataPath + "nyt/dbpedia_mini_json_0.75.json"
+  lazy val dbpediaMini100           = dataPath + "nyt/dbpedia_mini_json_1.00.json"
+  lazy val combinedIds              = dataPath + "nyt/combined_ids_0.5.txt"
+  lazy val freebaseToWikidata       = dataPath + "wikidata/fb_to_wd_all.txt"
+  lazy val wikidataToFreebase       = dataPath + "wikidata/wd_to_fb.txt"
+  lazy val wikidataToDbPedia        = dataPath + "wikidata/wikidata_to_dbpedia.txt"
 
   lazy val cats: Seq[String] = Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
+
+  def freebaseToWord2Vec(confidence: Double) = dataPath + s"nyt/fb_w2v_$confidence.txt"
+  def freebaseToWord2VecIDs(confidence: Double)    = dataPath + s"nyt/fb_w2v_${confidence}_ids.txt"
+  def documentVectors(confidence: Double) = dataPath + s"nyt/document_vectors_$confidence.json"
 
   def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.json"
 

@@ -10,16 +10,48 @@ object Cacher extends RddSerializer {
 
   /** Fetch json RDD and compute IPTC and annotations */
   def annotateAndCacheArticles() = {
-    Corpus.preloadAnnotations()
-    val rdd = Fetcher.rddMini.map(Corpus.toDBPediaAnnotated)
+    val annotations = Corpus.dbpediaAnnotations
+    val rdd = Fetcher.rddMini.map(a => Corpus.toDBPediaAnnotated(a, annotations))
     saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_corpus_annotated")
   }
 
+  def annotateAndCacheArticlesConfidence() = {
+    val db25 = Corpus.dbpediaAnnotationsMini25
+    var rdd = Fetcher.miniCorpus.map(a => Corpus.toDBPediaAnnotated(a, db25)).map(_.toMinimal).filter(_.ann.nonEmpty)
+    saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_25")
+    val db50 = Corpus.dbpediaAnnotationsMini50
+    rdd = Fetcher.miniCorpus.map(a => Corpus.toDBPediaAnnotated(a, db50)).map(_.toMinimal).filter(_.ann.nonEmpty)
+    saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_50")
+    val db75 = Corpus.dbpediaAnnotationsMini75
+    rdd = Fetcher.miniCorpus.map(a => Corpus.toDBPediaAnnotated(a, db75)).map(_.toMinimal).filter(_.ann.nonEmpty)
+    saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_75")
+    val db100 = Corpus.dbpediaAnnotationsMini100
+    rdd = Fetcher.miniCorpus.map(a => Corpus.toDBPediaAnnotated(a, db100)).map(_.toMinimal).filter(_.ann.nonEmpty)
+    saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_100")
+  }
+
+  def scrambler() = {
+    for {
+      n <- Seq("train", "test", "validation")
+      c <- Seq(25, 50, 75, 100, 0)
+    } {
+      val s = if (c != 0) s"confidence/nyt_mini_${n}_ordered_${c}.json" else s"nyt_${n}_ordered.json"
+      saveAsText(Fetcher.by(s).map(JsonSingle.toSingleJson).sortBy(a => Math.random), s)
+    }
+  }
+
+  def computeAndCacheDBPediaAnnotationsToJson(rdd: RDD[Article]) = {
+    Spotlight.cacheDbpedia(rdd, 0.25, w2vFilter = true)
+    Spotlight.cacheDbpedia(rdd, 0.5, w2vFilter = true)
+    Spotlight.cacheDbpedia(rdd, 0.75, w2vFilter = true)
+    Spotlight.cacheDbpedia(rdd, 1, w2vFilter = true)
+  }
+
   def annotateAndCacheArticlesWithTypes() = {
-    Corpus.preloadTypes()
-    val rdd = Fetcher.annotatedTrainOrdered.map(Corpus.toDBPediaAnnotatedWithTypes)
+    val annotations = Corpus.dbpediaAnnotationsWithTypes
+    val rdd = Fetcher.annotatedTrainOrdered.map(a => Corpus.toDBPediaAnnotatedWithTypes(a, annotations))
     saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_train_ordered_types")
-    val rdd2 = Fetcher.subTrainOrdered.map(Corpus.toDBPediaAnnotatedWithTypes)
+    val rdd2 = Fetcher.subTrainOrdered.map(a => Corpus.toDBPediaAnnotatedWithTypes(a, annotations))
     saveAsText(rdd2.map(JsonSingle.toSingleJson), "subsampled_train_ordered_types")
   }
 
@@ -31,6 +63,11 @@ object Cacher extends RddSerializer {
       .filter(_.ann.nonEmpty)
       .map(JsonSingle.toSingleJson)
     saveAsText(minimal, name + "_minimal")
+  }
+
+  def cacheMiniCorpus() = {
+    val rdd = sc.parallelize(Fetcher.rdd.map(Corpus.toIPTC).filter(_.iptc.nonEmpty).takeOrdered(200000)(Ordering.by(_.id.toInt * -1)), Config.partitions)
+    saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_mini_ordered")
   }
 
   def cacheBalanced() = {
@@ -108,7 +145,21 @@ object Cacher extends RddSerializer {
   def splitAndCache() = {
     val rdd = TC(Fetcher.annotatedRddMini).computed
     rdd.cache()
+    splitOrdered(rdd)
+    splitShuffled(rdd)
+  }
 
+  def cmon() = {
+    val s100 = Fetcher.miniMini100.map(_.id).collect().toSet
+    val r50 = Fetcher.miniMini50.filter(a => s100.contains(a.id))
+    val r25 = Fetcher.miniMini25.filter(a => s100.contains(a.id))
+    val r75 = Fetcher.miniMini75.filter(a => s100.contains(a.id))
+    saveAsText(r25.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_25")
+    saveAsText(r50.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_50")
+    saveAsText(r75.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_75")
+  }
+
+  def splitOrdered(rdd: RDD[Article], name: String = ""): Unit = {
     // Ordered split
     val numArticles = rdd.count()
     val ids = rdd.map(_.id.toInt).collect.sorted
@@ -116,13 +167,15 @@ object Cacher extends RddSerializer {
     val testIds = ids.slice((numArticles * 0.6).toInt, (numArticles * 0.8).toInt).map(_.toString).toSet
     val validationIds = ids.slice((numArticles * 0.8).toInt, numArticles.toInt).map(_.toString).toSet
 
-    val train = rdd.filter(a => trainIds.contains(a.id)).map(JsonSingle.toSingleJson)
-    saveAsText(train, "nyt_train_ordered")
-    val test = rdd.filter(a => testIds.contains(a.id)).map(JsonSingle.toSingleJson)
-    saveAsText(test, "nyt_test_ordered")
-    val validation = rdd.filter(a => validationIds.contains(a.id)).map(JsonSingle.toSingleJson)
-    saveAsText(validation, "nyt_validation_ordered")
+    val train = rdd.filter(a => trainIds.contains(a.id)).map(JsonSingle.toSingleJson).sortBy(a => Math.random)
+    saveAsText(train, "nyt_train_ordered" + name)
+    val test = rdd.filter(a => testIds.contains(a.id)).map(JsonSingle.toSingleJson).sortBy(a => Math.random)
+    saveAsText(test, "nyt_test_ordered" + name)
+    val validation = rdd.filter(a => validationIds.contains(a.id)).map(JsonSingle.toSingleJson).sortBy(a => Math.random)
+    saveAsText(validation, "nyt_validation_ordered" + name)
+  }
 
+  def splitShuffled(rdd: RDD[Article]): Unit = {
     // Shuffled splits
     val splits = rdd.map(JsonSingle.toSingleJson).sortBy(a => Math.random).randomSplit(Array(0.6, 0.2, 0.2), Config.seed)
     rdd.unpersist()
@@ -130,7 +183,6 @@ object Cacher extends RddSerializer {
     saveAsText(splits(1), "nyt_validation_shuffled")
     saveAsText(splits(2), "nyt_test_shuffled")
   }
-
   def cacheSubSampledShuffled() = {
     val rdds = Map(
       "train_shuffled" -> Fetcher.annotatedTrainShuffled,
