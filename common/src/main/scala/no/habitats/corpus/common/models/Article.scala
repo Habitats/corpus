@@ -6,6 +6,8 @@ import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.ops.transforms.Transforms
 
+import scala.collection.immutable.Iterable
+
 case class Article(id: String,
                    hl: String = "",
                    body: String = "",
@@ -46,17 +48,13 @@ case class Article(id: String,
 
   def toMinimal: Article = copy(body = "", desc = Set(), date = None, hl = "")
 
-  lazy val toDocumentVector: Vector = {
+  lazy val documentVectorMlLib: Vector = {
     val all = ann.map(_._2.fb).flatMap(W2VLoader.fromId)
-    // Min: -0.15568943321704865
-    // Max:  0.15866121649742126
-    val min = -0.16
-    val max = 0.16
-    val squashed: INDArray = all.reduce(_.addi(_)).divi(all.size)
-    val normal = squashed.subi(min).divi(max - min)
+    val normal: INDArray = W2VLoader.squashAndNormalize(all)
     val binary = Transforms.round(normal)
     MLLibUtil.toVector(binary)
   }
+
 
   def toVectorDense(phrases: Array[String]): Vector = {
     val row = phrases.map(w => if (ann.contains(w)) ann(w).tfIdf else 0)
@@ -75,7 +73,9 @@ case class Article(id: String,
     copy(iptc = if (broad) IPTC.toBroad(desc, 0) else IPTC.toIptc(desc))
   }
 
-  lazy val toND4JDocumentVector: INDArray = W2VLoader.fetchCachedDocumentVector(id).getOrElse(W2VLoader.calculateDocumentVector(ann))
+  private lazy val documentVector: INDArray = W2VLoader.fetchCachedDocumentVector(id).getOrElse(W2VLoader.calculateDocumentVector(ann))
+
+  def toDocumentVector: INDArray = documentVector
 }
 
 

@@ -60,7 +60,7 @@ object TSNE {
   }
 
   def stackDocumentVectors(rdd: RDD[Article]): Array[(String, INDArray)] = {
-    rdd.map(a => (a.iptc, a.toND4JDocumentVector)).flatMap { case (iptc, v) => iptc.map(c => (c, v)) }.collect()
+    rdd.map(a => (a.iptc, a.toDocumentVector)).flatMap { case (iptc, v) => iptc.map(c => (c, v)) }.collect()
   }
 
   def stackWordVectors(rdd: RDD[Article]): Array[(String, INDArray)] = {

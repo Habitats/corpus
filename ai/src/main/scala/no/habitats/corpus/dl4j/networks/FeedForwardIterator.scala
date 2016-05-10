@@ -24,7 +24,7 @@ class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize:
 
     for (i <- articles.toList.indices) {
       // We want to preserve order
-      features.putRow(i, if (phrases.isEmpty) articles(i).toND4JDocumentVector else MLLibUtil.toVector(articles(i).toVector(phrases)))
+      features.putRow(i, if (phrases.isEmpty) articles(i).toDocumentVector else MLLibUtil.toVector(articles(i).toVector(phrases)))
 
       // binary
       val v = if (articles(i).iptc.contains(label)) 1 else 0

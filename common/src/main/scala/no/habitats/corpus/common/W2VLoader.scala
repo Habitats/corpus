@@ -36,13 +36,22 @@ object W2VLoader extends RddSerializer {
   def contains(id: String): Boolean = loader.ids.contains(id)
 
   def calculateDocumentVector(ann: Map[String, Annotation]): INDArray = {
-    val vectors = ann.values.map(_.fb).flatMap(fromId).toSeq
-    val combined = vectors.reduce(_.addi(_)).divi(vectors.size)
+    val vectors: Iterable[INDArray] = ann.values.map(_.fb).flatMap(fromId)
+    val combined: INDArray = squash(vectors)
     //    val combined = Nd4j.vstack(vectors: _*).mean(0) // supposed to be fast, but it's 3 times slower
-    combined
+    normalize(combined)
   }
 
-  def fetchCachedDocumentVector(articleId: String): Option[INDArray] = loader.documentVectors.get(articleId) // If this crashes, you fucked up
+  def normalize(combined: INDArray): INDArray = {
+    // Min: -0.15568943321704865
+    // Max:  0.15866121649742126
+    val min = -0.16
+    val max = 0.16
+    combined.subi(min).divi(max - min)
+  }
+
+  def squash(vectors: Iterable[INDArray]): INDArray = vectors.reduce(_.addi(_)).divi(vectors.size)
+
   def fetchCachedDocumentVector(articleId: String): Option[INDArray] = loader.documentVectors.get(articleId).map(_.dup()) // If this crashes, you fucked up
 
   def cacheDocumentVectors(rdd: RDD[Article]) = {
@@ -51,10 +60,16 @@ object W2VLoader extends RddSerializer {
     saveAsText(docVecs, s"document_vectors_${loader.confidence}")
   }
 
+  def squashAndNormalize(all: Iterable[INDArray]): INDArray = {
+    val combined: INDArray = squash(all)
+    val normal: INDArray = normalize(combined)
+    normal
+  }
+
   def toString(w2v: INDArray): String = w2v.data().asFloat().mkString(",")
   def fromString(w2v: String): INDArray = Nd4j.create(w2v.split(",").map(_.toFloat))
 
-  private def loadVectors(vectorFile: String, filter: Set[String] = Set.empty): Map[String, INDArray] = {
+  def loadVectors(vectorFile: String, filter: Set[String] = Set.empty): Map[String, INDArray] = {
     Log.v(s"Loading cached W2V vectors ($vectorFile) ...")
     if (!new File(vectorFile).exists) throw new FileNotFoundException(s"No cached vectors: $vectorFile")
     val start = System.currentTimeMillis
@@ -65,11 +80,15 @@ object W2VLoader extends RddSerializer {
       .map(arr => {
         val vector = Nd4j.create(arr._2)
         val id = arr._1
+        if(id == "/m/05zl0") {
+         println("yolo")
+        }
         (id, vector)
       }).collect.toMap
 
     // SHOULD ALWAYS BE EQUAL!
     val s = vec.size
+    val yolo = vec.get("/m/05zl0")
     vec = vec.filter(_._2.size(1) == 1000)
     if (s != vec.size) throw new IllegalStateException(s"Vector filtering went wrong. Should be $s, was ${vec.size}!")
 
