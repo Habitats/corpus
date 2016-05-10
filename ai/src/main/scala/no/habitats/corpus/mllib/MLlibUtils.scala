@@ -26,7 +26,7 @@ object MlLibUtils {
 
   /** Created either a BoW or a squashed W2V document vector */
   def toVector(phrases: Array[String], bow: Boolean, a: Article): Vector = {
-    if (bow) a.toVector(phrases) else a.toDocumentVector
+    if (bow) a.toVector(phrases) else a.documentVectorMlLib.copy
   }
 
   def trainModelsNaiveBayedMultiNominal(training: RDD[(Set[String], Vector)], cats: Seq[String]): Map[String, NaiveBayesModel] = {

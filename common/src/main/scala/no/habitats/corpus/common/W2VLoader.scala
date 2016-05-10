@@ -29,7 +29,7 @@ object W2VLoader extends RddSerializer {
 
   def setLoader(confidence: Double, iKnowWhatImDoing: Boolean = false) = if (iKnowWhatImDoing || confidence > 1) this.loader = W2VLoader(confidence) else throw new IllegalArgumentException("Do you know what you're doing?")
 
-  def fromId(id: String): Option[INDArray] = loader.vectors.get(id)
+  def fromId(id: String): Option[INDArray] = loader.vectors.get(id).map(_.dup())
 
   def featureSize(): Int = loader.vectors.values.head.length()
 
@@ -43,6 +43,7 @@ object W2VLoader extends RddSerializer {
   }
 
   def fetchCachedDocumentVector(articleId: String): Option[INDArray] = loader.documentVectors.get(articleId) // If this crashes, you fucked up
+  def fetchCachedDocumentVector(articleId: String): Option[INDArray] = loader.documentVectors.get(articleId).map(_.dup()) // If this crashes, you fucked up
 
   def cacheDocumentVectors(rdd: RDD[Article]) = {
     loader.vectors
