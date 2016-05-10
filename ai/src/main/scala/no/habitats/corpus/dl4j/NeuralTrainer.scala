@@ -16,7 +16,7 @@ object NeuralTrainer {
     for (i <- 0 until neuralPrefs.epochs) {
       net.fit(trainIter)
       trainIter.reset()
-      val eval = NeuralEvaluation(net, testIter, i, label)
+      val eval = NeuralEvaluation(net, testIter, i, label, Some(neuralPrefs))
       eval.log()
       testIter.reset()
     }

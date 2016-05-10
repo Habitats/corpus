@@ -10,7 +10,7 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import scala.collection.JavaConverters._
 import scala.util.Try
 
-case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, epoch: Int, label: String) {
+case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None) {
   private lazy val eval = {
     val e = new Evaluation()
     testIter.asScala.foreach(t => {
@@ -44,7 +44,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
     "F-score" -> f"$fscore%.3f",
     "Error" -> f"${net.score}%.10f",
     "LR" -> f"${net.getLayerWiseConfigurations.getConf(0).getLayer.getLearningRate}",
-    "MBS" -> f"${testIter.batch}",
+    "MBS" -> f"${neuralPrefs.map(_.minibatchSize).getOrElse("N/A")}",
     "Hidden" -> f"$numHidden"
   )
 

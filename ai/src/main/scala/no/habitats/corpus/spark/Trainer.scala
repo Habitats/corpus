@@ -143,7 +143,7 @@ object Trainer {
     Log.v("Starting training ...")
     for (i <- 0 until neuralPrefs.epochs) {
       net = sparkNetwork.fitDataSet(rddTrain, 200, 2)
-      val eval = NeuralEvaluation(net, testIter, i, label)
+      val eval = NeuralEvaluation(net, testIter, i, label, Some(neuralPrefs))
       eval.log()
       testIter.reset()
     }
@@ -162,7 +162,7 @@ object Trainer {
     Log.v("Starting training ...")
     for (i <- 0 until neuralPrefs.epochs) {
       net = sparkNetwork.fitDataSet(rddTrain, 200, 2)
-      val eval = NeuralEvaluation(net, testIter, i, label)
+      val eval = NeuralEvaluation(net, testIter, i, label, Some(neuralPrefs))
       eval.log()
       testIter.reset()
     }
