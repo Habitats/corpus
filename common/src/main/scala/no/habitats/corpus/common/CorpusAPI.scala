@@ -1,6 +1,5 @@
 package no.habitats.corpus.common
 
-import edu.umd.cs.findbugs.annotations.Confidence
 import no.habitats.corpus.common.dl4j.NeuralPredictor
 import no.habitats.corpus.common.models.{Annotation, Article, DBPediaAnnotation, Entity}
 import org.nd4j.linalg.api.ndarray.INDArray
@@ -53,7 +52,7 @@ trait CorpusAPI {
     */
   def annotateWithTypes(text: String, confidence: Double): Seq[Annotation] = {
     val db = for {
-      entities <- Spotlight.fetchAnnotations(text,confidence).groupBy(_.id).values
+      entities <- Spotlight.fetchAnnotations(text, confidence).groupBy(_.id).values
       db = new DBPediaAnnotation("NO_ID", mc = entities.size, entities.minBy(_.offset))
       ann = AnnotationUtils.fromDbpedia(db)
       types <- Seq(ann) ++ AnnotationUtils.fromDBpediaType(db)
@@ -68,7 +67,7 @@ trait CorpusAPI {
     * @return Collection of INDArray's representing each 1000d vector
     */
   def extractFreebaseW2V(text: String, confidence: Double): Seq[INDArray] = {
-    val annotated = annotate(text,confidence)
+    val annotated = annotate(text, confidence)
     annotated
       .map(_.fb)
       .map(W2VLoader.fromId)

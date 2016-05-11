@@ -27,7 +27,7 @@ object Corpus {
     CorpusContext.sc.textFile(dbpedia)
       .map(DBPediaAnnotation.fromSingleJson)
       .map(AnnotationUtils.fromDbpedia)
-//      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
+      //      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
       .groupBy(_.articleId)
       .map { case (k, v) => (k, v.toSeq) }
       .collect.toMap

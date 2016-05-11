@@ -87,11 +87,10 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
     W2VLoader.featureSize.toString
   }
 
-
   def detailedInfo(text: String, confidence: Double) = {
     val entities: Seq[Entity] = extract(text, confidence).sortBy(_.offset)
-    val annotations: Seq[Annotation] = annotate(text,confidence).sortBy(_.offset)
-    val annotationsWithTypes: Seq[Annotation] = annotateWithTypes(text,confidence).sortBy(_.offset)
+    val annotations: Seq[Annotation] = annotate(text, confidence).sortBy(_.offset)
+    val annotationsWithTypes: Seq[Annotation] = annotateWithTypes(text, confidence).sortBy(_.offset)
     val w2v: Seq[String] = annotationsWithTypes.map(_.fb).map(fb => {
       val vec = freebaseToWord2Vec(fb) match {
         case Some(w2v) => w2v.toString
@@ -100,7 +99,7 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
       f"$fb%10s -> $vec"
     })
 
-    val predictions: Set[String] = predict(text,confidence)
+    val predictions: Set[String] = predict(text, confidence)
     <html>
       <body>
         <h1>Detailed info</h1>

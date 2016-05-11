@@ -72,11 +72,11 @@ object Tester {
     val testShuffled = rddShuffled.collect()
     FeedforwardTester("ffn-w2v-shuffled").test(testShuffled)
 
-//    // Ordered
-//    Log.r("Ordered ...")
-//    val rddOrdered = Fetcher.subTestOrdered.map(_.toMinimal)
-//    val testOrdered = rddOrdered.collect()
-//    FeedforwardTester("ffn-w2v-ordered").test(testOrdered)
+    //    // Ordered
+    //    Log.r("Ordered ...")
+    //    val rddOrdered = Fetcher.subTestOrdered.map(_.toMinimal)
+    //    val testOrdered = rddOrdered.collect()
+    //    FeedforwardTester("ffn-w2v-ordered").test(testOrdered)
   }
 
   def testLengths() = {

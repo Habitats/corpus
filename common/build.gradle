@@ -1,4 +1,3 @@
-
 configurations {
     all {
         exclude group: 'org.mortbay.jetty'
@@ -11,7 +10,6 @@ configurations {
 }
 
 dependencies {
-
 
     // Spark
     compile('org.apache.spark:spark-core_2.10:1.5.2') {

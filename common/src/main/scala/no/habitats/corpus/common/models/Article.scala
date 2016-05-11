@@ -6,8 +6,6 @@ import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.ops.transforms.Transforms
 
-import scala.collection.immutable.Iterable
-
 case class Article(id: String,
                    hl: String = "",
                    body: String = "",
@@ -54,7 +52,6 @@ case class Article(id: String,
     val binary = Transforms.round(normal)
     MLLibUtil.toVector(binary)
   }
-
 
   def toVectorDense(phrases: Array[String]): Vector = {
     val row = phrases.map(w => if (ann.contains(w)) ann(w).tfIdf else 0)

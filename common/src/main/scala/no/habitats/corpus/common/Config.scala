@@ -26,7 +26,7 @@ object Config {
   lazy val cats: Seq[String] = Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
 
   def freebaseToWord2Vec(confidence: Double) = dataPath + s"nyt/fb_w2v_$confidence.txt"
-  def freebaseToWord2VecIDs(confidence: Double)    = dataPath + s"nyt/fb_w2v_${confidence}_ids.txt"
+  def freebaseToWord2VecIDs(confidence: Double) = dataPath + s"nyt/fb_w2v_${confidence}_ids.txt"
   def documentVectors(confidence: Double) = dataPath + s"nyt/document_vectors_$confidence.json"
 
   def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.json"
