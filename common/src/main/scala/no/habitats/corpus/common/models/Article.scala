@@ -50,7 +50,7 @@ case class Article(id: String,
 
   lazy val documentVectorMlLib: Vector = {
     val all = ann.map(_._2.fb).flatMap(W2VLoader.fromId)
-    val normal: INDArray = W2VLoader.squashAndNormalize(all)
+    val normal: INDArray = W2VLoader.normalize(W2VLoader.squash(all))
     val binary = Transforms.round(normal)
     MLLibUtil.toVector(binary)
   }
@@ -75,7 +75,7 @@ case class Article(id: String,
 
   private lazy val documentVector: INDArray = W2VLoader.fetchCachedDocumentVector(id).getOrElse(W2VLoader.calculateDocumentVector(ann))
 
-  def toDocumentVector: INDArray = documentVector
+  def toDocumentVector: INDArray = documentVector.dup()
 }
 
 

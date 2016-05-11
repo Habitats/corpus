@@ -33,13 +33,13 @@ object W2VLoader extends RddSerializer {
 
   def featureSize(): Int = loader.vectors.values.head.length()
 
-  def contains(id: String): Boolean = loader.ids.contains(id)
+  def contains(id: String): Boolean = loader.vectors.contains(id)
 
   def calculateDocumentVector(ann: Map[String, Annotation]): INDArray = {
     val vectors: Iterable[INDArray] = ann.values.map(_.fb).flatMap(fromId)
     val combined: INDArray = squash(vectors)
     //    val combined = Nd4j.vstack(vectors: _*).mean(0) // supposed to be fast, but it's 3 times slower
-    normalize(combined)
+    combined.dup()
   }
 
   def normalize(combined: INDArray): INDArray = {
@@ -52,18 +52,15 @@ object W2VLoader extends RddSerializer {
 
   def squash(vectors: Iterable[INDArray]): INDArray = vectors.reduce(_.addi(_)).divi(vectors.size)
 
-  def fetchCachedDocumentVector(articleId: String): Option[INDArray] = loader.documentVectors.get(articleId).map(_.dup()) // If this crashes, you fucked up
+  def fetchCachedDocumentVector(articleId: String): Option[INDArray] = loader.documentVectors.get(articleId).map(_.dup())
 
   def cacheDocumentVectors(rdd: RDD[Article]) = {
     loader.vectors
-    val docVecs = rdd.map(a => s"${a.id},${W2VLoader.toString(calculateDocumentVector(a.ann))}")
+    val docVecs = rdd
+      .filter(_.ann.nonEmpty)
+      .filter(_.ann.map(_._2.fb).forall(W2VLoader.contains))
+      .map(a => s"${a.id},${W2VLoader.toString(calculateDocumentVector(a.ann))}")
     saveAsText(docVecs, s"document_vectors_${loader.confidence}")
-  }
-
-  def squashAndNormalize(all: Iterable[INDArray]): INDArray = {
-    val combined: INDArray = squash(all)
-    val normal: INDArray = normalize(combined)
-    normal
   }
 
   def toString(w2v: INDArray): String = w2v.data().asFloat().mkString(",")
@@ -79,16 +76,12 @@ object W2VLoader extends RddSerializer {
       .map(arr => (arr(0), arr.toSeq.slice(1, arr.length).map(_.toFloat).toArray))
       .map(arr => {
         val vector = Nd4j.create(arr._2)
-        val id = arr._1
-        if(id == "/m/05zl0") {
-         println("yolo")
-        }
+        val id = arr._1.trim
         (id, vector)
       }).collect.toMap
 
     // SHOULD ALWAYS BE EQUAL!
     val s = vec.size
-    val yolo = vec.get("/m/05zl0")
     vec = vec.filter(_._2.size(1) == 1000)
     if (s != vec.size) throw new IllegalStateException(s"Vector filtering went wrong. Should be $s, was ${vec.size}!")
 
