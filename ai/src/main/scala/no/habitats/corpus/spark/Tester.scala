@@ -47,6 +47,10 @@ object Tester {
     NaiveBayesTester("nb-bow").test(test)
   }
 
+  def testFNNOrdered() = {
+
+  }
+
   def testTypesInclusion() = {
     Config.resultsFileName = "test_type_inclusion.txt"
     Config.resultsCatsFileName = "test_type_inclusion.txt"
@@ -62,21 +66,22 @@ object Tester {
   }
 
   def testShuffledVsOrdered() = {
+
     Config.resultsFileName = "test_shuffled_vs_ordered.txt"
     Config.resultsCatsFileName = "test_shuffled_vs_ordered.txt"
     Log.h("Testing shuffled vs. ordered")
 
     // Shuffled
     Log.r("Shuffled ...")
-    val rddShuffled = Fetcher.subTestShuffled.map(_.toMinimal)
+    val rddShuffled = Fetcher.annotatedTestShuffled.map(_.toMinimal)
     val testShuffled = rddShuffled.collect()
     FeedforwardTester("ffn-w2v-shuffled").test(testShuffled)
 
-    //    // Ordered
-    //    Log.r("Ordered ...")
-    //    val rddOrdered = Fetcher.subTestOrdered.map(_.toMinimal)
-    //    val testOrdered = rddOrdered.collect()
-    //    FeedforwardTester("ffn-w2v-ordered").test(testOrdered)
+//    // Ordered
+//    Log.r("Ordered ...")
+//    val rddOrdered = Fetcher.annotatedTestOrdered
+//    val testOrdered = rddOrdered.collect()
+//    FeedforwardTester("ffn-w2v-ordered").test(testOrdered)
   }
 
   def testLengths() = {
@@ -95,6 +100,14 @@ object Tester {
     testBuckets("time", FeedforwardTester("ffn-w2v-ordered"), _.id.toInt)
     testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
     testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
+  }
+
+  def testConfidence() = {
+    Config.resultsFileName = "test_confidence.txt"
+    Config.resultsCatsFileName = "test_confidence_cats.txt"
+    Log.h("Testing Confidence Levels")
+    for {confidence <- Seq(25, 50, 75, 100)}
+      yield FeedforwardTester(s"ffn-w2v-ordered-confidence-${confidence}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.json").collect)
   }
 
   /** Test model on every test set matching name */

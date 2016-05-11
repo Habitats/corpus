@@ -39,7 +39,7 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
   get("/extract/*") {
     contentType = formats("txt")
     val (text, confidence) = parseParams
-    extract(text, confidence).map(_.toJson).mkString("\n")
+    extract(text, confidence).map(Entity.toSingleJson).mkString("\n")
   }
 
   get("/annotate/*") {

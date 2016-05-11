@@ -17,31 +17,6 @@ object Corpus {
     annotations
   }
 
-  lazy val dbpediaAnnotations       : Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpedia)
-  lazy val dbpediaAnnotationsMini25 : Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpediaMini25)
-  lazy val dbpediaAnnotationsMini50 : Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpediaMini50)
-  lazy val dbpediaAnnotationsMini75 : Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpediaMini75)
-  lazy val dbpediaAnnotationsMini100: Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpediaMini100)
-
-  def fetchDbpediaAnnotations(dbpedia: String): Map[String, Seq[Annotation]] = {
-    CorpusContext.sc.textFile(dbpedia)
-      .map(DBPediaAnnotation.fromSingleJson)
-      .map(AnnotationUtils.fromDbpedia)
-      //      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
-      .groupBy(_.articleId)
-      .map { case (k, v) => (k, v.toSeq) }
-      .collect.toMap
-  }
-
-  lazy val dbpediaAnnotationsWithTypes: Map[String, Seq[Annotation]] = {
-    CorpusContext.sc.textFile(Config.dbpedia)
-      .map(DBPediaAnnotation.fromSingleJson)
-      .flatMap(ann => Seq(AnnotationUtils.fromDbpedia(ann)) ++ AnnotationUtils.fromDBpediaType(ann))
-      .groupBy(_.articleId)
-      .filter(_._2.nonEmpty)
-      .map { case (k, v) => (k, v.toSeq.filter(ann => W2VLoader.contains(ann.fb))) }
-      .collect.toMap
-  }
 
   def articlesFromXML(path: String = Config.dataPath + "/nyt/", count: Int = Config.count): Seq[Article] = {
     Log.v(f"Loading ${if (count == Integer.MAX_VALUE) "all" else count} articles ...")
@@ -65,23 +40,9 @@ object Corpus {
     }
   }
 
-  def toDBPediaAnnotated(a: Article, dbpediaAnnotations: Map[String, Seq[Annotation]]): Article = {
-    dbpediaAnnotations.get(a.id) match {
-      case Some(ann) => a.copy(ann = a.ann ++ ann.map(a => (a.id, a)).toMap)
-      case None => Log.v("NO DBPEDIA: " + a.id); a
-    }
-  }
-
-  def toDBPediaAnnotatedWithTypes(a: Article, dbpediaAnnotations: Map[String, Seq[Annotation]]): Article = {
-    dbpediaAnnotationsWithTypes.get(a.id) match {
-      case Some(ann) => a.copy(ann = a.ann ++ ann.map(a => (a.id, a)).filter(a => a._2.fb != Config.NONE && W2VLoader.contains(a._1)).toMap)
-      case None => Log.v("NO DBPEDIA: " + a.id); a
-    }
-  }
 }
 
 object Article {
-
   import scala.collection.JavaConverters._
 
   implicit def stringToOption(s: String): Option[String] = Option(s)

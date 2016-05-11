@@ -4,6 +4,7 @@ import java.io.{File, FileNotFoundException}
 
 import no.habitats.corpus.common.CorpusContext.sc
 import no.habitats.corpus.common.W2VLoader._
+import no.habitats.corpus.common.dl4j.FreebaseW2V
 import no.habitats.corpus.common.models.{Annotation, Article}
 import org.apache.spark.rdd.RDD
 import org.json4s.NoTypeHints
@@ -12,28 +13,49 @@ import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 
 import scala.collection.{Map, Set}
-import scala.util.Try
 
-case class W2VLoader(confidence: Double) extends RddSerializer {
-  lazy val vectors        : Map[String, INDArray] = loadVectors(Config.freebaseToWord2Vec(confidence))
-  lazy val documentVectors: Map[String, INDArray] = loadVectors(Config.documentVectors(confidence))
-  lazy val ids            : Set[String]           = Try(Config.dataFile(Config.freebaseToWord2VecIDs(confidence)).getLines().toSet).getOrElse(vectors.keySet)
+//case class W2VLoader(confidence: Double) extends RddSerializer {
+//  lazy val vectors        : Map[String, INDArray] = loadVectors(Config.freebaseToWord2Vec(confidence))
+//  lazy val documentVectors: Map[String, INDArray] = loadVectors(Config.documentVectors(confidence))
+//  lazy val ids            : Set[String]           = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
+//}
+
+trait VectorLoader {
+  def fromId(fb: String): Option[INDArray]
+  def contains(fb: String): Boolean
+  def documentVector(a: Article): INDArray
+  def preload(): Unit
 }
 
-object W2VLoader extends RddSerializer {
-  def preload() = loader.vectors
+trait BinaryVectorLoader extends VectorLoader {
+  override def fromId(fb: String): Option[INDArray] = if (contains(fb)) Some(Nd4j.create(FreebaseW2V.gVec.getWordVector(fb))) else None
+  override def documentVector(a: Article): INDArray = W2VLoader.calculateDocumentVector(a.ann)
+  override def contains(fb: String): Boolean = FreebaseW2V.gVec.hasWord(fb)
+  override def preload(): Unit = FreebaseW2V.gVec
+}
+
+trait TextVectorLoader extends VectorLoader {
+  lazy val vectors        : Map[String, INDArray] = loadVectors(Config.freebaseToWord2Vec(W2VLoader.confidence))
+  lazy val documentVectors: Map[String, INDArray] = loadVectors(Config.documentVectors(W2VLoader.confidence))
+  lazy val ids            : Set[String]           = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
+
+  override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
+  override def documentVector(a: Article): INDArray = {
+//    W2VLoader.calculateDocumentVector(a.ann)
+    documentVectors.getOrElse(a.id, W2VLoader.calculateDocumentVector(a.ann))
+  }
+  override def contains(fb: String): Boolean = ids.contains(fb)
+  override def preload(): Unit = vectors
+}
+
+object W2VLoader extends RddSerializer with TextVectorLoader {
 
   implicit val formats = Serialization.formats(NoTypeHints)
 
-  private var loader: W2VLoader = null
+  // TODO: NOT GOOD
+  var confidence = 0.5
 
-  def setLoader(confidence: Double, iKnowWhatImDoing: Boolean = false) = if (iKnowWhatImDoing || confidence > 1) this.loader = W2VLoader(confidence) else throw new IllegalArgumentException("Do you know what you're doing?")
-
-  def fromId(id: String): Option[INDArray] = loader.vectors.get(id).map(_.dup())
-
-  def featureSize(): Int = loader.vectors.values.head.length()
-
-  def contains(id: String): Boolean = loader.vectors.contains(id)
+  val featureSize = 1000
 
   def calculateDocumentVector(ann: Map[String, Annotation]): INDArray = {
     val vectors: Iterable[INDArray] = ann.values.map(_.fb).flatMap(fromId)
@@ -52,15 +74,12 @@ object W2VLoader extends RddSerializer {
 
   def squash(vectors: Iterable[INDArray]): INDArray = vectors.reduce(_.addi(_)).divi(vectors.size)
 
-  def fetchCachedDocumentVector(articleId: String): Option[INDArray] = loader.documentVectors.get(articleId).map(_.dup())
-
   def cacheDocumentVectors(rdd: RDD[Article]) = {
-    loader.vectors
     val docVecs = rdd
       .filter(_.ann.nonEmpty)
       .filter(_.ann.map(_._2.fb).forall(W2VLoader.contains))
       .map(a => s"${a.id},${W2VLoader.toString(calculateDocumentVector(a.ann))}")
-    saveAsText(docVecs, s"document_vectors_${loader.confidence}")
+    saveAsText(docVecs, s"document_vectors_${confidence}")
   }
 
   def toString(w2v: INDArray): String = w2v.data().asFloat().mkString(",")

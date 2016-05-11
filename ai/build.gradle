@@ -5,7 +5,7 @@ shadowJar {
     zip64 = true
 }
 
-mainClassName = 'no.habitats.corpus.ai.spark.SparkUtil'
+mainClassName = 'no.habitats.corpus.spark.SparkUtil'
 
 dependencies {
     compile project(':common')
@@ -24,4 +24,27 @@ dependencies {
     compile ':stanford-corenlp-3.6.0-models@jar'
     compile 'com.google.protobuf:protobuf-java:2.6.1'
     compile 'com.google.guava:guava:19.0'
+}
+
+task pathingJar(type: Jar) {
+    dependsOn configurations.runtime
+    appendix = 'pathing'
+
+    doFirst {
+        manifest {
+            // Build the Class-Path for absolute paths based on runtime dependencies.
+            attributes "Class-Path": configurations.runtime.files.collect {
+                it.toURL().toString().replaceFirst(/file:\/+/, '/')
+            }.join(' ')
+        }
+    }
+}
+
+task corpus(type: JavaExec) {
+    dependsOn compileScala, pathingJar
+    // Class path is too long for Windows ... So got to bundle it in a jar
+    doFirst { classpath = files("$buildDir/classes/main", "$buildDir/resources/main", "$projectDir/gsp-classes", pathingJar.archivePath) }
+    main = 'no.habitats.corpus.spark.SparkUtil'
+    jvmArgs = '-Xmx60g -Xms12g -XX:+UseConcMarkSweepGC'.tokenize(" ")
+    args = 'job=computeDbAnnotations count=10'.tokenize(" ")
 }

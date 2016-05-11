@@ -70,7 +70,7 @@ case class Article(id: String,
     copy(iptc = if (broad) IPTC.toBroad(desc, 0) else IPTC.toIptc(desc))
   }
 
-  private lazy val documentVector: INDArray = W2VLoader.fetchCachedDocumentVector(id).getOrElse(W2VLoader.calculateDocumentVector(ann))
+  private lazy val documentVector: INDArray = W2VLoader.documentVector(this)
 
   def toDocumentVector: INDArray = documentVector.dup()
 }

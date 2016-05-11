@@ -58,9 +58,7 @@ object Trainer {
     def validation(confidence: Int): Array[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.json").collect
     Config.resultsFileName = "train_ffn_confidence.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = 0.05, train = null, validation = null, minibatchSize = 1000, epochs = 20)
-    W2VLoader.setLoader(0.25, iKnowWhatImDoing = true)
-    W2VLoader.preload()
+    val prefs = NeuralPrefs(learningRate = 1, train = null, validation = null, minibatchSize = 500, epochs = 5)
     Seq(25, 50, 75, 100).foreach(confidence => {
       Log.r(s"Training with confidence ${confidence} ...")
       Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs.copy(train = train(confidence), validation = validation(confidence)), confidence.toString))
@@ -71,12 +69,10 @@ object Trainer {
     val (train, validation) = Fetcher.ordered(sub)
     Config.resultsFileName = "train_ffn_ordered.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    W2VLoader.setLoader(0.5, true)
-    W2VLoader.preload()
-    val prefs = NeuralPrefs(learningRate = 0.025, train = train, validation = validation, minibatchSize = 1000, epochs = 5)
+    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 2)
     for {
-      lr <- Seq(1.0, 0.5, 0.25)
-      mbs <- Seq(1000)
+      lr <- Seq(2.0)
+      mbs <- Seq(500)
     } yield Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs.copy(learningRate = lr, minibatchSize = mbs)))
   }
 
@@ -84,18 +80,18 @@ object Trainer {
     val (train, validation) = Fetcher.types(sub)
     Config.resultsFileName = "train_ffn_ordered_types.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 2)
-    for{
-      lr <- Seq(0.05, 0.025, 0.1)
-      mbs <- Seq(500, 1000, 2000)
-    } yield  Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs.copy(learningRate = lr, minibatchSize = mbs)))
+    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 2)
+    for {
+      lr <- Seq(0.05)
+      mbs <- Seq(500)
+    } yield Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs.copy(learningRate = lr, minibatchSize = mbs)))
   }
 
   def trainFFNShuffled(sub: Boolean = true) = {
     val (train, validation) = Fetcher.shuffled(sub)
     Config.resultsFileName = "train_ffn_shuffled.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 1)
+    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 2)
     Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs))
   }
 

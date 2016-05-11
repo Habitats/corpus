@@ -11,7 +11,6 @@ import org.apache.spark.rdd.RDD
 object MlLibUtils {
 
   def multiLabelClassification(prefs: Broadcast[Prefs], train: RDD[Article], test: RDD[Article], phrases: Array[String], bow: Boolean): Map[String, NaiveBayesModel] = {
-    W2VLoader.setLoader(0.5, iKnowWhatImDoing = true)
     val training: RDD[(Set[String], Vector)] = train.map(a => (a.iptc, toVector(phrases, bow, a)))
     //    Log.v("Max:" + training.map(_._2.toArray.max).max)
     //    Log.v("Min: " + training.map(_._2.toArray.min).min)
@@ -41,7 +40,6 @@ object MlLibUtils {
   }
 
   def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], phrases: Array[String], prefs: Broadcast[Prefs], bow: Boolean): Map[String, NaiveBayesModel] = {
-    W2VLoader.setLoader(0.5, iKnowWhatImDoing = true)
     val testing: RDD[(Article, Vector)] = test.map(t => (t, toVector(phrases, bow, t)))
     //    Log.v("Max:" + testing.map(_._2.toArray.max).max)
     //    Log.v("Min: " + testing.map(_._2.toArray.min).min)

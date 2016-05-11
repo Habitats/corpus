@@ -10,23 +10,23 @@ object Cacher extends RddSerializer {
 
   /** Fetch json RDD and compute IPTC and annotations */
   def annotateAndCacheArticles() = {
-    val annotations = Corpus.dbpediaAnnotations
-    val rdd = Fetcher.rddMini.map(a => Corpus.toDBPediaAnnotated(a, annotations))
+    val annotations = Spotlight.dbpediaAnnotations
+    val rdd = Fetcher.rddMini.map(a => Spotlight.toDBPediaAnnotated(a, annotations))
     saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_corpus_annotated")
   }
 
   def annotateAndCacheArticlesConfidence() = {
-    val db25 = Corpus.dbpediaAnnotationsMini25
-    var rdd = Fetcher.miniCorpus.map(a => Corpus.toDBPediaAnnotated(a, db25)).map(_.toMinimal).filter(_.ann.nonEmpty)
+    val db25 = Spotlight.dbpediaAnnotationsMini25
+    var rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db25)).map(_.toMinimal).filter(_.ann.nonEmpty)
     saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_25")
-    val db50 = Corpus.dbpediaAnnotationsMini50
-    rdd = Fetcher.miniCorpus.map(a => Corpus.toDBPediaAnnotated(a, db50)).map(_.toMinimal).filter(_.ann.nonEmpty)
+    val db50 = Spotlight.dbpediaAnnotationsMini50
+    rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db50)).map(_.toMinimal).filter(_.ann.nonEmpty)
     saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_50")
-    val db75 = Corpus.dbpediaAnnotationsMini75
-    rdd = Fetcher.miniCorpus.map(a => Corpus.toDBPediaAnnotated(a, db75)).map(_.toMinimal).filter(_.ann.nonEmpty)
+    val db75 = Spotlight.dbpediaAnnotationsMini75
+    rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db75)).map(_.toMinimal).filter(_.ann.nonEmpty)
     saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_75")
-    val db100 = Corpus.dbpediaAnnotationsMini100
-    rdd = Fetcher.miniCorpus.map(a => Corpus.toDBPediaAnnotated(a, db100)).map(_.toMinimal).filter(_.ann.nonEmpty)
+    val db100 = Spotlight.dbpediaAnnotationsMini100
+    rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db100)).map(_.toMinimal).filter(_.ann.nonEmpty)
     saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_mini_train_annotated_100")
   }
 
@@ -42,16 +42,16 @@ object Cacher extends RddSerializer {
 
   def computeAndCacheDBPediaAnnotationsToJson(rdd: RDD[Article]) = {
     Spotlight.cacheDbpedia(rdd, 0.25, w2vFilter = true)
-    Spotlight.cacheDbpedia(rdd, 0.5, w2vFilter = true)
-    Spotlight.cacheDbpedia(rdd, 0.75, w2vFilter = true)
-    Spotlight.cacheDbpedia(rdd, 1, w2vFilter = true)
+//    Spotlight.cacheDbpedia(rdd, 0.5, w2vFilter = true)
+//    Spotlight.cacheDbpedia(rdd, 0.75, w2vFilter = true)
+//    Spotlight.cacheDbpedia(rdd, 1, w2vFilter = true)
   }
 
   def annotateAndCacheArticlesWithTypes() = {
-    val annotations = Corpus.dbpediaAnnotationsWithTypes
-    val rdd = Fetcher.annotatedTrainOrdered.map(a => Corpus.toDBPediaAnnotatedWithTypes(a, annotations))
+    val annotations = Spotlight.dbpediaAnnotationsWithTypes
+    val rdd = Fetcher.annotatedTrainOrdered.map(a => Spotlight.toDBPediaAnnotatedWithTypes(a, annotations))
     saveAsText(rdd.map(JsonSingle.toSingleJson), "nyt_train_ordered_types")
-    val rdd2 = Fetcher.subTrainOrdered.map(a => Corpus.toDBPediaAnnotatedWithTypes(a, annotations))
+    val rdd2 = Fetcher.subTrainOrdered.map(a => Spotlight.toDBPediaAnnotatedWithTypes(a, annotations))
     saveAsText(rdd2.map(JsonSingle.toSingleJson), "subsampled_train_ordered_types")
   }
 

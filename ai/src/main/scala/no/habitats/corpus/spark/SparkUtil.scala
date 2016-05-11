@@ -10,7 +10,6 @@ import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.dl4j.TSNE
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
-import org.bytedeco.javacpp.Pointer
 
 import scala.collection.Map
 
@@ -40,16 +39,18 @@ object SparkUtil {
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
-      case "computeDbAnnotations" => Cacher.computeAndCacheDBPediaAnnotationsToJson(Fetcher.miniCorpus)
+      case "computeDbAnnotations" => Cacher.computeAndCacheDBPediaAnnotationsToJson(Fetcher.annotatedRdd)
       case "computeDbAnnotationsConfidence" => Cacher.annotateAndCacheArticlesConfidence()
 
       case "wdToFbFromDump" => WikiData.extractFreebaseFromWikiDump()
       case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
       case "combineIds" => Spotlight.combineAndCacheIds()
       case "fbw2v" => FreebaseW2V.cacheWordVectors(Fetcher.miniMini25, 0.25)
+      case "fbw2vIds" => FreebaseW2V.cacheFbIds()
+      case "cacheW2V" => FreebaseW2V.cacheAll()
       case "cacheDocumentVectors" =>
-        W2VLoader.setLoader(0.50, true)
         W2VLoader.cacheDocumentVectors(Fetcher.annotatedRddMini)
+        W2VLoader.cacheDocumentVectors(Fetcher.miniMini25)
 
       case "cacheAnnotated" => Cacher.annotateAndCacheArticles()
       case "cacheMiniCorpus" => Cacher.cacheMiniCorpus()
@@ -75,11 +76,11 @@ object SparkUtil {
       case "tnesDocumentVectors" => tnesDocumentVectors()
       case "tnesWordVectors" => tnesWordVectors()
       case "stats" =>
-                stats(Fetcher.annotatedRddMini, "filtered")
-        //        Corpus.preloadAnnotations()
-        //        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
-//        timeStats()
-//        lengthStats()
+        stats(Fetcher.annotatedRddMini, "filtered")
+      //        Corpus.preloadAnnotations()
+      //        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
+      //        timeStats()
+      //        lengthStats()
 
       // Modelling
       case "trainNaiveBayesBoW" => Trainer.trainNaiveBayes(bow = true)
@@ -94,34 +95,40 @@ object SparkUtil {
       case "trainFFNSubSampledBoW" => Trainer.trainFFNSubSampledBoW()
       case "trainFFNBalanced" => Trainer.trainFFNBalanced()
       case "trainFFNSpark" => Trainer.trainFFNSpark()
+      case "trainFFNConfidence" => Trainer.trainFFNConfidence()
 
       case "train" =>
         Trainer.trainFFNOrdered(false)
-      //        Trainer.trainFFNShuffled(false)
-      //        Trainer.trainFFNOrderedTypes(false)
+        Trainer.trainFFNShuffled(false)
+        Trainer.trainFFNOrderedTypes(false)
       //        Trainer.trainFFNConfidence()
 
       // Testing
       case "testModels" => Tester.testModels()
       case "testLengths" => Tester.testLengths()
       case "testTimeDecay" => Tester.testTimeDecay()
+      case "testConfidence" => Tester.testConfidence()
       case "test" =>
-        Tester.testModels()
-        // Ex 1
-        Tester.testEmbeddedVeBoW()
-        // Ex 2
-        Tester.testTypesInclusion()
-        // Ex 3
-        Tester.testLengths()
+        W2VLoader.preload()
+        //        Tester.testModels()
+        //        // Ex 1
+        //        Tester.testEmbeddedVeBoW()
+        //        // Ex 2
+        //        Tester.testTypesInclusion()
+        //        // Ex 3
+        //        Tester.testLengths()
         // Ex 4
         Tester.testShuffledVsOrdered()
-        Tester.testTimeDecay()
+      //        Tester.testTimeDecay()
+      // Ex 5
+      //        Tester.testConfidence()
 
       case _ => Log.r("No job ... Exiting!")
     }
     Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
     //    Thread.sleep(Long.MaxValue)
-    //    sc.stop
+    sc.stop
+    System.exit(0)
   }
 
   def misc() = {
