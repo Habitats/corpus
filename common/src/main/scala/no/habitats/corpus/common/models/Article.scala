@@ -15,7 +15,6 @@ case class Article(id: String,
                    url: Option[String] = None,
                    desc: Set[String] = Set(),
                    pred: Set[String] = Set(),
-                   confidence: Double = 0.5,
                    ann: Map[String, Annotation] = Map()) extends JSonable {
 
   override def toString: String = {
@@ -75,4 +74,36 @@ case class Article(id: String,
   def toDocumentVector: INDArray = documentVector.dup()
 }
 
+object Article {
+  def toStringSerialized(a: Article) = {
+    Array(
+      a.id, a.hl, a.body, a.wc, a.date.getOrElse("N"), a.iptc.mkString("[", "~", "]"), a.url.getOrElse("N"), a.desc.mkString("[", "~", "]"), a.pred.mkString("[", "~", "]")).mkString("\t ") + "\t\t" + a.ann.values.map(Annotation.toStringSerialized).mkString("~")
+  }
 
+  def fromStringSerialized(string: String): Article = {
+    val annSplit = string.split("\t\t")
+    val s = annSplit(0).split("\t ")
+    val a = annSplit(1)
+    Article(
+      id = s(0),
+      hl = s(1),
+      body = s(2),
+      wc = s(3).toInt,
+      date = if (s(4) == "N") None else Some(s(4)),
+      iptc = toSet(s, 5),
+      url = if (s(6) == "N") None else Some(s(6)),
+      desc = toSet(s, 7),
+      pred = toSet(s, 8),
+      ann = a match {
+        case x if x.length > 0 => x.split("~").map(Annotation.fromStringSerialized).map(ann => (ann.id, ann)).toMap
+        case _ => Map()
+      })
+  }
+
+  def toSet(s: Array[String], i: Int): Set[String] = {
+    s(i).substring(1, s(i).length - 1) match {
+      case a: String if a.length > 0 => a.split("~").toSet
+      case _ => Set()
+    }
+  }
+}

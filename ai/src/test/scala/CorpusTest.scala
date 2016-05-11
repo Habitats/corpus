@@ -3,8 +3,9 @@
   */
 
 import no.habitats.corpus._
-import no.habitats.corpus.common.models.{Annotation, DBPediaAnnotation, Entity}
-import no.habitats.corpus.common.{Config, Log, Spotlight}
+import no.habitats.corpus.common.models.{Annotation, Article, DBPediaAnnotation, Entity}
+import no.habitats.corpus.common.{AnnotationUtils, Config, Log, Spotlight}
+import no.habitats.corpus.spark.Fetcher
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -66,6 +67,28 @@ class CorpusTest extends FunSuite with Samples {
 
     val start = System.currentTimeMillis()
     assert(dbpedia.forall(e => DBPediaAnnotation.fromStringSerialized(DBPediaAnnotation.toStringSerialized(e)) == e))
+    Log.v("String serialization: " + (System.currentTimeMillis() - start))
+  }
+
+  test("article serialization bench"){
+    val start2 = System.currentTimeMillis()
+    val articles = Fetcher.annotatedRddMini.take(100000)
+    val annotations = articles.flatMap(_.ann.values)
+    assert(annotations.forall(e => {
+      val s: String = Annotation.toStringSerialized(e)
+      val e2: Annotation = Annotation.fromStringSerialized(s)
+      e2 == e
+    }))
+
+    assert(articles.forall(e => JsonSingle.fromSingleJson(JsonSingle.toSingleJson(e)) == e))
+    Log.v("Json serialization: " + (System.currentTimeMillis() - start2))
+
+    val start = System.currentTimeMillis()
+    assert(articles.forall(e => {
+      val serialized: String = Article.toStringSerialized(e)
+      val serialized1: Article = Article.fromStringSerialized(serialized)
+      serialized1 == e
+    }))
     Log.v("String serialization: " + (System.currentTimeMillis() - start))
   }
 }
