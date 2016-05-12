@@ -8,9 +8,10 @@ sudo apt-get update
 sudo apt-get install -y htop
 
 ## .bashrc 
-echo "alias submit2='cd ~/corpus/ai/ && git pull && gradle shadowJar && spark-submit --class no.habitats.corpus.spark.SparkUtil build/libs/ai-all.jar local=false '" >> ~/.bashrc
+echo "alias submit2='cd ~/corpus/ && git pull && gradle ai:shadowJar && spark-submit --class no.habitats.corpus.spark.SparkUtil build/libs/ai-all.jar local=false '" >> ~/.bashrc
 echo "alias submit='spark-submit --class no.habitats.corpus.spark.SparkUtil --jars ~/corpus/ai/build/libs/ai-all.jar ~/corpus/ai/build/libs/ai.jar local=false '" >> ~/.bashrc
-
+echo "alias build='cd ~/corpus/ && git pull && gradle ai:jar'" >> ~/.bashrc
+ 
 # Git
 mv ~/.ssh/github_rsa ~/.ssh/id_rsa
 chmod 600 ~/.ssh/id_rsa
