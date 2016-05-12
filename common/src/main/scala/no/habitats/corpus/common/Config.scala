@@ -78,7 +78,6 @@ object Config {
   lazy val sparkProps = {
     Log.v("NO SPARK CONFIG, USING DEFAULT. THIS SHOULD ONLY HAPPEN DURING TESTING.")
     sparkConfig = configRoot + "spark_local.properties"
-
     val conf = new Properties
     val propsFile = Try(Source.fromInputStream(getClass.getResourceAsStream(sparkConfig))(Codec.UTF8).bufferedReader()).getOrElse(new FileReader(new File(sparkConfig)))
     conf.load(propsFile)
