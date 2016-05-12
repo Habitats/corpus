@@ -36,10 +36,17 @@ object Config {
 
   def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.txt"
 
-  private      var args           : Arguments = Arguments()
-  private      var sparkConfig    : String    = null
-  private      var corpusConfig   : String    = null
-  private lazy val localConfigRoot: String    = sys.env("DROPBOX_HOME") + "/code/projects/corpus/common/src/main/resources/"
+  private var args           : Arguments = Arguments()
+  private var sparkConfig    : String    = null
+  private val configRoot: String    = {
+    val c = if (System.getProperty("os.name").startsWith("Windows")) {
+      "%DROPBOX_HOME%/code/projects/corpus/common/src/main/resources/"
+    } else {
+      "~/corpus/"
+    }
+    formatPath(c)
+  }
+  private val corpusConfig   : String    = configRoot + "corpus_local.properties"
 
   def setArgs(arr: Array[String]) = {
     lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
@@ -70,7 +77,7 @@ object Config {
 
   lazy val sparkProps = {
     Log.v("NO SPARK CONFIG, USING DEFAULT. THIS SHOULD ONLY HAPPEN DURING TESTING.")
-    sparkConfig = localConfigRoot + "spark_local.properties"
+    sparkConfig = configRoot + "spark_local.properties"
 
     val conf = new Properties
     val propsFile = Try(Source.fromInputStream(getClass.getResourceAsStream(sparkConfig))(Codec.UTF8).bufferedReader()).getOrElse(new FileReader(new File(sparkConfig)))
@@ -80,11 +87,6 @@ object Config {
 
   lazy val conf = {
     Log.v("NO CORPUS CONFIG, USING DEFAULT. THIS SHOULD ONLY HAPPEN DURING TESTING.")
-    corpusConfig = if (System.getProperty("os.name").startsWith("Windows")) {
-      localConfigRoot + "corpus_local.properties"
-    } else {
-      "/corpus_cluster.properties"
-    }
     val present = new File(corpusConfig).exists()
     Log.v(s"Loading config (present: $present): " + corpusConfig)
     val conf = new Properties
