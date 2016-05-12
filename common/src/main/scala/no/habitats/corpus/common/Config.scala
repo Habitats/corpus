@@ -83,7 +83,7 @@ object Config {
     corpusConfig = if (System.getProperty("os.name").startsWith("Windows")) {
       localConfigRoot + "corpus_local.properties"
     } else {
-      "~/corpus/common/src/main/resources/corpus_cluster.properties"
+      "/common/corpus_cluster.properties"
     }
     val present = new File(corpusConfig).exists()
     Log.v(s"Loading config (present: $present): " + corpusConfig)
