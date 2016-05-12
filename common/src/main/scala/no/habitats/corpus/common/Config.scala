@@ -36,9 +36,9 @@ object Config {
 
   def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.txt"
 
-  private var args           : Arguments = Arguments()
-  private var sparkConfig    : String    = null
-  private var corpusConfig   : String    = null
+  private      var args           : Arguments = Arguments()
+  private      var sparkConfig    : String    = null
+  private      var corpusConfig   : String    = null
   private lazy val localConfigRoot: String    = sys.env("DROPBOX_HOME") + "/code/projects/corpus/common/src/main/resources/"
 
   def setArgs(arr: Array[String]) = {
@@ -83,7 +83,7 @@ object Config {
     corpusConfig = if (System.getProperty("os.name").startsWith("Windows")) {
       localConfigRoot + "corpus_local.properties"
     } else {
-      "/common/corpus_cluster.properties"
+      "/corpus_cluster.properties"
     }
     val present = new File(corpusConfig).exists()
     Log.v(s"Loading config (present: $present): " + corpusConfig)
@@ -94,11 +94,16 @@ object Config {
   }
 
   def formatPath(path: String): String = {
-    path
-      .replace("~", System.getProperty("user.home"))
-      .replace("%ARCHIVE_HOME%", sys.env("ARCHIVE_HOME"))
-      .replace("%DROPBOX_HOME%", sys.env("DROPBOX_HOME"))
-      .replace("\\", "/")
+    if (System.getProperty("os.name").startsWith("Windows")) {
+      path
+        .replace("%ARCHIVE_HOME%", sys.env("ARCHIVE_HOME"))
+        .replace("%DROPBOX_HOME%", sys.env("DROPBOX_HOME"))
+        .replace("\\", "/")
+    } else {
+      path
+        .replace("~", System.getProperty("user.home"))
+        .replace("\\", "/")
+    }
   }
 
   // static
