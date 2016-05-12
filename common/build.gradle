@@ -9,6 +9,7 @@ configurations {
     }
 }
 
+import org.apache.tools.ant.taskdefs.condition.Os
 dependencies {
 
     // Spark
@@ -36,7 +37,9 @@ dependencies {
     compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.9-SNAPSHOT'
     compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.9-SNAPSHOT'
     compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT'
-    compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT:windows-x86_64' // Native crash otherwise
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT:windows-x86_64' // Native crash otherwise
+    }
     compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
 
     compile 'org.apache.commons:commons-collections4:4.1' // fixed size fifo queue
