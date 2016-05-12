@@ -9,7 +9,7 @@ object CorpusContext {
   lazy val sc = {
     System.setProperty("hadoop.home.dir", "C:\\hadoop\\")
     val conf = new SparkConf()
-    if (System.getProperty("os.name").startsWith("Windows")) {
+    if (Config.local) {
        conf.setAll(Config.sparkProps.asScala)
       //      .set("spark.serializer", "org.apache.spark.serializer.KryoSerializer")
       //      .set("spark.kryoserializer.buffer", "256m")

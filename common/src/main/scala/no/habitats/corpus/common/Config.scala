@@ -36,17 +36,17 @@ object Config {
 
   def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.txt"
 
-  private var args           : Arguments = Arguments()
-  private var sparkConfig    : String    = null
-  private val configRoot: String    = {
-    val c = if (System.getProperty("os.name").startsWith("Windows")) {
+  private var args        : Arguments = Arguments()
+  private var sparkConfig : String    = null
+  private val configRoot  : String    = {
+    val c = if (local) {
       "%DROPBOX_HOME%/code/projects/corpus/common/src/main/resources/"
     } else {
       "~/corpus/"
     }
     formatPath(c)
   }
-  private val corpusConfig   : String    = configRoot + "corpus_local.properties"
+  private val corpusConfig: String    = configRoot + "corpus_local.properties"
 
   def setArgs(arr: Array[String]) = {
     lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
@@ -62,8 +62,10 @@ object Config {
 
     Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
     Log.v("CORPUS CONFIG: " + corpusConfig + "\n\t" + conf.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
-    Log.v("SPARK CONFIG: " + sparkConfig + "\n\t" + sparkProps.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
+    if (local) Log.v("SPARK CONFIG: " + sparkConfig + "\n\t" + sparkProps.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
   }
+
+  def local: Boolean = System.getProperty("os.name").startsWith("Windows")
 
   def dataFile(s: String): BufferedSource = Try(Source.fromFile(s)(Codec.ISO8859)) match {
     case Success(file) => Log.v("Loading data file: " + s); file
@@ -95,7 +97,7 @@ object Config {
   }
 
   def formatPath(path: String): String = {
-    if (System.getProperty("os.name").startsWith("Windows")) {
+    if (local) {
       path
         .replace("%ARCHIVE_HOME%", sys.env("ARCHIVE_HOME"))
         .replace("%DROPBOX_HOME%", sys.env("DROPBOX_HOME"))
