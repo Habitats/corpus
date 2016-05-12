@@ -39,7 +39,7 @@ object Config {
   private var args           : Arguments = Arguments()
   private var sparkConfig    : String    = null
   private var corpusConfig   : String    = null
-  private val localConfigRoot: String    = sys.env("DROPBOX_HOME") + "/code/projects/corpus/common/src/main/resources/"
+  private lazy val localConfigRoot: String    = sys.env("DROPBOX_HOME") + "/code/projects/corpus/common/src/main/resources/"
 
   def setArgs(arr: Array[String]) = {
     lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap

@@ -9,7 +9,7 @@ sudo apt-get install -y htop
 
 ## .bashrc 
 echo "alias submit2='cd ~/corpus/ai/ && git pull && gradle shadowJar && spark-submit --class no.habitats.corpus.spark.SparkUtil build/libs/ai-all.jar local=false '" >> ~/.bashrc
-echo "alias submit='spark-submit --class no.habitats.corpus.spark.SparkUtil --jars ~/corpus/ai/build/libs/ai-all.jar ~/ai.jar local=false '" >> ~/.bashrc
+echo "alias submit='spark-submit --class no.habitats.corpus.spark.SparkUtil --jars ~/corpus/ai/build/libs/ai-all.jar ~/corpus/ai/build/libs/ai.jar local=false '" >> ~/.bashrc
 
 # Git
 mv ~/.ssh/github_rsa ~/.ssh/id_rsa
@@ -18,7 +18,7 @@ chmod 600 ~/.ssh/google_compute_engine
 eval $(ssh-agent -s) && ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa; yes | git clone http://github.com/Habitats/corpus.git'
 git config --global user.email "mail@habitats.no"
 git config --global user.name "Patrick Skjennum"
-cd corpus && git remote set-url origin git@github.com:Habitats/corpus.git && cd ..
+cd corpus && git remote set-url origin git@github.com:Habitats/corpus.git && git pull && cd ..
 
 # Maven
 if [ ! -f ~/apache-maven-3.3.3-bin.tar.gz ]; then
@@ -39,7 +39,7 @@ if [ ! -f corpus-archive.zip ]; then
 	echo "Downloading ..."
     wget --progress=bar:force:noscroll https://www.dropbox.com/s/n0750x98l0hsrhp/corpus-archive.zip
 fi
-if [ -d data ]; then
+if [ ! -d data ]; then
 	echo "Unzipping ..."
 	unzip -o corpus-archive.zip
 	mv models ~/corpus/
@@ -84,7 +84,7 @@ mvn clean install -DskipTests -Dmaven.javadoc.skip=true
 # Gradle
 
 cd ~
-if [ -d opt ]; then
+if [ ! -d opt ]; then
 	mkdir -p ~/opt/packages/gradle 
 	cd $_ 
 	wget --progress=bar:force:noscroll https://services.gradle.org/distributions/gradle-2.10-bin.zip 
@@ -99,7 +99,7 @@ if [ -d opt ]; then
 fi
 
 cd ~/corpus/ 
-~/opt/gradle/bin/gradle clean jar shadowJar
+~/opt/gradle/bin/gradle clean ai:jar ai:shadowJar
 
 # Copy over the raw data for easy access. A better solution would be to use HDFS, but whatever. edit: Actually HDFS was slow as hell.
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-0:~/
