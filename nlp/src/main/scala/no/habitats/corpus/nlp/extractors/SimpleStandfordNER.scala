@@ -1,7 +1,8 @@
 package no.habitats.corpus.npl.extractors
 
 import edu.stanford.nlp.simple.Document
-import no.habitats.corpus.npl.models.Sentence
+import no.habitats.corpus.nlp.extractors.Extractor
+import no.habitats.corpus.nlp.models.Sentence
 
 import scala.collection.JavaConverters._
 

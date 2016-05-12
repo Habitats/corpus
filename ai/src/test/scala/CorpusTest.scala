@@ -37,7 +37,7 @@ class CorpusTest extends FunSuite with Samples {
     import no.habitats.corpus.common.models.Entity
     import no.habitats.corpus.common.{Config, Spotlight}
 
-    val entities = Spotlight.fetchEntities(Config.dataPath + "nyt/dbpedia_json_0.25.json")
+    val entities = Spotlight.fetchEntities(Config.dataPath + "dbpedia/dbpedia_json_0.25.json")
 
     val start = System.currentTimeMillis()
     assert(entities.values.forall(e => Entity.fromStringSerialized(Entity.toStringSerialized(e)) == e))

@@ -10,8 +10,6 @@ subprojects {
         mavenLocal()
         mavenCentral()
 //        maven { url "https://oss.sonatype.org/content/repositories/snapshots" }
-        flatDir(dirs: 'models') // Yes you need both. Don't ask why.
-        flatDir(dirs: 'ai/models')
     }
 
     compileScala {
@@ -31,6 +29,4 @@ subprojects {
         compile "org.scala-lang:scala-compiler:2.10.5"
         compile "org.scala-lang:scala-reflect:2.10.5"
     }
-
-
 }

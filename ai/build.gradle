@@ -15,15 +15,7 @@ dependencies {
     compile 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.22.2'
     compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.22.2'
 
-    // OpenNLP
-    compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging
 
-    // Standford NPL
-    compile fileTree('models/binary')
-    compile('edu.stanford.nlp:stanford-corenlp:3.6.0') { exclude group: 'xml-apis' }
-    compile ':stanford-corenlp-3.6.0-models@jar'
-    compile 'com.google.protobuf:protobuf-java:2.6.1'
-    compile 'com.google.guava:guava:19.0'
 }
 
 task pathingJar(type: Jar) {

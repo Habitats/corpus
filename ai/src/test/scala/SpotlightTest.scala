@@ -14,7 +14,7 @@ class SpotlightTest extends FunSuite with Samples {
   val log = LoggerFactory.getLogger(getClass)
 
   test("fetch annotations") {
-    val test2 = Config.testFile("npl/article.txt").getLines().mkString(" ")
+    val test2 = Config.testFile("nlp/article.txt").getLines().mkString(" ")
     val ann = Spotlight.fetchAnnotations(test2)
     ann.foreach(Log.v)
   }

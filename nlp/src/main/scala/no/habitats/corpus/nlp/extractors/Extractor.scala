@@ -1,6 +1,6 @@
-package no.habitats.corpus.npl.extractors
+package no.habitats.corpus.nlp.extractors
 
-import no.habitats.corpus.npl.models.Sentence
+import no.habitats.corpus.nlp.models.Sentence
 
 /**
   * Created by mail on 04.02.2016.

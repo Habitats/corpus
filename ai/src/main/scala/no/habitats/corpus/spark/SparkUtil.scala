@@ -35,7 +35,6 @@ object SparkUtil {
       case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "misc" =>
-        Fetcher.jsonToTxt()
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
@@ -98,11 +97,10 @@ object SparkUtil {
       case "trainFFNConfidence" => Trainer.trainFFNConfidence()
 
       case "train" =>
-        Trainer.trainFFNOrdered(false)
+//        Trainer.trainFFNOrdered(false)
 //        Trainer.trainFFNShuffled(false)
 //        Trainer.trainFFNOrderedTypes(false)
-//        Trainer.trainFFNConfidence()
-        Fetcher.jsonToTxt()
+        Trainer.trainFFNConfidence()
 
       // Testing
       case "testModels" => Tester.testModels()

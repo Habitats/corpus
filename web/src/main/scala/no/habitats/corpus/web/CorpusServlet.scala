@@ -57,7 +57,7 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
   get("/file/*") {
     contentType = formats("html")
     val (file, confidence) = parseParams
-    val text = Config.testFile(s"npl/${file}").getLines().mkString("\n")
+    val text = Config.testFile(s"nlp/${file}").getLines().mkString("\n")
     detailedInfo(text, confidence)
   }
 
@@ -145,8 +145,8 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
 
   get("/") {
     contentType = formats("html")
-    val longArticle = Config.testFile("npl/article.txt").getLines().mkString("\n")
-    val shortArticle = Config.testFile("npl/article_short.txt").getLines().mkString("\n")
+    val longArticle = Config.testFile("nlp/article.txt").getLines().mkString("\n")
+    val shortArticle = Config.testFile("nlp/article_short.txt").getLines().mkString("\n")
     val fb = "/m/02bv9"
     <html>
       <body>

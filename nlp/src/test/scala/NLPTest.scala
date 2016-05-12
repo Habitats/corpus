@@ -1,9 +1,11 @@
+
 /**
   * Created by Patrick on 13.11.2015.
   */
 
 import no.habitats.corpus.common.Config
-import no.habitats.corpus.npl.extractors.{OpenNLP, SimpleStandfordNER}
+import no.habitats.corpus.nlp.extractors.OpenNLP
+import no.habitats.corpus.npl.extractors.SimpleStandfordNER
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
@@ -13,8 +15,8 @@ import org.slf4j.LoggerFactory
 class NLPTest extends FunSuite {
 
   val log = LoggerFactory.getLogger(getClass)
-  lazy val test  = Config.testFile("npl/article.txt").getLines().mkString(" ")
-  lazy val test2 = Config.testFile("npl/article_short.txt").getLines().mkString(" ")
+  lazy val test  = Config.testFile("nlp/article.txt").getLines().mkString(" ")
+  lazy val test2 = Config.testFile("nlp/article_short.txt").getLines().mkString(" ")
 
   test("extraction") {
     val e1 = OpenNLP.extract(test2)

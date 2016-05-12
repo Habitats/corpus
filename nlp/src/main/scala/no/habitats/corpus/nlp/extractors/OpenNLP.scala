@@ -1,9 +1,9 @@
-package no.habitats.corpus.npl.extractors
+package no.habitats.corpus.nlp.extractors
 
 import java.io.FileInputStream
 
 import no.habitats.corpus.common.Config
-import no.habitats.corpus.npl.models.Sentence
+import no.habitats.corpus.nlp.models.Sentence
 import opennlp.tools.namefind.{NameFinderME, TokenNameFinderModel}
 import opennlp.tools.postag.{POSModel, POSTaggerME}
 import opennlp.tools.sentdetect.{SentenceDetectorME, SentenceModel}

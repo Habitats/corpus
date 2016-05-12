@@ -1,4 +1,4 @@
-package no.habitats.corpus.npl.models
+package no.habitats.corpus.nlp.models
 
 /**
   * Created by mail on 04.02.2016.

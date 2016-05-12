@@ -1,0 +1,20 @@
+apply plugin: 'application'
+
+repositories {
+    flatDir(dirs: 'models') // Yes you need both. Don't ask why.
+    flatDir(dirs: 'ai/models')
+}
+
+dependencies {
+    compile project(':common')
+
+    // OpenNLP
+    compile 'org.apache.opennlp:opennlp-tools:1.6.0' // POS tagging
+
+    // Standford NPL
+    compile fileTree('models/binary')
+    compile('edu.stanford.nlp:stanford-corenlp:3.6.0') { exclude group: 'xml-apis' }
+    compile ':stanford-corenlp-3.6.0-models@jar'
+    compile 'com.google.protobuf:protobuf-java:2.6.1'
+    compile 'com.google.guava:guava:19.0'
+}
