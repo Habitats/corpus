@@ -12,37 +12,34 @@ object Config {
   val seed = 123
   val NONE = "NONE"
 
-  lazy val freebaseToWord2VecIDs100 = dataPath + "nyt/confidence/fb_w2v_100.txt"
-  lazy val dbpedia                  = dataPath + "nyt/dbpedia-all-0.5.json"
-  lazy val dbpediaMini25            = dataPath + "nyt/dbpedia_mini_json_0.25.json"
-  lazy val dbpediaMini50            = dataPath + "nyt/dbpedia_mini_json_0.50.json"
-  lazy val dbpediaMini75            = dataPath + "nyt/dbpedia_mini_json_0.75.json"
-  lazy val dbpediaMini100           = dataPath + "nyt/dbpedia_mini_json_1.00.json"
-  lazy val combinedIds              = dataPath + "nyt/combined_ids_0.5.txt"
-  lazy val freebaseToWikidata       = dataPath + "wikidata/fb_to_wd_all.txt"
-  lazy val wikidataToFreebase       = dataPath + "wikidata/wd_to_fb.txt"
-  lazy val wikidataToDbPedia        = dataPath + "wikidata/wikidata_to_dbpedia.txt"
+  lazy val dbpedia            = dataPath + "dbpedia/dbpedia-all-0.5.json"
+  lazy val dbpediaMini25      = dataPath + "dbpedia/dbpedia_mini_json_0.25.json"
+  lazy val dbpediaMini50      = dataPath + "dbpedia/dbpedia_mini_json_0.50.json"
+  lazy val dbpediaMini75      = dataPath + "dbpedia/dbpedia_mini_json_0.75.json"
+  lazy val dbpediaMini100     = dataPath + "dbpedia/dbpedia_mini_json_1.00.json"
+  lazy val combinedIds        = dataPath + "dbpedia/combined_ids_0.5.txt"
+  lazy val freebaseToWikidata = dataPath + "dbpedia/fb_to_wd_all.txt"
+  lazy val wikidataToFreebase = dataPath + "dbpedia/wd_to_fb.txt"
+  lazy val wikidataToDbPedia  = dataPath + "dbpedia/wikidata_to_dbpedia.txt"
 
   lazy val cats: Seq[String] = Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
 
   def freebaseToWord2VecIDs = dataPath + s"fb_ids_with_w2v.txt"
   def freebaseToWord2Vec(confidence: Double) = {
-    //    dataPath + s"nyt/fb_w2v_$confidence.txt"
-    s"r:/fb_w2v_$confidence.txt"
+    dataPath + s"w2v/fb_w2v_$confidence.txt"
+    //    s"r:/fb_w2v_$confidence.txt"
   }
   def documentVectors(confidence: Double) = {
-//    dataPath + s"nyt/document_vectors_$confidence.json"
-    s"r:/document_vectors_$confidence.json"
+    dataPath + s"w2v/document_vectors_$confidence.txt"
+    //    s"r:/document_vectors_$confidence.json"
   }
 
-  def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.json"
+  def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.txt"
 
   private var args           : Arguments = Arguments()
   private var sparkConfig    : String    = null
   private var corpusConfig   : String    = null
   private val localConfigRoot: String    = sys.env("DROPBOX_HOME") + "/code/projects/corpus/common/src/main/resources/"
-
-  val corpusApiURL = "http://corpus.habitats.no:8090/vec"
 
   def setArgs(arr: Array[String]) = {
     lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap

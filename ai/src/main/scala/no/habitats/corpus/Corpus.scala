@@ -29,7 +29,7 @@ object Corpus {
   // transformations
   def toNYT(file: File): NYTCorpusDocument = rawNYTParser.parseNYTCorpusDocumentFromFile(file, false)
 
-  def toArticle(nyt: NYTCorpusDocument): Article = Article.fromNYT(nyt)
+  def toArticle(nyt: NYTCorpusDocument): Article = ArticleUtils.fromNYT(nyt)
 
   def toIPTC(article: Article): Article = article.addIptc(Config.broadMatch)
 
@@ -42,7 +42,7 @@ object Corpus {
 
 }
 
-object Article {
+object ArticleUtils {
   import scala.collection.JavaConverters._
 
   implicit def stringToOption(s: String): Option[String] = Option(s)

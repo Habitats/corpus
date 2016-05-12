@@ -54,11 +54,11 @@ object Trainer {
   }
 
   def trainFFNConfidence() = {
-    def train(confidence: Int): Array[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.json").collect
-    def validation(confidence: Int): Array[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.json").collect
+    def train(confidence: Int): Array[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt").collect
+    def validation(confidence: Int): Array[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt").collect
     Config.resultsFileName = "train_ffn_confidence.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = 1, train = null, validation = null, minibatchSize = 500, epochs = 5)
+    val prefs = NeuralPrefs(learningRate = 0.05, train = null, validation = null, minibatchSize = 500, epochs = 5)
     Seq(25, 50, 75, 100).foreach(confidence => {
       Log.r(s"Training with confidence ${confidence} ...")
       Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs.copy(train = train(confidence), validation = validation(confidence)), confidence.toString))
@@ -71,7 +71,7 @@ object Trainer {
     Config.resultsCatsFileName = Config.resultsFileName
     val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 2)
     for {
-      lr <- Seq(2.0)
+      lr <- Seq(0.5)
       mbs <- Seq(500)
     } yield Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs.copy(learningRate = lr, minibatchSize = mbs)))
   }
@@ -81,10 +81,7 @@ object Trainer {
     Config.resultsFileName = "train_ffn_ordered_types.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 2)
-    for {
-      lr <- Seq(0.05)
-      mbs <- Seq(500)
-    } yield Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs.copy(learningRate = lr, minibatchSize = mbs)))
+    Config.cats.foreach(c => trainNeuralNetwork(c, trainBinaryFFN, prefs))
   }
 
   def trainFFNShuffled(sub: Boolean = true) = {

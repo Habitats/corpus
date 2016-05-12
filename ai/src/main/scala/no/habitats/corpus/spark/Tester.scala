@@ -107,7 +107,7 @@ object Tester {
     Config.resultsCatsFileName = "test_confidence_cats.txt"
     Log.h("Testing Confidence Levels")
     for {confidence <- Seq(25, 50, 75, 100)}
-      yield FeedforwardTester(s"ffn-w2v-ordered-confidence-${confidence}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.json").collect)
+      yield FeedforwardTester(s"ffn-w2v-ordered-confidence-${confidence}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt").collect)
   }
 
   /** Test model on every test set matching name */

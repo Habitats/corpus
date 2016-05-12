@@ -35,7 +35,7 @@ object SparkUtil {
       case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "misc" =>
-        Cacher.scrambler()
+        Fetcher.jsonToTxt()
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
@@ -65,7 +65,7 @@ object SparkUtil {
       case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
       case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
       case "cache" =>
-        Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".json"), s.toString))
+        Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".txt"), s.toString))
       //        Cacher.cacheAndSplitLength()
       //        Cacher.cacheAndSplitTime()
       //        Cacher.cacheSubSampledOrdered()
@@ -99,9 +99,10 @@ object SparkUtil {
 
       case "train" =>
         Trainer.trainFFNOrdered(false)
-        Trainer.trainFFNShuffled(false)
-        Trainer.trainFFNOrderedTypes(false)
-      //        Trainer.trainFFNConfidence()
+//        Trainer.trainFFNShuffled(false)
+//        Trainer.trainFFNOrderedTypes(false)
+//        Trainer.trainFFNConfidence()
+        Fetcher.jsonToTxt()
 
       // Testing
       case "testModels" => Tester.testModels()

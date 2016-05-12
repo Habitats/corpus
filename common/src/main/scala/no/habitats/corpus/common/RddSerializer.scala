@@ -12,7 +12,7 @@ trait RddSerializer {
     val path = Config.cachePath + s"${name.replaceAll("[,\\s+]+", "_")}"
     FileUtils.deleteDirectory(new File(path))
     rdd.coalesce(1, shuffle = true).saveAsTextFile(path)
-    val file = new File(path + ".json")
+    val file = new File(path + ".txt")
     Files.move(new File(path + "/part-00000").toPath, file.toPath, StandardCopyOption.REPLACE_EXISTING)
     FileUtils.deleteDirectory(new File(path))
   }

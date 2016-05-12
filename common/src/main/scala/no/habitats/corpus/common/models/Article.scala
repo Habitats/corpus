@@ -83,7 +83,7 @@ object Article {
   def fromStringSerialized(string: String): Article = {
     val annSplit = string.split("\t\t")
     val s = annSplit(0).split("\t ")
-    val a = annSplit(1)
+    val a = if(annSplit.length > 1) annSplit(1) else ""
     Article(
       id = s(0),
       hl = s(1),

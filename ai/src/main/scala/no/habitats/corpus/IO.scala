@@ -72,14 +72,14 @@ object IO {
 
 object JsonSingle {
   implicit val formats  = Serialization.formats(NoTypeHints)
-  lazy     val jsonFile = new File(Config.dataPath + "nyt_corpus.json")
+  lazy     val jsonFile = new File(Config.dataPath + "nyt_corpus.txt")
 
   def cacheRawNYTtoJson(count: Int = Config.count, articles: Seq[Article] = Nil) = {
     jsonFile.delete
     jsonFile.createNewFile
     val p = new PrintWriter(jsonFile, "ISO-8859-1")
     (if (articles == Nil) Corpus.articlesFromXML(count = count) else articles)
-      .map(JsonSingle.toSingleJson)
+      .map(Article.toStringSerialized)
       .foreach(p.println)
     p.close
   }
@@ -92,11 +92,12 @@ object JsonSingle {
   }
 
   def toSingleJson(article: Article): String = {
-    write(article)
+    write(article.copy(body = article.body.replace("\n", " ")))
   }
 
   def fromSingleJson(string: String): Article = {
-    read[Article](string)
+    val a = read[Article](string)
+    a.copy(body = a.body.replace("\n", " "))
   }
 }
 

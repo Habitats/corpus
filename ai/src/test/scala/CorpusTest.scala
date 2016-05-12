@@ -72,7 +72,7 @@ class CorpusTest extends FunSuite with Samples {
 
   test("article serialization bench"){
     val start2 = System.currentTimeMillis()
-    val articles = Fetcher.annotatedRddMini.take(100000)
+    val articles = Fetcher.rdd.take(100000)
     val annotations = articles.flatMap(_.ann.values)
     assert(annotations.forall(e => {
       val s: String = Annotation.toStringSerialized(e)
@@ -83,6 +83,7 @@ class CorpusTest extends FunSuite with Samples {
     assert(articles.forall(e => JsonSingle.fromSingleJson(JsonSingle.toSingleJson(e)) == e))
     Log.v("Json serialization: " + (System.currentTimeMillis() - start2))
 
+    var i = 0
     val start = System.currentTimeMillis()
     assert(articles.forall(e => {
       val serialized: String = Article.toStringSerialized(e)
