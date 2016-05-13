@@ -51,7 +51,7 @@ object FeedForward {
     val net = new MultiLayerNetwork(conf)
     net.init()
     Log.r(s"Initialized ${net.getLayers.length} layer Feedforward net [${net.numParams()} params] - ${neuralPrefs}")
-    net.setListeners(CorpusIterationListener())
+    net.setListeners(neuralPrefs.listener)
     if (neuralPrefs.histogram) {
       net.setListeners(new HistogramIterationListener(1))
     }
