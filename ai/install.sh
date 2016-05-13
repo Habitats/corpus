@@ -22,7 +22,7 @@ chmod 600 ~/.ssh/google_compute_engine
 eval $(ssh-agent -s) && ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa; yes | git clone http://github.com/Habitats/corpus.git'
 git config --global user.email "mail@habitats.no"
 git config --global user.name "Patrick Skjennum"
-cd corpus && git remote set-url origin git@github.com:Habitats/corpus.git && git pull && cd ..
+cd ~/corpus && git remote set-url origin http://github.com/Habitats/corpus.git && git pull && cd ..
 
 # Maven
 if [ ! -d /usr/local/apache-maven-3.3.3 ]; then

@@ -21,7 +21,7 @@ object Trainer {
   implicit def collect(rdd: RDD[Article]): Array[Article] = rdd.collect()
 
   def trainRNNSpark() = {
-    val (train, validation) = Fetcher.ordered(true)
+    val (train, validation) = Fetcher.ordered(false)
     Config.resultsFileName = "train_rnn.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val prefs = NeuralPrefs(train = train, validation = validation)
@@ -29,7 +29,7 @@ object Trainer {
   }
 
   def trainFFNSpark() = {
-    val (train, validation) = Fetcher.ordered(true)
+    val (train, validation) = Fetcher.ordered(false)
     Config.resultsFileName = "train_ffn_spark.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     W2VLoader.preload()
