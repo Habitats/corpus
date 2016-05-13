@@ -42,7 +42,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
     "Precision" -> f"$precision%.3f",
     "Accuracy" -> f"$accuracy%.3f",
     "F-score" -> f"$fscore%.3f",
-    "Error" -> f"${neuralPrefs.map(_.listener.average).map(a => s"$a%.10f").getOrElse("N/A")}",
+    "Error" -> f"${neuralPrefs.map(_.listener.average).map(a => f"$a%.10f").getOrElse("N/A")}",
     "LR" -> f"${net.getLayerWiseConfigurations.getConf(0).getLayer.getLearningRate}",
     "MBS" -> f"${neuralPrefs.map(_.minibatchSize).getOrElse("N/A")}",
     "Hidden" -> f"$numHidden"

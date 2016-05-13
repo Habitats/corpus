@@ -41,7 +41,7 @@ object CNNIris {
       .seed(seed)
       .iterations(iterations)
       .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-      .list(2)
+      .list()
       .layer(0,
         new ConvolutionLayer.Builder(1, 1)
           .nIn(nChannels)

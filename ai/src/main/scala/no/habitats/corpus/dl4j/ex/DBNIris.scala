@@ -54,7 +54,7 @@ object DBNIris {
       .optimizationAlgo(OptimizationAlgorithm.CONJUGATE_GRADIENT) // backpropr to calculate gradients
       .l1(1e-1).regularization(true).l2(2e-4) // regularization fights overfitting
       .useDropConnect(true) // helps the net generazile from training data by randomly cancelling out the interlayer edges between nodes
-      .list(2) // number of layers (0-indexed)
+      .list() // number of layers (0-indexed)
       .layer(0,
       new RBM.Builder(RBM.HiddenUnit.RECTIFIED, RBM.VisibleUnit.GAUSSIAN) // apply gaussian white noise to normalize the distribution of continious data
         .nIn(numRows * numColumns) // # input nodes. rows = features

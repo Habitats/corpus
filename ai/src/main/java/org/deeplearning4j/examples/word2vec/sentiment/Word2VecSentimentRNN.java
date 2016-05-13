@@ -80,7 +80,7 @@ public class Word2VecSentimentRNN {
         new NeuralNetConfiguration.Builder().optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
             .updater(Updater.RMSPROP).regularization(true).l2(1e-5).weightInit(WeightInit.XAVIER)
             .gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue).gradientNormalizationThreshold(1.0)
-            .learningRate(0.0018).list(2).layer(0, new GravesLSTM.Builder().nIn(vectorSize).nOut(200).activation("softsign").build())
+            .learningRate(0.0018).list().layer(0, new GravesLSTM.Builder().nIn(vectorSize).nOut(200).activation("softsign").build())
             .layer(1, new RnnOutputLayer.Builder().activation("softmax").lossFunction(LossFunctions.LossFunction.MCXENT).nIn(200).nOut(2)
                 .build()).pretrain(false).backprop(true).build();
 
