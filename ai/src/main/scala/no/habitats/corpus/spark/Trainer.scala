@@ -32,7 +32,6 @@ object Trainer {
     val (train, validation) = Fetcher.ordered(false)
     Config.resultsFileName = "train_ffn_spark.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    W2VLoader.init(true)
     for {
       lr <- Seq(0.075, 0.1, 0.2, 0.3, 0.4)
       mbs <- Seq(1000, 2000, 3000)
@@ -132,7 +131,6 @@ object Trainer {
   }
 
   def sparkRNNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
-    W2VLoader.init(true)
     var net = RNN.createBinary(neuralPrefs)
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
@@ -152,7 +150,6 @@ object Trainer {
   }
 
   def sparkFFNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
-    W2VLoader.init(true)
     var net = FeedForward.create(neuralPrefs)
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
@@ -172,7 +169,6 @@ object Trainer {
   }
 
   def binaryRNNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
-    W2VLoader.init(false)
     val net = RNN.createBinary(neuralPrefs)
     val trainIter = new RNNIterator(neuralPrefs.train, Some(label), batchSize = neuralPrefs.minibatchSize)
     val testIter = new RNNIterator(neuralPrefs.validation, Some(label), batchSize = neuralPrefs.minibatchSize)
@@ -180,7 +176,6 @@ object Trainer {
   }
 
   def brinaryFFNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
-    W2VLoader.init(false)
     val net = FeedForward.create(neuralPrefs)
     val trainIter = new FeedForwardIterator(neuralPrefs.train, label, batchSize = neuralPrefs.minibatchSize)
     val testIter = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize)
@@ -188,7 +183,6 @@ object Trainer {
   }
 
   def trainBinaryFFNBoW(label: String, neuralPrefs: NeuralPrefs, phrases: Array[String]): MultiLayerNetwork = {
-    W2VLoader.init(false)
     val net = FeedForward.createBoW(neuralPrefs, phrases.size)
     val trainIter = new FeedForwardIterator(neuralPrefs.train, label, batchSize = neuralPrefs.minibatchSize, phrases = phrases)
     val testIter = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize, phrases = phrases)

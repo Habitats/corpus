@@ -35,25 +35,22 @@ if [ ! -d /usr/local/apache-maven-3.3.3 ]; then
 	echo "Maven is on version `mvn -v`"
 fi
 
-# Downlaod corpus
+# Gradle
 cd ~
-if [ ! -d data ]; then
-	mkdir data && cd data
-	if [ ! -f fb_w2v_0.5.rar ]; then 
-		wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/fb_w2v_0.5.rar
-	fi
-	if [ ! -f document_vectors_0.5.rar ]; then 
-		wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/document_vectors_0.5.rar
-	fi
-	if [ ! -f nyt.rar ]; then
-	    wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/nyt.rar
-	fi
-	unrar e nyt.rar && mkdir nyt && mv *txt nyt/ 
-	unrar e document_vectors_0.5.rar
-	unrar e fb_w2v_0.5.rar
-	mkdir w2v && mv *txt w2v/ 
-	rm *rar
+if [ ! -d opt ]; then
+	mkdir -p ~/opt/packages/gradle 
+	cd $_ 
+	wget --progress=bar:force:noscroll https://services.gradle.org/distributions/gradle-2.10-bin.zip 
+	unzip -o gradle-2.10-bin.zip 
+	ln -s ~/opt/packages/gradle/gradle-2.10/ ~/opt/gradle 
+	echo "if [ -d \"\$HOME/opt/gradle\" ]; then
+	    export GRADLE_HOME=\"\$HOME/opt/gradle\"
+	    PATH=\"\$PATH:\$GRADLE_HOME/bin\"
+	fi" >> ~/.profile
+	source ~/.profile
+	source ~/.bashrc
 fi
+
 
 # cmake
 cd ~ 
@@ -95,24 +92,26 @@ if [ ! -d dl4j ]; then
 	/usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true
 fi
 
-# Gradle
+# Downlaod corpus
 cd ~
-if [ ! -d opt ]; then
-	mkdir -p ~/opt/packages/gradle 
-	cd $_ 
-	wget --progress=bar:force:noscroll https://services.gradle.org/distributions/gradle-2.10-bin.zip 
-	unzip -o gradle-2.10-bin.zip 
-	ln -s ~/opt/packages/gradle/gradle-2.10/ ~/opt/gradle 
-	echo "if [ -d \"\$HOME/opt/gradle\" ]; then
-	    export GRADLE_HOME=\"\$HOME/opt/gradle\"
-	    PATH=\"\$PATH:\$GRADLE_HOME/bin\"
-	fi" >> ~/.profile
-	source ~/.profile
-	source ~/.bashrc
+if [ ! -d data ]; then
+	mkdir data && cd data
+	mkdir res
+	if [ ! -f fb_w2v_0.5.rar ]; then 
+		wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/fb_w2v_0.5.rar
+	fi
+	if [ ! -f document_vectors_0.5.rar ]; then 
+		wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/document_vectors_0.5.rar
+	fi
+	if [ ! -f nyt.rar ]; then
+	    wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/nyt.rar
+	fi
+	unrar e nyt.rar && mkdir nyt && mv *txt nyt/ 
+	unrar e document_vectors_0.5.rar
+	unrar e fb_w2v_0.5.rar
+	mkdir w2v && mv *txt w2v/ 
+	rm *rar
 fi
-
-cd ~/corpus/ 
-~/opt/gradle/bin/gradle clean ai:jar ai:shadowJar
 
 # Copy over the raw data for easy access. A better solution would be to use HDFS, but whatever. edit: Actually HDFS was slow as hell.
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-0:~/
@@ -121,4 +120,10 @@ scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/corpus/corpu
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-1:~/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-2:~/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-3:~/
+
+# Build
+cd ~/corpus/ 
+~/opt/gradle/bin/gradle clean ai:jar ai:shadowJar
+
+
 

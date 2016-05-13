@@ -75,12 +75,12 @@ private class TextVectorLoader extends VectorLoader {
 sealed class SparkVectorLoader extends VectorLoader {
 
   // Spark broadcasting (it's not pretty but maybe it works?)
-  var bVectors        : Broadcast[Map[String, INDArray]] = null
-  var bDocumentVectors: Broadcast[Map[String, INDArray]] = null
+  lazy val bVectors        : Broadcast[Map[String, INDArray]] = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.freebaseToWord2Vec(W2VLoader.confidence)))
+  lazy val bDocumentVectors: Broadcast[Map[String, INDArray]] = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.documentVectors(W2VLoader.confidence)))
 
   override def preload(): Unit = {
-    bVectors = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.freebaseToWord2Vec(W2VLoader.confidence)))
-    bDocumentVectors = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.documentVectors(W2VLoader.confidence)))
+    bVectors
+    bDocumentVectors
   }
 
   override def contains(fb: String): Boolean = bVectors.value.contains(fb)
@@ -91,18 +91,11 @@ sealed class SparkVectorLoader extends VectorLoader {
 object W2VLoader extends RddSerializer with VectorLoader {
 
   implicit val formats = Serialization.formats(NoTypeHints)
-  var loader: VectorLoader = null
+  lazy val loader: VectorLoader = if (Config.spark) new SparkVectorLoader() else new TextVectorLoader()
 
   // TODO: NOT GOOD
   var confidence  = 0.5
   val featureSize = 1000
-
-  def init(spark: Boolean = false): Unit = {
-    if (loader == null) {
-      loader = if (Config.local) new SparkVectorLoader() else new TextVectorLoader()
-      preload()
-    }
-  }
 
   def preload(): Unit = loader.preload()
 

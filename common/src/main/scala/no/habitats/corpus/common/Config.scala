@@ -57,6 +57,7 @@ object Config {
       iptcFilter = props.get("iptcFilter").map(_.split(",").toSet),
       category = props.get("category"),
       count = props.get("count").map(_.toInt),
+      spark = props.get("spark").map(_.toBoolean),
       useApi = props.get("useApi").map(_.toBoolean)
     )
 
@@ -136,6 +137,7 @@ object Config {
   def job = args.job.getOrElse(conf.getProperty("job"))
   def category = args.category.getOrElse(throw new IllegalArgumentException("NO CATEGORY DEFINED"))
   def useApi = args.useApi.getOrElse(false)
+  def spark = args.spark.getOrElse(false)
 
   case class Arguments(
                         partitions: Option[Int] = None,
@@ -144,6 +146,7 @@ object Config {
                         count: Option[Int] = None,
                         category: Option[String] = None,
                         iptcFilter: Option[Set[String]] = None,
+                        spark: Option[Boolean] = None,
                         useApi: Option[Boolean] = None
                       )
 }
