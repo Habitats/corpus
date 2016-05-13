@@ -46,7 +46,7 @@ object Config {
     }
     formatPath(c)
   }
-  private val corpusConfig: String    = configRoot + "corpus_local.properties"
+  private val corpusConfig: String    = if(local) configRoot + "corpus_local.properties" else "/corpus_cluster.properties"
 
   def setArgs(arr: Array[String]) = {
     lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap

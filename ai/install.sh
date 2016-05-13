@@ -117,6 +117,8 @@ cd ~/corpus/
 
 # Copy over the raw data for easy access. A better solution would be to use HDFS, but whatever. edit: Actually HDFS was slow as hell.
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-0:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/corpus/corpus_local.properties habispam@corpus-w-0:~/corpus/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/corpus/corpus_local.properties habispam@corpus-w-1:~/corpus/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-1:~/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-2:~/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-3:~/
