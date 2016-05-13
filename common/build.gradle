@@ -39,6 +39,8 @@ dependencies {
     compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT'
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT:windows-x86_64' // Native crash otherwise
+    } else {
+        compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT:linux-x86_64' // Native crash otherwise
     }
     compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
 
