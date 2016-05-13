@@ -75,11 +75,11 @@ object Fetcher extends RddSerializer{
   }
 
   def fetchJson(name: String, fraction: Double = 1): RDD[Article] = {
-    limit(sc.textFile(Config.dataPath + name, (Config.partitions * fraction).toInt).map(JsonSingle.fromSingleJson), fraction)
+    limit(sc.textFile("file:///" + Config.dataPath + name, (Config.partitions * fraction).toInt).map(JsonSingle.fromSingleJson), fraction)
   }
 
   def fetch(name: String, fraction: Double = 1): RDD[Article] = {
-    limit(sc.textFile(Config.dataPath + name, (Config.partitions * fraction).toInt).map(Article.fromStringSerialized), fraction)
+    limit(sc.textFile("file:///" + Config.dataPath + name, (Config.partitions * fraction).toInt).map(Article.fromStringSerialized), fraction)
   }
 
   def filter(rdd: RDD[Article]): RDD[Article] = {
