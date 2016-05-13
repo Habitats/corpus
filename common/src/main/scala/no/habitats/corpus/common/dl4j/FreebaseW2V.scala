@@ -31,7 +31,7 @@ object FreebaseW2V extends RddSerializer {
   }
 
   def cacheAll() = {
-    val vecs = sc.textFile(Config.dataPath + "fb_ids_with_w2v.txt")
+    val vecs = sc.textFile("file:///" + Config.dataPath + "fb_ids_with_w2v.txt")
       .filter(gVec.hasWord)
       .map(fb => (fb, gVec.getWordVector(fb)))
       .map(a => s"${a._1}, ${a._2.toSeq.mkString(", ")}")

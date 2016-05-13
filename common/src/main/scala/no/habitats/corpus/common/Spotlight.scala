@@ -43,7 +43,7 @@ object Spotlight extends RddSerializer {
   lazy val dbpediaAnnotationsMini100: Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpediaMini100)
 
   def fetchDbpediaAnnotationsJson(dbpedia: String): Map[String, Seq[Annotation]] = {
-    CorpusContext.sc.textFile(dbpedia)
+    CorpusContext.sc.textFile("file:///" + dbpedia)
       .map(DBPediaAnnotation.fromSingleJson)
       .map(AnnotationUtils.fromDbpedia)
       //      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
@@ -53,7 +53,7 @@ object Spotlight extends RddSerializer {
   }
 
   def fetchDbpediaAnnotations(dbpedia: String): Map[String, Seq[Annotation]] = {
-    CorpusContext.sc.textFile(dbpedia)
+    CorpusContext.sc.textFile("file:///" + dbpedia)
       .map(DBPediaAnnotation.fromStringSerialized)
       .map(AnnotationUtils.fromDbpedia)
       //      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
@@ -62,10 +62,10 @@ object Spotlight extends RddSerializer {
       .collect.toMap
   }
 
-  def fetchEntities(file: String): Map[String, Entity] = CorpusContext.sc.textFile(file).map(Entity.fromSingleJson).map(e => (e.id, e)).collectAsMap()
+  def fetchEntities(file: String): Map[String, Entity] = CorpusContext.sc.textFile("file:///" + file).map(Entity.fromSingleJson).map(e => (e.id, e)).collectAsMap()
 
   def fetchArticleMapping(file: String): Map[String, Set[String]] = {
-      CorpusContext.sc.textFile(file).flatMap(l => {
+      CorpusContext.sc.textFile("file:///" + file).flatMap(l => {
         val tokens = l.split(" ")
         val dbpediaId = tokens.head
         val articleIds = tokens.slice(1, tokens.size)
@@ -74,7 +74,7 @@ object Spotlight extends RddSerializer {
   }
 
   lazy val dbpediaAnnotationsWithTypes: Map[String, Seq[Annotation]] = {
-    CorpusContext.sc.textFile(Config.dbpedia)
+    CorpusContext.sc.textFile("file:///" + Config.dbpedia)
       .map(DBPediaAnnotation.fromSingleJson)
       .flatMap(ann => Seq(AnnotationUtils.fromDbpedia(ann)) ++ AnnotationUtils.fromDBpediaType(ann))
       .groupBy(_.articleId)
@@ -98,7 +98,7 @@ object Spotlight extends RddSerializer {
   }
 
   def dbpedia(sc: SparkContext, name: String = Config.dbpedia): RDD[DBPediaAnnotation] = {
-    val rdd = sc.textFile(name).map(DBPediaAnnotation.fromSingleJson)
+    val rdd = sc.textFile("file:///" + name).map(DBPediaAnnotation.fromSingleJson)
     if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(Config.count)) else rdd
   }
 

@@ -89,7 +89,7 @@ object W2VLoader extends RddSerializer with TextVectorLoader {
     Log.v(s"Loading cached W2V vectors ($vectorFile) ...")
     if (!new File(vectorFile).exists) throw new FileNotFoundException(s"No cached vectors: $vectorFile")
     val start = System.currentTimeMillis
-    var vec = sc.textFile(vectorFile)
+    var vec = sc.textFile("file:///" + vectorFile)
       .map(_.split(","))
       .filter(arr => filter.isEmpty || filter.contains(arr(0)))
       .map(arr => (arr(0), arr.toSeq.slice(1, arr.length).map(_.toFloat).toArray))
