@@ -41,8 +41,8 @@ trait TextVectorLoader extends VectorLoader {
 
   override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
   override def documentVector(a: Article): INDArray = {
-//    W2VLoader.calculateDocumentVector(a.ann)
-    documentVectors.getOrElse(a.id, W2VLoader.calculateDocumentVector(a.ann))
+    W2VLoader.calculateDocumentVector(a.ann)
+//    documentVectors.getOrElse(a.id, W2VLoader.calculateDocumentVector(a.ann))
   }
   override def contains(fb: String): Boolean = ids.contains(fb)
   override def preload(): Unit = vectors
