@@ -4,16 +4,15 @@
 ############################
 
 ## Apps
+sudo echo "deb http://http.us.debian.org/debian stable main contrib non-free" | sudo tee -a /etc/apt/sources.list # enable non-free packages
 sudo apt-get update
 sudo apt-get install -y htop
-
-sudo echo "deb http://http.us.debian.org/debian stable main contrib non-free" >> /etc/apt/sources.list # enable non-free packages
 sudo apt-get install unrar
 
 ## .bashrc 
 echo "alias submit2='cd ~/corpus/ && git pull && gradle ai:shadowJar && spark-submit --class no.habitats.corpus.spark.SparkUtil ~/corpus/ai/build/libs/ai-all.jar local=false '" >> ~/.bashrc
 echo "alias submit='spark-submit --class no.habitats.corpus.spark.SparkUtil --jars ~/corpus/ai/build/libs/ai-all.jar ~/corpus/ai/build/libs/ai.jar local=false '" >> ~/.bashrc
-echo "alias build='cd ~/corpus/ && git pull && gradle ai:jar'" >> ~/.bashrc
+echo "alias build='cd ~/corpus/ && git pull && gradle ai:clean ai:shadowJar'" >> ~/.bashrc
  
 # Git
 mv ~/.ssh/github_rsa ~/.ssh/id_rsa
@@ -84,16 +83,16 @@ if [ ! -d dl4j ]; then
 	#bash buildnativeoperations.sh -c cuda
 	echo "export LIBND4J_HOME=`pwd`" >> ~/.profile
 	source ~./profile
-	cd ..
+	cd ~/dl4j
 	git clone https://github.com/deeplearning4j/nd4j.git
-	git pull
 	cd nd4j
-	mvn clean install -DskipTests -Dmaven.javadoc.skip=true -pl '!:nd4j-cuda-7.5,!org.nd4j:nd4j-tests'
-	cd ..
+	git pull
+	/usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -pl '!:nd4j-cuda-7.5,!org.nd4j:nd4j-tests'
+	cd ~/dl4j
 	git clone https://github.com/deeplearning4j/deeplearning4j.git
 	git pull
 	cd deeplearning4j
-	mvn clean install -DskipTests -Dmaven.javadoc.skip=true
+	/usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true
 fi
 
 # Gradle

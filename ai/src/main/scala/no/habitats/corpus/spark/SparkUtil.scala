@@ -108,7 +108,7 @@ object SparkUtil {
       case "testTimeDecay" => Tester.testTimeDecay()
       case "testConfidence" => Tester.testConfidence()
       case "test" =>
-        W2VLoader.preload()
+        W2VLoader.init()
         //        Tester.testModels()
         //        // Ex 1
         //        Tester.testEmbeddedVeBoW()

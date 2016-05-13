@@ -91,11 +91,18 @@ sealed class SparkVectorLoader extends VectorLoader {
 object W2VLoader extends RddSerializer with VectorLoader {
 
   implicit val formats = Serialization.formats(NoTypeHints)
-  val loader: VectorLoader = if (Config.local) new SparkVectorLoader() else new TextVectorLoader()
+  var loader: VectorLoader = null
 
   // TODO: NOT GOOD
   var confidence  = 0.5
   val featureSize = 1000
+
+  def init(spark: Boolean = false): Unit = {
+    if (loader == null) {
+      loader = if (Config.local) new SparkVectorLoader() else new TextVectorLoader()
+      preload()
+    }
+  }
 
   def preload(): Unit = loader.preload()
 
