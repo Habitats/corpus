@@ -30,10 +30,16 @@ object Trainer {
 
   def trainFFNSpark() = {
     val (train, validation) = Fetcher.ordered(true)
-    Config.resultsFileName = "train_ffn.txt"
+    Config.resultsFileName = "train_ffn_spark.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(train = train, validation = validation)
-    trainSparkFFN("sport", prefs)
+    W2VLoader.preload()
+    for {
+      lr <- Seq(1.0, 0.5, 0.05, 0.005, 0.0005)
+      mbs <- Seq(100, 250, 500, 1000, 2000)
+    } yield {
+      val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = mbs, epochs = 5)
+      Config.cats.foreach(c => trainNeuralNetwork(c, trainSparkFFN, prefs, "spark"))
+    }
   }
 
   def trainRNNSampled() = {
@@ -154,7 +160,7 @@ object Trainer {
 
     Log.v("Starting training ...")
     for (i <- 0 until neuralPrefs.epochs) {
-      net = sparkNetwork.fitDataSet(rddTrain, 200, 2)
+      net = sparkNetwork.fitDataSet(rddTrain, neuralPrefs.minibatchSize * 8, 8)
       val eval = NeuralEvaluation(net, testIter, i, label, Some(neuralPrefs))
       eval.log()
       testIter.reset()
