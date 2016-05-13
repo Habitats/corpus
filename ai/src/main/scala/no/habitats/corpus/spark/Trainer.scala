@@ -34,10 +34,10 @@ object Trainer {
     Config.resultsCatsFileName = Config.resultsFileName
     W2VLoader.preload()
     for {
-      lr <- Seq(1.0, 0.5, 0.05, 0.005, 0.0005)
-      mbs <- Seq(100, 250, 500, 1000, 2000)
+      lr <- Seq(0.075, 0.1, 0.2, 0.3, 0.4)
+      mbs <- Seq(1000, 2000, 3000)
     } yield {
-      val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = mbs, epochs = 5)
+      val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = mbs, epochs = 10)
       Config.cats.foreach(c => trainNeuralNetwork(c, trainSparkFFN, prefs, "spark"))
     }
   }
