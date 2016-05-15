@@ -21,6 +21,7 @@ chmod 600 ~/.ssh/google_compute_engine
 eval $(ssh-agent -s) && ssh-agent bash -c 'ssh-add ~/.ssh/id_rsa; yes | git clone http://github.com/Habitats/corpus.git'
 git config --global user.email "mail@habitats.no"
 git config --global user.name "Patrick Skjennum"
+git config --global alias.lg "log --color --graph --pretty=format:'%Cred%h%Creset -%C(yellow)%d%Creset %s %Cgreen(%cr) %C(bold blue)<%an>%Creset' --abbrev-commit"
 cd ~/corpus && git remote set-url origin http://github.com/Habitats/corpus.git && git pull && cd ..
 
 # Maven
@@ -90,19 +91,26 @@ if [ ! -d dl4j ]; then
 	git clone https://github.com/deeplearning4j/deeplearning4j.git
 	git pull
 	cd deeplearning4j
-	/usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true
+	/usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dscala.binary.version=2.10.5 -Dspark.version=1.5.2
 fi
 
 # Install MKL
 # sn: 3JZX-G9KCVXRL https://registrationcenter.intel.com/regcenter/RegisterSNInfo.aspx?dnld=t&SN=3JZX-G9KCVXRL&EmailID=mail@habitats.no&Sequence=1794271
 cd ~
-wget http://registrationcenter-download.intel.com/akdlm/irc_nas/9068/l_mkl_11.3.3.210.tgz
+if [ ! -d l_mkl_11.3.3.210 ]; then 
+	wget http://registrationcenter-download.intel.com/akdlm/irc_nas/9068/l_mkl_11.3.3.210.tgz
+	tar xf l_mkl_11.3.3.210.tgz
+fi
 sudo update-alternatives --install /usr/lib/libblas.so     libblas.so     /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
 sudo update-alternatives --install /usr/lib/libblas.so.3   libblas.so.3   /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
 sudo update-alternatives --install /usr/lib/liblapack.so   liblapack.so   /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
 sudo update-alternatives --install /usr/lib/liblapack.so.3 liblapack.so.3 /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
 sudo echo "/opt/intel/lib/intel64" | sudo tee -a /etc/ld.so.conf
 sudo echo "/opt/intel/mkl/lib/intel64" | sudo tee -a /etc/ld.so.conf
+sudo echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/mkl/lib/intel64:/home/habispam/intel64" >> ~/.profile
+echo "export PATH=/opt/intel/mkl/lib/intel64:/home/habispam/intel64:$PATH" >> ~/.profile
+chmod 600
+
 
 # Downlaod corpus
 cd ~
@@ -127,12 +135,22 @@ if [ ! -d data ]; then
 fi
 
 # Copy over the raw data for easy access. A better solution would be to use HDFS, but whatever. edit: Actually HDFS was slow as hell.
-scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-0:~/
+#scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-0:~/
+#scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-1:~/
+#scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-2:~/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/corpus/corpus_local.properties habispam@corpus-w-0:~/corpus/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/corpus/corpus_local.properties habispam@corpus-w-1:~/corpus/
-scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-1:~/
-scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-2:~/
-scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/data habispam@corpus-w-3:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/corpus/corpus_local.properties habispam@corpus-w-2:~/corpus/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r /opt/intel/mkl/lib/intel64 habispam@corpus-w-0:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r /opt/intel/mkl/lib/intel64 habispam@corpus-w-1:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r /opt/intel/mkl/lib/intel64 habispam@corpus-w-2:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.profile habispam@corpus-w-0:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.profile habispam@corpus-w-1:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.profile habispam@corpus-w-2:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.bashrc habispam@corpus-w-0:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.bashrc habispam@corpus-w-1:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.bashrc habispam@corpus-w-2:~/
+
 
 # Build
 cd ~/corpus/ 

@@ -10,6 +10,7 @@ import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.dl4j.TSNE
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
+import org.nd4j.linalg.factory.Nd4j
 
 import scala.collection.Map
 
@@ -35,6 +36,7 @@ object SparkUtil {
       case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "misc" =>
+        Nd4j.ones(100).sumNumber()
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
