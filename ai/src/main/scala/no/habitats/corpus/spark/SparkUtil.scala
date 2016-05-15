@@ -36,7 +36,7 @@ object SparkUtil {
       case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "misc" =>
-        Nd4j.ones(100).sumNumber()
+        sc.parallelize(Seq(1,2,3)).map(s => Nd4j.ones(100).sumNumber()).foreach(Log.v)
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
