@@ -30,7 +30,7 @@ object CNN {
       .iterations(iterations)
       .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
       .regularization(true).l2(1e-5)
-      .list(3)
+      .list()
       .layer(0, new ConvolutionLayer.Builder(1, 1)
         .nIn(nChannels)
         .nOut(1000)

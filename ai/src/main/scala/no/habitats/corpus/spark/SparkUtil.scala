@@ -23,6 +23,7 @@ object SparkUtil {
 
   def main(args: Array[String]) = {
     Config.setArgs(args)
+    System.loadLibrary("libmkl_rt")
 
     Log.init()
     Log.r(s"Starting Corpus job: ${args.mkString(", ")}")
