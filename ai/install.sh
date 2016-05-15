@@ -79,6 +79,7 @@ if [ ! -d dl4j ]; then
 	bash buildnativeoperations.sh cpu 
 	#bash buildnativeoperations.sh -c cuda
 	echo "export LIBND4J_HOME=`pwd`" >> ~/.profile
+	export LIBND4J_HOME=`pwd`
 	source ~./profile
 	cd ~/dl4j
 	git clone https://github.com/deeplearning4j/nd4j.git
@@ -92,11 +93,23 @@ if [ ! -d dl4j ]; then
 	/usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true
 fi
 
+# Install MKL
+# sn: 3JZX-G9KCVXRL https://registrationcenter.intel.com/regcenter/RegisterSNInfo.aspx?dnld=t&SN=3JZX-G9KCVXRL&EmailID=mail@habitats.no&Sequence=1794271
+cd ~
+wget http://registrationcenter-download.intel.com/akdlm/irc_nas/9068/l_mkl_11.3.3.210.tgz
+sudo update-alternatives --install /usr/lib/libblas.so     libblas.so     /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
+sudo update-alternatives --install /usr/lib/libblas.so.3   libblas.so.3   /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
+sudo update-alternatives --install /usr/lib/liblapack.so   liblapack.so   /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
+sudo update-alternatives --install /usr/lib/liblapack.so.3 liblapack.so.3 /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
+sudo echo "/opt/intel/lib/intel64" | sudo tee -a /etc/ld.so.conf
+sudo echo "/opt/intel/mkl/lib/intel64" | sudo tee -a /etc/ld.so.conf
+
 # Downlaod corpus
 cd ~
 if [ ! -d data ]; then
 	mkdir data && cd data
 	mkdir res
+	mkdir ~/cache
 	if [ ! -f fb_w2v_0.5.rar ]; then 
 		wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/fb_w2v_0.5.rar
 	fi

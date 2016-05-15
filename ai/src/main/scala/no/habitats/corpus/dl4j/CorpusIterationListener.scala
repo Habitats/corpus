@@ -8,7 +8,7 @@ import org.deeplearning4j.optimize.api.IterationListener
 
 import scala.collection.JavaConverters._
 
-case class CorpusIterationListener extends IterationListener {
+case class CorpusIterationListener() extends IterationListener {
   private var printIterations: Int     = 10
   private var inv            : Boolean = false
   private var iterCount      : Long    = 0

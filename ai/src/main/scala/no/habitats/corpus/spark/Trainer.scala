@@ -48,6 +48,14 @@ object Trainer {
     Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, train, validation, "sampled"))
   }
 
+  def trainRNNOrdered() = {
+    val (train, validation) = Fetcher.ordered(false)
+    Config.resultsFileName = "train_rnn.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
+    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 10)
+    Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, prefs))
+  }
+
   def trainRNNBalanced() = {
     Config.resultsFileName = "train_rnn.txt"
     Config.resultsCatsFileName = Config.resultsFileName
