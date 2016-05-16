@@ -96,20 +96,24 @@ fi
 
 # Install MKL
 # sn: 3JZX-G9KCVXRL https://registrationcenter.intel.com/regcenter/RegisterSNInfo.aspx?dnld=t&SN=3JZX-G9KCVXRL&EmailID=mail@habitats.no&Sequence=1794271
-cd ~
-if [ ! -d l_mkl_11.3.3.210 ]; then 
-	wget http://registrationcenter-download.intel.com/akdlm/irc_nas/9068/l_mkl_11.3.3.210.tgz
-	tar xf l_mkl_11.3.3.210.tgz
+# cd ~
+# if [ ! -d l_mkl_11.3.3.210 ]; then 
+# 	wget http://registrationcenter-download.intel.com/akdlm/irc_nas/9068/l_mkl_11.3.3.210.tgz
+# 	tar xf l_mkl_11.3.3.210.tgz
+# fi
+# sudo update-alternatives --install /usr/lib/libblas.so     libblas.so     /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
+# sudo update-alternatives --install /usr/lib/libblas.so.3   libblas.so.3   /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
+# sudo update-alternatives --install /usr/lib/liblapack.so   liblapack.so   /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
+# sudo update-alternatives --install /usr/lib/liblapack.so.3 liblapack.so.3 /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
+# sudo echo "/opt/intel/lib/intel64" | sudo tee -a /etc/ld.so.conf
+# sudo echo "/opt/intel/mkl/lib/intel64" | sudo tee -a /etc/ld.so.conf
+# sudo echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/mkl/lib/intel64:~/opt/intel/mkl/lib/intel64" >> ~/.profile
+# chmod 600
+if [ ! -f /usr/bin/mkl.rar ]; then
+	cd /usr/bin/
+	sudo wget --progress=bar:force:noscroll https://storage.googleapis.com/ntnu-corpus/mkl.rar
+	sudo unrar e mkl.rar
 fi
-sudo update-alternatives --install /usr/lib/libblas.so     libblas.so     /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
-sudo update-alternatives --install /usr/lib/libblas.so.3   libblas.so.3   /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
-sudo update-alternatives --install /usr/lib/liblapack.so   liblapack.so   /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
-sudo update-alternatives --install /usr/lib/liblapack.so.3 liblapack.so.3 /opt/intel/mkl/lib/intel64/libmkl_rt.so 1000
-sudo echo "/opt/intel/lib/intel64" | sudo tee -a /etc/ld.so.conf
-sudo echo "/opt/intel/mkl/lib/intel64" | sudo tee -a /etc/ld.so.conf
-sudo echo "export LD_LIBRARY_PATH=$LD_LIBRARY_PATH:/opt/intel/mkl/lib/intel64:/home/habispam/intel64" >> ~/.profile
-echo "export PATH=/opt/intel/mkl/lib/intel64:/home/habispam/intel64:$PATH" >> ~/.profile
-chmod 600
 
 
 # Downlaod corpus
@@ -119,13 +123,16 @@ if [ ! -d data ]; then
 	mkdir res
 	mkdir ~/cache
 	if [ ! -f fb_w2v_0.5.rar ]; then 
-		wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/fb_w2v_0.5.rar
+		#wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/fb_w2v_0.5.rar
+		wget --progress=bar:force:noscroll https://storage.googleapis.com/ntnu-corpus/fb_w2v_0.5.rar
 	fi
 	if [ ! -f document_vectors_0.5.rar ]; then 
-		wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/document_vectors_0.5.rar
+		#wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/document_vectors_0.5.rar
+		wget --progress=bar:force:noscroll https://storage.googleapis.com/ntnu-corpus/document_vectors_0.5.rar
 	fi
 	if [ ! -f nyt.rar ]; then
-	    wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/nyt.rar
+	    #wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/nyt.rar
+	    wget --progress=bar:force:noscroll https://storage.googleapis.com/ntnu-corpus/nyt.rar
 	fi
 	unrar e nyt.rar && mkdir nyt && mv *txt nyt/ 
 	unrar e document_vectors_0.5.rar
@@ -141,9 +148,9 @@ fi
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/corpus/corpus_local.properties habispam@corpus-w-0:~/corpus/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/corpus/corpus_local.properties habispam@corpus-w-1:~/corpus/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/corpus/corpus_local.properties habispam@corpus-w-2:~/corpus/
-scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r /opt/intel/mkl/lib/intel64 habispam@corpus-w-0:~/
-scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r /opt/intel/mkl/lib/intel64 habispam@corpus-w-1:~/
-scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r /opt/intel/mkl/lib/intel64 habispam@corpus-w-2:~/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r /opt/intel/mkl/lib/intel64/ habispam@corpus-w-0:~/intel64/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r /opt/intel/mkl/lib/intel64/ habispam@corpus-w-1:~/intel64/
+scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r /opt/intel/mkl/lib/intel64/ habispam@corpus-w-2:~/intel64/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.profile habispam@corpus-w-0:~/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.profile habispam@corpus-w-1:~/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.profile habispam@corpus-w-2:~/
@@ -151,10 +158,11 @@ scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.bashrc habi
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.bashrc habispam@corpus-w-1:~/
 scp -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine -r ~/.bashrc habispam@corpus-w-2:~/
 
+ssh -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine habispam@corpus-w-0 "sudo mv intel64/* /usr/lib/"
+ssh -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine habispam@corpus-w-1 "sudo mv intel64/* /usr/lib/"
+ssh -oStrictHostKeyChecking=no -i ~/.ssh/google_compute_engine habispam@corpus-w-2 "sudo mv intel64/* /usr/lib/"
 
 # Build
-cd ~/corpus/ 
-~/opt/gradle/bin/gradle clean ai:jar ai:shadowJar
-
-
+#cd ~/corpus/ 
+#~/opt/gradle/bin/gradle clean ai:jar ai:shadowJar
 
