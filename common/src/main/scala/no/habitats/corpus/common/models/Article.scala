@@ -1,6 +1,6 @@
 package no.habitats.corpus.common.models
 
-import no.habitats.corpus.common.{IPTC, W2VLoader}
+import no.habitats.corpus.common.{IPTC, Log, W2VLoader}
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.api.ndarray.INDArray
@@ -84,6 +84,7 @@ object Article {
     val annSplit = string.split("\t\t")
     val s = annSplit(0).split("\t ")
     val a = if(annSplit.length > 1) annSplit(1) else ""
+    if(s.length != 9) throw new IllegalStateException("Article parse error: \n" + string)
     Article(
       id = s(0),
       hl = s(1),

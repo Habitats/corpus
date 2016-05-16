@@ -63,7 +63,7 @@ object SparkUtil {
       case "cacheSubSampled" =>
         Cacher.cacheSubSampledOrdered()
         Cacher.cacheSubSampledShuffled()
-      case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
+      case "cacheAndSplitLength" => Cacher.splitTime()
       case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
       case "cache" =>
         Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".txt"), s.toString))
@@ -94,10 +94,10 @@ object SparkUtil {
 
       case "trainFFNOrdered" => Trainer.trainFFNOrdered(false)
       case "trainFFNShuffled" => Trainer.trainFFNShuffled()
-      case "trainFFNSubSampledBoW" => Trainer.trainFFNSubSampledBoW()
       case "trainFFNBalanced" => Trainer.trainFFNBalanced()
       case "trainFFNSpark" => Trainer.trainFFNSpark()
       case "trainFFNConfidence" => Trainer.trainFFNConfidence()
+      case "trainFFNTime" => Trainer.trainTime()
 
       case "train" =>
 //        Trainer.trainFFNOrdered(false)

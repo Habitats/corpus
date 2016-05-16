@@ -40,6 +40,16 @@ object Trainer {
       Config.cats.foreach(c => trainNeuralNetwork(c, sparkFFNTrainer, prefs, "spark"))
     }
   }
+  def trainTime() = {
+    val train = Fetcher.by("time/nyt_length_20_train.txt")
+    Config.resultsFileName = "train_ffn_time_decay.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
+    val validation = (for {
+      i <- 0 until 20
+    } yield {Fetcher.by(s"time/nyt_length_20-${i}_validation.txt")}).reduce(_ ++ _)
+    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 5)
+    Config.cats.foreach(c => trainNeuralNetwork(c, brinaryFFNTrainer, prefs))
+  }
 
   def trainRNNSampled() = {
     val (train, validation) = Fetcher.ordered(true)
