@@ -137,27 +137,28 @@ object Cacher extends RddSerializer {
     rdd.unpersist()
   }
 
-  def splitTime() = {
+  def splitAndCacheBuckets(buckets: Int = 20, name: String, ordering: Article => Int): IndexedSeq[Unit] = {
+    val trainFraction: Double = 0.6
+    val testValFraction: Double = 1 - trainFraction
     // Assume 60, 20, 20 split, where each model is trained 60 % and every bucket has the equivalent of 20 %
     // Thus; s = train% * s + #buckets * 2 * test% * s
     val all = Fetcher.annotatedRddMini
     all.cache()
     val numAll = all.count
-    val ids: Array[String] = all.map(_.id).sortBy(_.toInt).collect()
-    val b = 20
-    val s = numAll / (0.4 * b + 0.6)
-    val numTrain = (0.6 * s).round.toInt
-    val numTest, numVal = ((0.4 * s) /  2).round.toInt
+    val ids: Array[Int] = all.map(ordering).collect.sorted
+    val s = numAll / (testValFraction * buckets + trainFraction)
+    val numTrain = (trainFraction * s).round.toInt
+    val numTest, numVal = ((testValFraction * s) /  2).round.toInt
     val trainIds = ids.slice(0, numTrain).toSet
-    saveAsText(all.filter(a => trainIds.contains(a.id)).map(Article.toStringSerialized), s"lengths/nyt_length_${b}_train")
-    for (i <- 0 until b) yield {
+    saveAsText(all.filter(a => trainIds.contains(ordering(a))).map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}_train")
+    for (i <- 0 until buckets) yield {
       val from = numTrain + i * (numTest + numVal)
       val until = numTrain + (i + 1) * (numTest + numVal)
       val bucketIds = Random.shuffle(ids.slice(from.toInt, until.toInt).toSet)
       val testIds = bucketIds.slice(0, bucketIds.size / 2)
       val valIds = bucketIds.slice(bucketIds.size / 2, bucketIds.size)
-      saveAsText(all.filter(a => testIds.contains(a.id)).map(Article.toStringSerialized), s"lengths/nyt_length_${b}-${i}_test")
-      saveAsText(all.filter(a => valIds.contains(a.id)).map(Article.toStringSerialized), s"lengths/nyt_length_${b}-${i}_validation")
+      saveAsText(all.filter(a => testIds.contains(ordering(a))).map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}-${i}_test")
+      saveAsText(all.filter(a => valIds.contains(ordering(a))).map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}-${i}_validation")
     }
   }
 
