@@ -7,6 +7,17 @@ import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
 object Preprocess {
+  def frequencyFilter(rdd: RDD[Article], phrases: Set[String]): RDD[Article] = rdd.map(_.filterAnnotation(ann => phrases.contains(ann.id))).filter(_.ann.nonEmpty)
+
+  def computeTerms(rdd: RDD[Article], termFrequencyThreshold: Int): Set[String] = {
+    rdd
+      .flatMap(_.ann.keySet.toList)
+      .map(ann => (ann, 1))
+      .reduceByKey(_ + _)
+      // skip phrases mentioned less than n times
+      .filter(_._2 > termFrequencyThreshold)
+      .map(_._1).collect.toSet
+  }
 
   def current(rdd: RDD[Article]) = f"A: ${rdd.count}%6s  P: ${rdd.flatMap(_.ann.keys).distinct.count}%6s"
 

@@ -36,7 +36,7 @@ object SparkUtil {
       case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "misc" =>
-        sc.parallelize(Seq(1,2,3)).map(s => Nd4j.ones(100).sumNumber()).foreach(Log.v)
+        sc.parallelize(Seq(1, 2, 3)).map(s => Nd4j.ones(100).sumNumber()).foreach(Log.v)
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
@@ -77,7 +77,7 @@ object SparkUtil {
       case "tnesDocumentVectors" => tnesDocumentVectors()
       case "tnesWordVectors" => tnesWordVectors()
       case "stats" =>
-        stats(Fetcher.annotatedRddMini, "filtered")
+        CorpusStats(Fetcher.annotatedRddMini, "filtered").termFrequencyAnalysis
       //        Corpus.preloadAnnotations()
       //        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
       //        timeStats()
@@ -94,15 +94,16 @@ object SparkUtil {
 
       case "trainFFNOrdered" => Trainer.trainFFNOrdered(false)
       case "trainFFNShuffled" => Trainer.trainFFNShuffled()
+      case "trainFFNBoW" => Trainer.trainFFNBoW()
       case "trainFFNBalanced" => Trainer.trainFFNBalanced()
       case "trainFFNSpark" => Trainer.trainFFNSpark()
       case "trainFFNConfidence" => Trainer.trainFFNConfidence()
       case "trainFFNTime" => Trainer.trainTime()
 
       case "train" =>
-//        Trainer.trainFFNOrdered(false)
-//        Trainer.trainFFNShuffled(false)
-//        Trainer.trainFFNOrderedTypes(false)
+        //        Trainer.trainFFNOrdered(false)
+        //        Trainer.trainFFNShuffled(false)
+        //        Trainer.trainFFNOrderedTypes(false)
         Trainer.trainFFNConfidence()
 
       // Testing
@@ -162,52 +163,6 @@ object SparkUtil {
       .reduceByKey(_ + _)
       .sortBy(_._2)
     Log.v(rdd.collect.map(c => f"${c._2}%-10s - ${c._1}").mkString("IPTC CATEGORY DISTRIBUTION\n", "\n", ""))
-  }
-
-  def stats(rdd: RDD[Article], name: String) = {
-    rdd.cache()
-    val statsFile = s"res/stats_${name}_general.txt"
-
-    // Annotations per IPTC
-    val annCounts = rdd.flatMap(a => a.iptc.map(c => (c, a.ann.size))).reduceByKey(_ + _).collectAsMap
-    Log.toFile(annCounts.toSeq.sortBy(_._1).map(c => f"${c._1}%41s ${c._2}%10d").mkString("Annotations per ITPC:\n", "\n", "\n"), statsFile)
-
-    // Articles per IPTC (category distribution)
-    val artByAnn = rdd.flatMap(a => a.iptc.map(c => (c, 1))).reduceByKey(_ + _).collectAsMap
-    Log.toFile(artByAnn.toSeq.sortBy(_._1).map(c => f"${c._1}%41s ${c._2}%10d").mkString("Articles per IPTC:\n", "\n", "\n"), statsFile)
-
-    // Average ANN per IPTC
-    val iptc = rdd.flatMap(_.iptc).distinct.collect.sorted
-    val avgAnnIptc = iptc.map(c => (c, annCounts(c).toDouble / artByAnn(c))).toMap
-    Log.toFile(avgAnnIptc.toSeq.sortBy(_._1).map(c => f"${c._1}%41s ${c._2}%10.0f").mkString("Average number of annoations per IPTC:\n", "\n", "\n"), statsFile)
-
-    // General stats
-    val numAnnotations = rdd.flatMap(_.ann.values.toList)
-    val numArticles = rdd.count
-    Log.toFile(f"Articles:                     ${numArticles}%10d", statsFile)
-    Log.toFile(f"Articles without IPTC:        ${rdd.filter(_.iptc.isEmpty).count}%10d", statsFile)
-    Log.toFile(f"Articles without annotations: ${rdd.filter(_.ann.isEmpty).count}%10d", statsFile)
-    Log.toFile(f"Total annotations:            ${numAnnotations.count}%10d", statsFile)
-    Log.toFile(f"Distinct annotations:         ${numAnnotations.map(_.id).distinct.count}%10d", statsFile)
-
-    def statsToPretty(stats: StatCounter, name: String): String = f"${name}%25s - Max: ${stats.max.toInt}%10d - Min: ${stats.min.toInt}%3d - Std: ${stats.stdev}%7.2f - Mean: ${stats.mean}%7.2f - Variance: ${stats.variance}%15.2f"
-    def pairs(rdd: RDD[_]): Array[String] = rdd.map(_.toString).map(size => (size, 1)).reduceByKey(_ + _).sortBy(_._2 * -1).map { case (size, count) => f"$size%10s$count%10d" }.collect()
-
-    val annotationsIptc: RDD[Int] = rdd.map(_.ann.size)
-    Log.toFile(statsToPretty(annotationsIptc.stats(), "Annotations per article"), statsFile)
-    Log.toFile(pairs(annotationsIptc), s"res/stats_${name}_annotations_per_article.txt")
-
-    val articlesIptc: RDD[Int] = rdd.map(_.iptc.size)
-    Log.toFile(statsToPretty(articlesIptc.stats(), "IPTC"), statsFile)
-    Log.toFile(pairs(articlesIptc), s"res/stats_${name}_iptc_per_article.txt")
-
-    val articleLength: RDD[Int] = rdd.map(_.wc)
-    Log.toFile(statsToPretty(articleLength.stats(), "Article length"), statsFile)
-    Log.toFile(pairs(articleLength), s"res/stats_${name}_article_length.txt")
-
-    val mentionAnnotation: RDD[Int] = rdd.flatMap(_.ann.values.map(_.id)).map(id => (id, 1)).reduceByKey(_ + _).values
-    Log.toFile(statsToPretty(mentionAnnotation.stats(), "Mentions per annotation"), statsFile)
-    Log.toFile(pairs(mentionAnnotation), s"res/stats_${name}_mention_per_annotation.txt")
   }
 
   /////////////////////

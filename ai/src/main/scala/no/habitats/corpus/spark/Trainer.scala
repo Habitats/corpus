@@ -7,7 +7,7 @@ import no.habitats.corpus.common.mllib.MLlibModelLoader
 import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.dl4j.networks.{FeedForward, FeedForwardIterator, RNN, RNNIterator}
 import no.habitats.corpus.dl4j.{NeuralEvaluation, NeuralPrefs, NeuralTrainer}
-import no.habitats.corpus.mllib.{MlLibUtils, Prefs}
+import no.habitats.corpus.mllib.{MlLibUtils, Prefs, Preprocess}
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.{AsyncDataSetIterator, DataSetIterator}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
@@ -227,25 +227,26 @@ object Trainer {
     System.gc()
   }
 
-  def trainFFNSubSampledBoW() = {
-    val (train, validation) = Fetcher.ordered(true)
+  def trainFFNBoW() = {
+    val (train, validation) = Fetcher.ordered(false)
     Config.resultsFileName = "train_ffn_bow.txt"
     Config.resultsCatsFileName = "train_ffn_bow_cats.txt"
-    val phrases: Array[String] = (train ++ validation).flatMap(_.ann.keySet).collect.distinct.sorted
-
+    val phrases: Set[String] = Preprocess.computeTerms(train ++ validation, 100)
     for {
-      hiddenNodes <- Seq(20, 50, 100)
-      learningRate <- Seq(0.05, 0.025, 0.01, 0.005)
-      minibatchSize = 100
-      //            c <- cats
-      c = "sport"
+      learningRate <- Seq(0.05)
+      minibatchSize = 1000
+      c <- Config.cats.takeRight(2)
       histogram = false
       epochs = 1
     } yield {
-      val neuralPrefs = NeuralPrefs(learningRate = learningRate, hiddenNodes = hiddenNodes, train = train, validation = validation, minibatchSize = minibatchSize, histogram = histogram, epochs = epochs)
+      val neuralPrefs = NeuralPrefs(
+        learningRate = learningRate, minibatchSize = minibatchSize, histogram = histogram, epochs = epochs,
+        train = Preprocess.frequencyFilter(train, phrases),
+        validation = Preprocess.frequencyFilter(validation, phrases)
+      )
       Log.r(neuralPrefs)
-      val net: MultiLayerNetwork = trainBinaryFFNBoW(c, neuralPrefs, phrases)
-      NeuralModelLoader.save(net, c, Config.count)
+      val net: MultiLayerNetwork = trainBinaryFFNBoW(c, neuralPrefs, phrases.toArray.sorted)
+      NeuralModelLoader.save(net, "bow_" + c, Config.count)
       System.gc()
     }
   }

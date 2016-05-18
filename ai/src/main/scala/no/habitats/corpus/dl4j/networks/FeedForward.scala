@@ -61,7 +61,9 @@ object FeedForward {
 
   def createBoW(neuralPrefs: NeuralPrefs, numInputs: Int): MultiLayerNetwork = {
     val numOutputs = 2
-    val firstLayer = (numInputs * 0.5).toInt
+    val firstLayer = 1000
+    val secondLayer = 700
+    val thirdLayer = 500
 
     val conf = new NeuralNetConfiguration.Builder()
       .seed(Config.seed)
@@ -77,9 +79,21 @@ object FeedForward {
         .activation("tanh")
         .build()
       )
-      .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-        .activation("softmax")
+      .layer(1, new DenseLayer.Builder()
         .nIn(firstLayer)
+        .nOut(secondLayer)
+        .activation("tanh")
+        .build()
+      )
+      .layer(2, new DenseLayer.Builder()
+        .nIn(secondLayer)
+        .nOut(thirdLayer)
+        .activation("tanh")
+        .build()
+      )
+      .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+        .activation("softmax")
+        .nIn(thirdLayer)
         .nOut(numOutputs)
         .build()
       )
@@ -89,7 +103,7 @@ object FeedForward {
     val net = new MultiLayerNetwork(conf)
     net.init()
     Log.r(s"Initialized ${net.getLayers.length} layer Feedforward net with ${net.numParams()} params!")
-    net.setListeners(new ScoreIterationListener(1))
+    net.setListeners(neuralPrefs.listener)
     if (neuralPrefs.histogram) {
       net.setListeners(new HistogramIterationListener(1))
     }
