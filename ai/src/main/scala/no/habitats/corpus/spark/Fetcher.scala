@@ -62,11 +62,7 @@ object Fetcher extends RddSerializer{
 
   def by(name: String) = fetch("nyt/" + name)
 
-//  def jsonToTxt() = {
-//    new File(Config.dataPath +"nyt/confidence").listFiles().filter(_.getName.startsWith("nyt_")).foreach(f => {
-//      saveAsText(by("confidence/" + f.getName).map(Article.toStringSerialized),f.getName.substring(0, f.getName.length-5))
-//    })
-//  }
+  def jsonToTxt(name: String) = saveAsText(fetchJson("nyt/" + name).map(Article.toStringSerialized),name)
 
   def limit(rdd: RDD[Article], fraction: Double = 1): RDD[Article] = {
     val num = (Config.count * fraction).toInt

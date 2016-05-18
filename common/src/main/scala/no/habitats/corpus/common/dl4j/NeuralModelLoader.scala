@@ -6,14 +6,13 @@ import java.nio.file.{Files, Paths}
 import no.habitats.corpus.common.{Config, Log}
 import org.apache.commons.io.FileUtils
 import org.deeplearning4j.nn.conf.MultiLayerConfiguration
-import org.deeplearning4j.nn.layers.feedforward.dense.DenseLayer
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.nd4j.linalg.factory.Nd4j
 
 object NeuralModelLoader {
 
-  def coefficientsPath(name: String, label: String, count: Int): String = s"coefficients-${name}_${label}_${count}.bin"
-  def confPath(name: String, label: String, count: Int): String = s"conf-${name}_${label}_${count}.json"
+  def coefficientsPath(name: String, label: String, count: Int): String = s"${name}/coefficients-${name}_${label}_${if (count == Int.MaxValue) "all" else count}.bin"
+  def confPath(name: String, label: String, count: Int): String = s"${name}/conf-${name}_${label}_${if (count == Int.MaxValue) "all" else count}.json"
 
   // Returns ("sport", <model>) pairs
   def bestModels(name: String): Map[String, MultiLayerNetwork] = bestModel("conf-" + name).zip(bestModel("coefficients-" + name))
@@ -44,10 +43,11 @@ object NeuralModelLoader {
       .sorted
   }
 
-  def save(model: MultiLayerNetwork, label: String, count: Int) = {
+  def save(model: MultiLayerNetwork, label: String, count: Int, name: String) = {
     // write parameters
-    val name = if (model.getLayer(0).isInstanceOf[DenseLayer]) "ffa" else "rnn"
-    val dos = new DataOutputStream(Files.newOutputStream(Paths.get(Config.cachePath + coefficientsPath(name, label, count))))
+    val s = Config.cachePath + coefficientsPath(name, label, count)
+    new File(s).getParentFile.mkdirs()
+    val dos = new DataOutputStream(Files.newOutputStream(Paths.get(s)))
     Nd4j.write(model.params(), dos)
 
     // write config

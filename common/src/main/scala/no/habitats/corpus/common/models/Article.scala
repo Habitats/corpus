@@ -75,6 +75,8 @@ case class Article(id: String,
 }
 
 object Article {
+  def safeString(body: String): String = body.replaceAll("[\n\\[\\]\\~]", " ").replaceAll("\\s+", " ")
+
   def toStringSerialized(a: Article) = {
     Array(
       a.id, a.hl, a.body, a.wc, a.date.getOrElse("N"), a.iptc.mkString("[", "~", "]"), a.url.getOrElse("N"), a.desc.mkString("[", "~", "]"), a.pred.mkString("[", "~", "]")).mkString("\t ") + "\t\t" + a.ann.values.map(Annotation.toStringSerialized).mkString("~")

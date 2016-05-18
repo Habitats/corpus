@@ -36,7 +36,8 @@ object SparkUtil {
       case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "misc" =>
-        sc.parallelize(Seq(1, 2, 3)).map(s => Nd4j.ones(100).sumNumber()).foreach(Log.v)
+//        Fetcher.jsonToTxt("nyt_corpus_annotated_0.5.json")
+        Log.v(Fetcher.annotatedRdd.count())
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
@@ -77,7 +78,7 @@ object SparkUtil {
       case "tnesDocumentVectors" => tnesDocumentVectors()
       case "tnesWordVectors" => tnesWordVectors()
       case "stats" =>
-        CorpusStats(Fetcher.annotatedRddMini, "filtered").termFrequencyAnalysis
+        CorpusStats(Fetcher.annotatedRddMini, "filtered").termFrequencyAnalysis()
       //        Corpus.preloadAnnotations()
       //        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
       //        timeStats()
@@ -98,7 +99,7 @@ object SparkUtil {
       case "trainFFNBalanced" => Trainer.trainFFNBalanced()
       case "trainFFNSpark" => Trainer.trainFFNSpark()
       case "trainFFNConfidence" => Trainer.trainFFNConfidence()
-      case "trainFFNTime" => Trainer.trainTime()
+      case "trainFFNTime" => Trainer.trainFFNTime()
 
       case "train" =>
         //        Trainer.trainFFNOrdered(false)

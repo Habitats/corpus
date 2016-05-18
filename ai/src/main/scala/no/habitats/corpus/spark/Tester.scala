@@ -97,9 +97,9 @@ object Tester {
     Config.resultsFileName = "test_time_decay.txt"
     Config.resultsCatsFileName = "test_time_decay_cats.txt"
     Log.h("Testing Time Decay")
-    testBuckets("time", FeedforwardTester("ffn-w2v-ordered"), _.id.toInt)
-    testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
-    testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
+    testBuckets("time", FeedforwardTester("ffn-time"), _.id.toInt)
+//    testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
+//    testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
   }
 
   def testConfidence() = {
@@ -112,10 +112,11 @@ object Tester {
 
   /** Test model on every test set matching name */
   def testBuckets(name: String, tester: Testable, criterion: Article => Double) = {
-    val rdds: Array[(Int, RDD[Article])] = new File(Config.dataPath + "nyt").listFiles
-      .map(_.getName).filter(_.contains(s"test_$name"))
-      .map(n => (n.split("[._]").filter(s => Try(s.toInt).isSuccess).head.toInt, n))
-      .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$n")) }
+    val rdds: Array[(Int, RDD[Article])] = new File(Config.dataPath + s"nyt/$name/").listFiles
+      .map(_.getName).filter(_.contains(s"test"))
+      .map(n => (n.split("_").filter(s => Try(s.toInt).isSuccess).head.toInt, n))
+      .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$name/$n")) }
+      .sortBy(_._1)
     rdds.foreach { case (index, n) => {
       val collect: Array[Article] = n.collect()
       Log.r2(s"${name} group: $index -  min: ${Try(collect.map(criterion).min).getOrElse("N/A")} - max: ${Try(collect.map(criterion).max).getOrElse("N/A")}")
@@ -129,7 +130,9 @@ sealed trait Testable {
   val modelName: String
 
   def iter(test: Array[Article], label: String): DataSetIterator = ???
+
   def models(modelName: String): Map[String, MultiLayerNetwork] = ???
+
   def test(test: Array[Article], iteration: Int = 0) = {
     if (iteration == 0) Log.r(s"Testing $modelName ...")
     val evals: Set[NeuralEvaluation] = models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {

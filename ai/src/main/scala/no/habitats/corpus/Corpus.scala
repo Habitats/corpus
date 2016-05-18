@@ -17,7 +17,6 @@ object Corpus {
     annotations
   }
 
-
   def articlesFromXML(path: String = Config.dataPath + "/nyt/", count: Int = Config.count): Seq[Article] = {
     Log.v(f"Loading ${if (count == Integer.MAX_VALUE) "all" else count} articles ...")
     IO.walk(path, count, filter = ".xml")

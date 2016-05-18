@@ -67,7 +67,6 @@ object IO {
   def loadRdd(sc: SparkContext, cacheDir: String = rddCacheDir): RDD[Article] = {
     sc.objectFile[Article]("file:///" + cacheDir)
   }
-
 }
 
 object JsonSingle {
@@ -97,7 +96,7 @@ object JsonSingle {
 
   def fromSingleJson(string: String): Article = {
     val a = read[Article](string)
-    a.copy(body = a.body.replace("\n", " "))
+    a.copy(body = Article.safeString(a.body), desc = a.desc.map(Article.safeString), hl = Article.safeString(a.hl)) // remove chars used for string serialization
   }
 }
 
