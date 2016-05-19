@@ -125,19 +125,24 @@ if [ ! -d data ]; then
 	if [ ! -f fb_w2v_0.5.rar ]; then 
 		#wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/fb_w2v_0.5.rar
 		wget --progress=bar:force:noscroll https://storage.googleapis.com/ntnu-corpus/fb_w2v_0.5.rar
+		unrar e fb_w2v_0.5.rar
+		mkdir w2v && mv fb_w2v_0.5.txt w2v/ 
 	fi
 	if [ ! -f document_vectors_0.5.rar ]; then 
 		#wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/document_vectors_0.5.rar
 		wget --progress=bar:force:noscroll https://storage.googleapis.com/ntnu-corpus/document_vectors_0.5.rar
+		unrar e document_vectors_0.5.rar
 	fi
 	if [ ! -f nyt.rar ]; then
 	    #wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/nyt.rar
 	    wget --progress=bar:force:noscroll https://storage.googleapis.com/ntnu-corpus/nyt.rar
+		unrar e nyt.rar && mkdir nyt && mv *txt nyt/ 
 	fi
-	unrar e nyt.rar && mkdir nyt && mv *txt nyt/ 
-	unrar e document_vectors_0.5.rar
-	unrar e fb_w2v_0.5.rar
-	mkdir w2v && mv *txt w2v/ 
+		if [ ! -f nyt_sub.rar ]; then
+	    #wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/nyt.rar
+	    wget --progress=bar:force:noscroll https://dl.dropboxusercontent.com/u/30450949/nyt_sub.rar
+		unrar e nyt_sub.rar
+	fi
 	rm *rar
 fi
 

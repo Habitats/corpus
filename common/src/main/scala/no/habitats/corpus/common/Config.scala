@@ -58,7 +58,9 @@ object Config {
       category = props.get("category"),
       count = props.get("count").map(_.toInt),
       spark = props.get("spark").map(_.toBoolean),
-      useApi = props.get("useApi").map(_.toBoolean)
+      useApi = props.get("useApi").map(_.toBoolean),
+      learningRate = props.get("lr").map(_.toDouble),
+      miniBatchSize = props.get("mbs").map(_.toInt)
     )
 
     Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
@@ -138,6 +140,8 @@ object Config {
   def category = args.category.getOrElse(throw new IllegalArgumentException("NO CATEGORY DEFINED"))
   def useApi = args.useApi.getOrElse(false)
   def spark = args.spark.getOrElse(false)
+  def learningRate = args.learningRate
+  def miniBatchSize = args.miniBatchSize
 
   case class Arguments(
                         partitions: Option[Int] = None,
@@ -147,6 +151,8 @@ object Config {
                         category: Option[String] = None,
                         iptcFilter: Option[Set[String]] = None,
                         spark: Option[Boolean] = None,
-                        useApi: Option[Boolean] = None
+                        useApi: Option[Boolean] = None,
+                        learningRate: Option[Double] = None,
+                        miniBatchSize: Option[Int] = None
                       )
 }

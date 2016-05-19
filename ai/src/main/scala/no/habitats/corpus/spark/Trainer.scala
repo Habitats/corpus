@@ -15,7 +15,6 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.spark.impl.multilayer.SparkDl4jMultiLayer
 import org.nd4j.linalg.dataset.DataSet
 
-import scala.collection.JavaConverters._
 import scala.language.implicitConversions
 
 object Trainer extends NeuralTrainer {
@@ -65,14 +64,14 @@ object Trainer extends NeuralTrainer {
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
     Seq(25, 50, 75, 100).foreach(confidence => {
       Log.r(s"Training with confidence ${confidence} ...")
-      trainFFNW2V(train = train(confidence), validation = validation(confidence), "ffa-confidence-" + confidence)
+      trainFFNW2V(train = train(confidence), validation = validation(confidence), name = "ffa-confidence-" + confidence)
     })
   }
 
   // Ex3 - Types
   def trainFFNOrderedTypes(sub: Boolean) = {
     val (train, validation) = Fetcher.types(sub)
-    trainFFNW2V(train, validation, "ffa-w2v-types" + (if(sub) "-subsampled" else ""))
+    trainFFNW2V(train, validation, "ffa-w2v-types" + (if (sub) "-subsampled" else ""))
   }
 
   // Ex4 - Lenghts - Use baseline
@@ -122,11 +121,19 @@ object Trainer extends NeuralTrainer {
 }
 
 sealed trait NeuralTrainer {
+
   import scala.collection.JavaConverters._
 
   implicit def collect(rdd: RDD[Article]): Array[Article] = rdd.collect()
 
   private val count: String = if (Config.count == Int.MaxValue) "all" else Config.count.toString
+
+  def trainFFNW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Double = Config.learningRate.getOrElse(0.05), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000)) = {
+    Config.resultsFileName = s"train_${name}.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
+    val prefs = NeuralPrefs(learningRate = learningRate, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1)
+    Config.cats.foreach(c => trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name))
+  }
 
   def trainFFNSpark(train: RDD[Article], validation: RDD[Article], name: String) = {
     Config.resultsFileName = s"train_${name}.txt"
@@ -140,17 +147,10 @@ sealed trait NeuralTrainer {
     }
   }
 
-  def trainFFNW2V(train: RDD[Article], validation: RDD[Article], name: String) = {
+  def trainRNNW2V(train: RDD[Article], validation: RDD[Article], name: String, minibatchSize: Int = Config.miniBatchSize.getOrElse(500), learningRate: Double = Config.learningRate.getOrElse(0.50)) = {
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 1)
-    Config.cats.foreach(c => trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name))
-  }
-
-  def trainRNNW2V(train: RDD[Article], validation: RDD[Article], name: String) = {
-    Config.resultsFileName = s"train_${name}.txt"
-    Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = 0.50, train = train, validation = validation, minibatchSize = 500, epochs = 1, hiddenNodes = 200)
+    val prefs = NeuralPrefs(learningRate = learningRate, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1, hiddenNodes = 200)
     Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, prefs, name))
   }
 

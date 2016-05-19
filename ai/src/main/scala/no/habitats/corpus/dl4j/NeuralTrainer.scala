@@ -19,12 +19,12 @@ object NeuralTrainer {
     for (i <- 0 until neuralPrefs.epochs) {
       while (trainIter.hasNext) {
         net.fit(trainIter.next())
-        c += 1
         if (c % 10 == 0) {
           val evaluation: NeuralEvaluation = NeuralEvaluation(net, testIter.asScala.take(2), i, label, Some(neuralPrefs))
           evaluation.logv(c)
           testIter.reset()
         }
+        c += 1
       }
       trainIter.reset()
       NeuralEvaluation(net, testIter.asScala, i, label, Some(neuralPrefs)).log()

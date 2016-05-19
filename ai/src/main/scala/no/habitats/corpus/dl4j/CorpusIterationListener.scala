@@ -9,7 +9,7 @@ import org.deeplearning4j.optimize.api.IterationListener
 import scala.collection.JavaConverters._
 
 case class CorpusIterationListener() extends IterationListener {
-  private var printIterations: Int                     = 1
+  private var printIterations: Int                     = 5
   private var inv            : Boolean                 = false
   private var iterCount      : Long                    = 0
   private val res                                      = new CircularFifoQueue[Double](100)
