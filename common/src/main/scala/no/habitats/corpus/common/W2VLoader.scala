@@ -66,13 +66,16 @@ private class TextVectorLoader extends VectorLoader {
   }
   lazy val ids            : Set[String]           = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
 
-  override def fromId(fb: String): Option[INDArray] = vectors.get(fb).map(_.dup)
+  override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
   override def documentVector(a: Article): INDArray = {
     if (Config.cache) documentVectors.getOrElse(a.id, W2VLoader.calculateDocumentVector(a.ann))
     else W2VLoader.calculateDocumentVector(a.ann)
   }
   override def contains(fb: String): Boolean = ids.contains(fb)
-  override def preload(): Unit = vectors
+  override def preload(): Unit = {
+    if (Config.cache) documentVectors
+    vectors
+  }
 }
 
 sealed class SparkVectorLoader extends VectorLoader {
