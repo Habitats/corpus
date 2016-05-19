@@ -9,7 +9,7 @@ import scala.collection.JavaConverters._
 case class CorpusIterationListener() extends IterationListener {
   private var printIterations: Int                     = 5
   private var inv            : Boolean                 = false
-  private var iterCount      : Long                    = 0
+  var iterCount      : Long                    = 0
   private val res                                      = new CircularFifoQueue[Double](100)
   private val deltas         : CircularFifoQueue[Long] = new CircularFifoQueue[Long](8)
   private var delta                                    = System.currentTimeMillis
