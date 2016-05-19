@@ -103,10 +103,11 @@ object SparkUtil {
         // Trainer.trainNaiveBayesW2VSubsampled()
         // Trainer.trainNaiveBayesBoWSubsampled()
         // Trainer.trainFFNW2VSubsampled()
+        // Trainer.trainFFNBoWSubsampled()
+
         // Trainer.trainFFNOrdered()
 
         // TODO
-        // Trainer.trainFFNBoWSubsampled()
 
         Trainer.trainRNNSubsampled()
 
