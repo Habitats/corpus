@@ -89,10 +89,12 @@ object SparkUtil {
       // Modelling
       case "trainRNNBalanced" => Trainer.trainRNNBalanced()
       case "trainFFNOrdered" => Trainer.trainFFNOrdered()
+      case "trainFFNBoWOrdered" => Trainer.trainFFNBoWOrdered()
       case "trainFFNShuffled" => Trainer.trainFFNShuffled()
       case "trainFFNBalanced" => Trainer.trainFFNBalanced()
-      case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
       case "trainFFNConfidence" => Trainer.trainFFNConfidence()
+
+      case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
       case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
       case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
 
@@ -101,6 +103,7 @@ object SparkUtil {
         // Trainer.trainNaiveBayesW2VSubsampled()
         // Trainer.trainNaiveBayesBoWSubsampled()
         // Trainer.trainFFNW2VSubsampled()
+        // Trainer.trainFFNOrdered()
 
         // TODO
         // Trainer.trainFFNBoWSubsampled()
@@ -113,7 +116,6 @@ object SparkUtil {
         Trainer.trainFFNConfidence()
         Trainer.trainFFNOrderedTypes(true)
 
-        Trainer.trainFFNOrdered()
         Trainer.trainFFNBoWOrdered()
         Trainer.trainFFNOrderedTypes(false)
 
