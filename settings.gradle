@@ -1,4 +1,4 @@
 rootProject.name = 'corpus'
 
-include 'web', 'ai', 'common', 'nlp'
+include 'common', 'web', 'ai', 'nlp'
 

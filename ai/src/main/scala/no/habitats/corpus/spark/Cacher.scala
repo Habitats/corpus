@@ -1,9 +1,5 @@
 package no.habitats.corpus.spark
 
-import java.util.Collections
-import java.util.Collections
-
-import scala.collection.JavaConverters._
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
@@ -48,9 +44,9 @@ object Cacher extends RddSerializer {
 
   def computeAndCacheDBPediaAnnotationsToJson(rdd: RDD[Article]) = {
     Spotlight.cacheDbpedia(rdd, 0.25, w2vFilter = true)
-//    Spotlight.cacheDbpedia(rdd, 0.5, w2vFilter = true)
-//    Spotlight.cacheDbpedia(rdd, 0.75, w2vFilter = true)
-//    Spotlight.cacheDbpedia(rdd, 1, w2vFilter = true)
+    //    Spotlight.cacheDbpedia(rdd, 0.5, w2vFilter = true)
+    //    Spotlight.cacheDbpedia(rdd, 0.75, w2vFilter = true)
+    //    Spotlight.cacheDbpedia(rdd, 1, w2vFilter = true)
   }
 
   def annotateAndCacheArticlesWithTypes() = {
@@ -105,19 +101,9 @@ object Cacher extends RddSerializer {
     all.filter(a => idLabeled.contains(a.id) || idOther.contains(a.id))
   }
 
-  def cacheAndSplitTime() = cacheAndSplit(Fetcher.annotatedValidationOrdered, 10, a => a.id.toInt, "nyt_test_time")
+  def cacheAndSplitTime() = RelativeSplitter.split(Fetcher.annotatedRddMini, 20, a => a.id.toInt, "time")
 
-  def cacheAndSplitLength() = cacheAndSplit(Fetcher.annotatedTestOrdered, 10, a => a.wc, "nyt_test_length")
-
-  def cacheAndSplit(rdd: RDD[Article], parts: Int, criterion: Article => Double, name: String) = {
-    rdd.cache()
-    val count = rdd.count.toInt
-    val bucketSize = count / parts
-    val ordered = rdd.sortBy(criterion).map(_.id).collect()
-    val ids: Map[Int, Set[String]] = (0 until parts).map(p => (p, ordered.slice(p * bucketSize - 1, (p + 1) * bucketSize).toSet)).toMap
-    ids.map { case (k, v) => (k, rdd.filter(a => v.contains(a.id)).map(Article.toStringSerialized)) }.foreach { case (k, v) => saveAsText(v, s"${name}_$k") }
-    rdd.unpersist()
-  }
+  def cacheAndSplitLength() = StaticSplitter.split(Fetcher.annotatedRddMini, 10, a => a.wc, "length")
 
   def cacheSuperSampled(maxLimit: Option[Int] = None) = {
     val rdd = Fetcher.annotatedTrainOrdered
@@ -137,31 +123,6 @@ object Cacher extends RddSerializer {
     rdd.unpersist()
   }
 
-  def splitAndCacheBuckets(buckets: Int = 20, name: String, ordering: Article => Int): IndexedSeq[Unit] = {
-    val trainFraction: Double = 0.6
-    val testValFraction: Double = 1 - trainFraction
-    // Assume 60, 20, 20 split, where each model is trained 60 % and every bucket has the equivalent of 20 %
-    // Thus; s = train% * s + #buckets * 2 * test% * s
-    val all = Fetcher.annotatedRddMini
-    all.cache()
-    val numAll = all.count
-    val ids: Array[Int] = all.map(ordering).collect.sorted
-    val s = numAll / (testValFraction * buckets + trainFraction)
-    val numTrain = (trainFraction * s).round.toInt
-    val numTest, numVal = ((testValFraction * s) /  2).round.toInt
-    val trainIds = ids.slice(0, numTrain).toSet
-    saveAsText(all.filter(a => trainIds.contains(ordering(a))).map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}_train")
-    for (i <- 0 until buckets) yield {
-      val from = numTrain + i * (numTest + numVal)
-      val until = numTrain + (i + 1) * (numTest + numVal)
-      val bucketIds = Random.shuffle(ids.slice(from.toInt, until.toInt).toSet)
-      val testIds = bucketIds.slice(0, bucketIds.size / 2)
-      val valIds = bucketIds.slice(bucketIds.size / 2, bucketIds.size)
-      saveAsText(all.filter(a => testIds.contains(ordering(a))).map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}-${i}_test")
-      saveAsText(all.filter(a => valIds.contains(ordering(a))).map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}-${i}_validation")
-    }
-  }
-
   def cacheSingleSubSampled(rdd: RDD[Article], name: String) = {
     rdd.cache()
     val pairs = IPTC.topCategories.map(c => (c, rdd.filter(_.iptc.contains(c))))
@@ -174,7 +135,7 @@ object Cacher extends RddSerializer {
   }
 
   def splitAndCache() = {
-    val rdd = TC(Fetcher.annotatedRddMini).computed
+    val rdd = Fetcher.annotatedRddMini
     rdd.cache()
     splitOrdered(rdd)
     splitShuffled(rdd)
@@ -214,6 +175,7 @@ object Cacher extends RddSerializer {
     saveAsText(splits(1), "nyt_validation_shuffled")
     saveAsText(splits(2), "nyt_test_shuffled")
   }
+
   def cacheSubSampledShuffled() = {
     val rdds = Map(
       "train_shuffled" -> Fetcher.annotatedTrainShuffled,
@@ -233,3 +195,48 @@ object Cacher extends RddSerializer {
   }
 
 }
+
+sealed trait Splitter extends RddSerializer {
+  def split(rdd: RDD[Article], buckets: Int, ordering: Article => Int, name: String)
+}
+
+object RelativeSplitter extends Splitter {
+  def split(rdd: RDD[Article], buckets: Int, ordering: Article => Int, name: String) = {
+    val trainFraction: Double = 0.6
+    val testValFraction: Double = 1 - trainFraction
+    // Assume 60, 20, 20 split, where each model is trained 60 % and every bucket has the equivalent of 20 %
+    // Thus; s = train% * s + #buckets * 2 * test% * s
+    rdd.cache()
+    val numAll = rdd.count
+    val ids: Array[Int] = rdd.map(ordering).collect.sorted
+    val s = numAll / (testValFraction * buckets + trainFraction)
+    val numTrain = (trainFraction * s).round.toInt
+    val numTest, numVal = ((testValFraction * s) / 2).round.toInt
+    val trainIds = ids.slice(0, numTrain).toSet
+    saveAsText(rdd.map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}_train")
+    for (i <- 0 until buckets) yield {
+      val from = numTrain + i * (numTest + numVal)
+      val until = numTrain + (i + 1) * (numTest + numVal)
+      val bucketIds = Random.shuffle(ids.slice(from.toInt, until.toInt).toSet)
+      val testIds = bucketIds.slice(0, bucketIds.size / 2)
+      val valIds = bucketIds.slice(bucketIds.size / 2, bucketIds.size)
+      saveAsText(rdd.filter(a => testIds.contains(ordering(a))).map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}-${i}_test")
+      saveAsText(rdd.filter(a => valIds.contains(ordering(a))).map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}-${i}_validation")
+    }
+    rdd.unpersist()
+  }
+}
+
+object StaticSplitter extends Splitter {
+  def split(rdd: RDD[Article], buckets: Int, ordering: Article => Int, name: String) = {
+    rdd.cache()
+    val count = rdd.count.toInt
+    val bucketSize = count / buckets
+    val ordered = rdd.sortBy(ordering).map(_.id).collect()
+    val ids: Map[Int, Set[String]] = (0 until buckets).map(p => (p, ordered.slice(p * bucketSize - 1, (p + 1) * bucketSize).toSet)).toMap
+    ids.map { case (k, v) => (k, rdd.filter(a => v.contains(a.id)).map(Article.toStringSerialized)) }.foreach { case (k, v) => saveAsText(v, s"${name}_$k") }
+    rdd.unpersist()
+  }
+}
+
+

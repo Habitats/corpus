@@ -2,6 +2,7 @@ package no.habitats.corpus.spark
 
 import java.io.File
 
+import no.habitats.corpus.TFIDF
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
 import no.habitats.corpus.common.dl4j.NeuralModelLoader
@@ -15,6 +16,7 @@ import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
+import scala.io.Source
 import scala.util.Try
 
 object Tester {
@@ -51,6 +53,17 @@ object Tester {
 
   }
 
+  def testFFNBow() = {
+    Config.resultsFileName = "test_embedded_vs_bow.txt"
+    Config.resultsCatsFileName = "test_embedded_vs_bow.txt"
+    Log.h("Testing embedded vs. BoW")
+    val rdd = Fetcher.annotatedTestOrdered
+    val test = rdd.collect()
+
+    val name: String = "ffn-bow-10000"
+    FeedforwardTester(name).test(test)
+  }
+
   def testTypesInclusion() = {
     Config.resultsFileName = "test_type_inclusion.txt"
     Config.resultsCatsFileName = "test_type_inclusion.txt"
@@ -77,11 +90,11 @@ object Tester {
     val testShuffled = rddShuffled.collect()
     FeedforwardTester("ffn-w2v-shuffled").test(testShuffled)
 
-//    // Ordered
-//    Log.r("Ordered ...")
-//    val rddOrdered = Fetcher.annotatedTestOrdered
-//    val testOrdered = rddOrdered.collect()
-//    FeedforwardTester("ffn-w2v-ordered").test(testOrdered)
+    //    // Ordered
+    //    Log.r("Ordered ...")
+    //    val rddOrdered = Fetcher.annotatedTestOrdered
+    //    val testOrdered = rddOrdered.collect()
+    //    FeedforwardTester("ffn-w2v-ordered").test(testOrdered)
   }
 
   def testLengths() = {
@@ -98,8 +111,8 @@ object Tester {
     Config.resultsCatsFileName = "test_time_decay_cats.txt"
     Log.h("Testing Time Decay")
     testBuckets("time", FeedforwardTester("ffn-time"), _.id.toInt)
-//    testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
-//    testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
+    //    testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
+    //    testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
   }
 
   def testConfidence() = {
@@ -149,7 +162,7 @@ sealed trait Testable {
 case class FeedforwardTester(modelName: String) extends Testable {
   lazy val ffa: Map[String, MultiLayerNetwork] = NeuralModelLoader.models(modelName)
 
-  override def iter(test: Array[Article], label: String): DataSetIterator = new FeedForwardIterator(test, label, 500)
+  override def iter(test: Array[Article], label: String): DataSetIterator = new FeedForwardIterator(test, label, 500, if(modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None)
   override def models(modelName: String): Map[String, MultiLayerNetwork] = ffa
 }
 
@@ -161,11 +174,11 @@ case class RecurrentTester(modelName: String) extends Testable {
 }
 
 case class NaiveBayesTester(modelName: String) extends Testable {
-  def test(rdd: Array[Article]) = {
+
+  def test(articles: Array[Article]) = {
     Log.r(s"Testing Naive Bayes [$modelName] ...")
     val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(c => (c, MLlibModelLoader.load(modelName, IPTC.trim(c)))).toMap
-    val phrases: Array[String] = Config.dataFile(Config.modelPath + "nb_phrases.txt").getLines().toArray.sorted
-    val prefs = sc.broadcast(Prefs())
-    MlLibUtils.testMLlibModels(sc.parallelize(rdd), nb, phrases, prefs, modelName.toLowerCase.contains("bow"))
+    val rdd: RDD[Article] = sc.parallelize(articles)
+    MlLibUtils.testMLlibModels(rdd, nb, if(modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None, sc.broadcast(Prefs()))
   }
 }

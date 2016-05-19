@@ -39,30 +39,12 @@ case class Article(id: String,
     f"$id - $hl - $url - IPTC >> $iptcstr >> PREDICTION >> $predstr"
   }
 
-  def toVector(phrases: Array[String]): Vector = {
-    toVectorSparse(phrases)
-  }
-
   def toMinimal: Article = copy(body = "", desc = Set(), date = None, hl = "")
 
   lazy val documentVectorMlLib: Vector = {
     val all = ann.map(_._2.fb).flatMap(W2VLoader.fromId)
-    val normal: INDArray = W2VLoader.normalize(W2VLoader.squash(all))
-    val binary = Transforms.round(normal)
+    val binary: INDArray = Transforms.ceil(W2VLoader.squash(all))
     MLLibUtil.toVector(binary)
-  }
-
-  def toVectorDense(phrases: Array[String]): Vector = {
-    val row = phrases.map(w => if (ann.contains(w)) ann(w).tfIdf else 0)
-    Vectors.dense(row)
-  }
-
-  def toVectorSparse(phrases: Array[String]): Vector = {
-    val values: Seq[(Int, Double)] = for {
-      i <- phrases.indices
-      w = phrases(i) if ann.contains(w) && ann(w).tfIdf > 0
-    } yield (i, ann(w).tfIdf)
-    Vectors.sparse(phrases.size, values)
   }
 
   def addIptc(broad: Boolean): Article = {

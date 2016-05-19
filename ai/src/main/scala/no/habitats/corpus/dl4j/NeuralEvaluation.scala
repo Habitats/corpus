@@ -72,7 +72,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
 
   def log() = {
     //    Log.r2(confusion)
-    if (epoch == 0) Log.r2(statsHeader)
+    Log.rr(statsHeader)
     Log.r2(stats)
   }
 }
@@ -107,8 +107,7 @@ object NeuralEvaluation {
       "Mi.Accuracy" -> f"$miAccuracy%.3f",
       "Mi.F-score" -> f"$miFscore%.3f"
     )
-    if (iteration == 0)
-      Log.r(stats.map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
+    Log.rr(stats.map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
     Log.r(stats.map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
 
   }

@@ -9,7 +9,8 @@ case class NeuralPrefs(
                         validation: Array[Article],
                         minibatchSize: Int = 50,
                         epochs: Int = 5,
-                        histogram: Boolean = false
+                        histogram: Boolean = false,
+                        phrases: Option[Array[String]] = None
                       ) {
 
   lazy val listener: CorpusIterationListener = CorpusIterationListener()

@@ -13,7 +13,7 @@ object Corpus {
   lazy val googleAnnotations: Map[String, Seq[Annotation]] = {
     val annotations = AnnotationUtils.fromGoogle()
     Log.v("Generated " + annotations.size + " annotations")
-    Log.toFile(annotations.keySet, "/nyt/nyt_with_google-annotations.txt")
+    Log.toListFile(annotations.keySet, "/nyt/nyt_with_google-annotations.txt")
     annotations
   }
 

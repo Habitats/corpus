@@ -8,8 +8,11 @@ import org.apache.commons.io.FileUtils
 import org.apache.spark.Logging
 import org.slf4j.MarkerFactory
 
+import scala.collection.mutable
+
 object Log extends Logging {
-  val marker = MarkerFactory.getMarker("CORPUS")
+  val marker                       = MarkerFactory.getMarker("CORPUS")
+  val headers: mutable.Set[String] = mutable.Set[String]()
 
   def resultsFile(name: String) = {
     val resultsFile = new File(s"${Config.dataPath}res/$name")
@@ -33,22 +36,17 @@ object Log extends Logging {
     writer.close()
   }
 
-  def toFile(m: String, fileName: String) = {
-    val resultsFile = new File(Config.dataPath + f"/$fileName")
-    if (!resultsFile.exists) {
-      Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
-      resultsFile.getParentFile.mkdirs()
-      resultsFile.createNewFile()
-    }
-    writeLine(m.toString, resultsFile)
-  }
-
-  def toFile(m: Traversable[String], fileName: String, path: String = Config.dataPath) = {
+  def toFile(m: String, fileName: String, path: String = Config.dataPath, overwrite: Boolean = false) = {
     val resultsFile = new File(path + f"/$fileName")
     Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
-    FileUtils.deleteQuietly(resultsFile)
-    resultsFile.createNewFile
-    writeLine(m.mkString("\n"), resultsFile)
+    if(overwrite) FileUtils.deleteQuietly(resultsFile)
+    resultsFile.getParentFile.mkdirs()
+    resultsFile.createNewFile()
+    writeLine(m, resultsFile)
+  }
+
+  def toListFile(m: Traversable[String], fileName: String, path: String = Config.dataPath) = {
+    toFile(m.mkString("\n"), fileName, path)
   }
 
   def init() = {
@@ -67,6 +65,13 @@ object Log extends Logging {
   def r(m: Any) = {
     i(m)
     writeLine(f(m), resultsFile(Config.resultsFileName))
+  }
+
+  def rr(m: Any) = {
+    if(!headers.contains(m.toString)) {
+      r(m)
+      headers.add(m.toString)
+    }
   }
 
   def r2(m: Any) = {

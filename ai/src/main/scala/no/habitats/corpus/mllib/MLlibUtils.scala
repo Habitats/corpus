@@ -1,7 +1,8 @@
 package no.habitats.corpus.mllib
 
+import no.habitats.corpus.TFIDF
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{Config, IPTC, Log, W2VLoader}
+import no.habitats.corpus.common.{Config, IPTC, Log}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.linalg.Vector
@@ -10,8 +11,8 @@ import org.apache.spark.rdd.RDD
 
 object MlLibUtils {
 
-  def multiLabelClassification(prefs: Broadcast[Prefs], train: RDD[Article], test: RDD[Article], phrases: Array[String], bow: Boolean): Map[String, NaiveBayesModel] = {
-    val training: RDD[(Set[String], Vector)] = train.map(a => (a.iptc, toVector(phrases, bow, a)))
+  def multiLabelClassification(prefs: Broadcast[Prefs], train: RDD[Article], test: RDD[Article], tfidf: Option[TFIDF]): Map[String, NaiveBayesModel] = {
+    val training: RDD[(Set[String], Vector)] = train.map(a => (a.iptc, toVector(tfidf, a)))
     //    Log.v("Max:" + training.map(_._2.toArray.max).max)
     //    Log.v("Min: " + training.map(_._2.toArray.min).min)
     training.cache
@@ -20,12 +21,15 @@ object MlLibUtils {
     //      val catModelPairs = trainModelsSVM(training)
     Log.v("--- Training complete! ")
 
-    testMLlibModels(test, catModelPairs, phrases, prefs, bow)
+    testMLlibModels(test, catModelPairs, tfidf, prefs)
   }
 
   /** Created either a BoW or a squashed W2V document vector */
-  def toVector(phrases: Array[String], bow: Boolean, a: Article): Vector = {
-    if (bow) a.toVector(phrases) else a.documentVectorMlLib.copy
+  def toVector(tfidf: Option[TFIDF], a: Article): Vector = {
+    tfidf match {
+      case None => a.documentVectorMlLib.copy
+      case Some(v) => v.toVector(a)
+    }
   }
 
   def trainModelsNaiveBayedMultiNominal(training: RDD[(Set[String], Vector)], cats: Seq[String]): Map[String, NaiveBayesModel] = {
@@ -39,8 +43,8 @@ object MlLibUtils {
     }).toMap
   }
 
-  def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], phrases: Array[String], prefs: Broadcast[Prefs], bow: Boolean): Map[String, NaiveBayesModel] = {
-    val testing: RDD[(Article, Vector)] = test.map(t => (t, toVector(phrases, bow, t)))
+  def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], tfidf: Option[TFIDF], prefs: Broadcast[Prefs]): Map[String, NaiveBayesModel] = {
+    val testing: RDD[(Article, Vector)] = test.map(t => (t, toVector(tfidf, t)))
     //    Log.v("Max:" + testing.map(_._2.toArray.max).max)
     //    Log.v("Min: " + testing.map(_._2.toArray.min).min)
     val predicted: RDD[Article] = predictCategories(catModelPairs, testing)

@@ -140,15 +140,5 @@ class MLTest extends FunSuite {
     assert(tfidfann1.tfIdf === ans1)
     assert(tfidfann2.tfIdf === ans2)
     assert(tfidfann3.tfIdf === ans3)
-
-    val computed = tc.computed.collect
-    val denseVectors = computed.map(a => (a.id, a.toVectorDense(Array(A, B, C, D))))
-    val sparseVectors = computed.map(a => (a.id, a.toVectorSparse(Array(A, B, C, D))))
-    for (i <- computed.indices) {
-      val d = denseVectors(i)._2
-      val s = sparseVectors(i)._2
-      assert(s === d.toSparse)
-      assert(d === s.toDense)
-    }
   }
 }

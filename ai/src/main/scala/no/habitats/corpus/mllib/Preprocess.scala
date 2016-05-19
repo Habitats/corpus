@@ -9,14 +9,18 @@ import org.apache.spark.rdd.RDD
 object Preprocess {
   def frequencyFilter(rdd: RDD[Article], phrases: Set[String]): RDD[Article] = rdd.map(_.filterAnnotation(ann => phrases.contains(ann.id))).filter(_.ann.nonEmpty)
 
-  def computeTerms(rdd: RDD[Article], termFrequencyThreshold: Int): Set[String] = {
-    rdd
+  def computeTerms(rdd: RDD[Article], termFrequencyThreshold: Int): Array[String] = {
+    val counted = rdd
       .flatMap(_.ann.keySet.toList)
       .map(ann => (ann, 1))
       .reduceByKey(_ + _)
+    val oldSize = counted.distinct.count
+    val filtered = counted
       // skip phrases mentioned less than n times
       .filter(_._2 > termFrequencyThreshold)
-      .map(_._1).collect.toSet
+      .map(_._1).distinct.collect.sorted
+    Log.v(s"Phrase frequency filtering reduced unique phrases from ${oldSize} to ${filtered.size}.")
+    filtered
   }
 
   def current(rdd: RDD[Article]) = f"A: ${rdd.count}%6s  P: ${rdd.flatMap(_.ann.keys).distinct.count}%6s"
@@ -39,37 +43,10 @@ object Preprocess {
     expanded
   }
 
-  def preprocess(prefs: Broadcast[Prefs], raw: RDD[Article]) = {
-    var rdd = raw
-    Log.v(s"${current(rdd)} - Running preprocessing ...")
-
-    rdd = phraseSkipFilter(rdd, prefs)
-    rdd = rdd.filter(_.iptc.nonEmpty).filter(_.ann.nonEmpty)
-
-    // Computations ...
-    rdd = computeTfIdf(rdd)
-
-    //    IO.cacheAnnotationDistribution(rdd, prefs.value.ontology, prefs.value.iteration)
-    Log.v("--- Preprocessing done!")
-    rdd
-  }
-
   def computeTfIdf(rdd: RDD[Article]): RDD[Article] = {
     val computed = TC(rdd).computed
     Log.v(s"${current(computed)} - Computed TF-IDF")
     computed
-  }
-
-  def phraseSkipFilter(rdd: RDD[Article], prefs: Broadcast[Prefs]): RDD[Article] = {
-    val phraseCounts = rdd.flatMap(_.ann.values.map(_.id)).map((_, 1)).reduceByKey(_ + _)
-    phraseCounts.cache
-    val phrasesToRemove = phraseCounts.filter(_._2 < prefs.value.termFrequencyThreshold).map(_._1).collect.toSet
-    def removePhrases(ann: Map[String, Annotation]): Map[String, Annotation] = {
-      ann.filter(ann => !phrasesToRemove.contains(ann._1))
-    }
-    val filtered = rdd.map(a => a.copy(ann = removePhrases(a.ann))).filter(_.ann.nonEmpty)
-    Log.v(s"${current(filtered)} - Removed phrases with less than ${prefs.value.termFrequencyThreshold} occurrences")
-    filtered
   }
 
   def wikiDataFilter(rdd: RDD[Article], prefs: Broadcast[Prefs]): RDD[Article] = {

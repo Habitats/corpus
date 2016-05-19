@@ -25,15 +25,14 @@ object RNN {
     val hiddenNodes = neuralPrefs.hiddenNodes // should not be less than a quarter of the input size
     val learningRate = neuralPrefs.learningRate
 
-    Log.r(f"Count: ${Config.count} - $neuralPrefs")
-    Log.r2(f"Count: ${Config.count} - $neuralPrefs")
+    Log.rr(f"Count: ${Config.count} - $neuralPrefs")
 
     val conf = new NeuralNetConfiguration.Builder()
       .seed(Config.seed)
       .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
       .iterations(1)
       .updater(Updater.RMSPROP)
-      .regularization(true).l2(1e-5)
+      .regularization(true).l2(1e-5).l1(0)
       .weightInit(WeightInit.XAVIER)
       .gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue).gradientNormalizationThreshold(1.0)
       .learningRate(learningRate)

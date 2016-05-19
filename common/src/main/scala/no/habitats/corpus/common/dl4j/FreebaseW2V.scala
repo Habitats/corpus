@@ -18,7 +18,7 @@ object FreebaseW2V extends RddSerializer {
 //  lazy val gModel            = new File("e:Archive2/w2v/freebase-vectors-skipgram1000.bin")
   lazy val gVec: WordVectors = WordVectorSerializer.loadGoogleModel(gModel, true)
 
-  def cacheFbIds() = Log.toFile(gVec.vocab().words().asScala.toSet, "fb_ids_with_w2v.txt")
+  def cacheFbIds() = Log.toListFile(gVec.vocab().words().asScala.toSet, "fb_ids_with_w2v.txt")
 
   def cacheWordVectors(rdd: RDD[Article], confidence: Double) = {
     val vecs = rdd

@@ -36,8 +36,10 @@ object SparkUtil {
       case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "misc" =>
-//        Fetcher.jsonToTxt("nyt_corpus_annotated_0.5.json")
-        Log.v(Fetcher.annotatedRdd.count())
+        //        Fetcher.jsonToTxt("nyt_corpus_annotated_0.5.json")
+        //        Log.v(Fetcher.annotatedRdd.count())
+        CorpusStats(Fetcher.subTrainOrdered, "subsampled").termFrequencyAnalysis()
+      //        Trainer.trainFFNBoWTime()
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
@@ -64,8 +66,8 @@ object SparkUtil {
       case "cacheSubSampled" =>
         Cacher.cacheSubSampledOrdered()
         Cacher.cacheSubSampledShuffled()
-      case "cacheAndSplitLength" => Cacher.splitAndCacheBuckets(10, "length-10", a => a.wc)
-      case "cacheAndSplitTime" => Cacher.splitAndCacheBuckets(20, "time", a => a.id.toInt)
+      case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
+      case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
       case "cache" =>
         Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".txt"), s.toString))
       //        Cacher.cacheAndSplitLength()
@@ -78,37 +80,44 @@ object SparkUtil {
       case "tnesDocumentVectors" => tnesDocumentVectors()
       case "tnesWordVectors" => tnesWordVectors()
       case "stats" =>
-        CorpusStats(Fetcher.annotatedRddMini, "filtered").termFrequencyAnalysis()
+        //        CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").termFrequencyAnalysis()
+        //        CorpusStats(Fetcher.by("time/nyt_time_train.txt"), "time").termFrequencyAnalysis()
+        CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").lengthCorrelation()
       //        Corpus.preloadAnnotations()
       //        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
       //        timeStats()
       //        lengthStats()
 
       // Modelling
-      case "trainNaiveBayesBoW" => Trainer.trainNaiveBayes(bow = true)
-      case "trainNaiveBayesW2V" => Trainer.trainNaiveBayes(bow = false)
-
-      case "trainRNNSubSampled" => Trainer.trainRNNSampled()
       case "trainRNNBalanced" => Trainer.trainRNNBalanced()
-      case "trainRNNSpark" => Trainer.trainRNNSpark()
-      case "trainRNNOrdered" => Trainer.trainRNNOrdered()
-
-      case "trainFFNOrdered" => Trainer.trainFFNOrdered(false)
+      case "trainFFNOrdered" => Trainer.trainFFNOrdered()
       case "trainFFNShuffled" => Trainer.trainFFNShuffled()
-      case "trainFFNBoW" => Trainer.trainFFNBoW()
       case "trainFFNBalanced" => Trainer.trainFFNBalanced()
-      case "trainFFNSpark" => Trainer.trainFFNSpark()
       case "trainFFNConfidence" => Trainer.trainFFNConfidence()
-      case "trainFFNTime" => Trainer.trainFFNTime()
 
       case "train" =>
-        //        Trainer.trainFFNOrdered(false)
-        //        Trainer.trainFFNShuffled(false)
-        //        Trainer.trainFFNOrderedTypes(false)
+        // DONE
+        // Trainer.trainNaiveBayesW2VSubsampled()
+        // Trainer.trainNaiveBayesBoWSubsampled()
+
+        // TODO
+        Trainer.trainFFNBoWSubsampled()
+        Trainer.trainFFNW2VSubsampled()
+        Trainer.trainRNNSubsampled()
+
+        Trainer.trainFFNBoWTime()
+        Trainer.trainFFNW2VTime()
+
         Trainer.trainFFNConfidence()
+        Trainer.trainFFNOrderedTypes(true)
+
+        Trainer.trainFFNOrdered()
+        Trainer.trainFFNBoWOrdered()
+        Trainer.trainFFNOrderedTypes(false)
 
       // Testing
       case "testModels" => Tester.testModels()
+      case "testFFNBoW" => Tester.testFFNBow()
       case "testLengths" => Tester.testLengths()
       case "testTimeDecay" => Tester.testTimeDecay()
       case "testConfidence" => Tester.testConfidence()

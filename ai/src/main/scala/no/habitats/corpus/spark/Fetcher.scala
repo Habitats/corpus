@@ -56,11 +56,11 @@ object Fetcher extends RddSerializer{
   lazy val subTrainShuffled     : RDD[Article] = fetch("nyt/subsampled_train_shuffled.txt", 0.6)
   lazy val subValidationShuffled: RDD[Article] = fetch("nyt/subsampled_validation_shuffled.txt", 0.2)
 
-  def ordered(sub: Boolean = true) = if (sub) (subTrainOrdered, subValidationOrdered) else (annotatedTrainOrdered, annotatedValidationOrdered)
-  def shuffled(sub: Boolean = true) = if (sub) (subTrainShuffled, subValidationShuffled) else (annotatedTrainShuffled, annotatedValidationShuffled)
-  def types(sub: Boolean = true) = if (sub) (subTrainOrderedTypes, subValidationOrdered) else (annotatedTrainOrderedTypes, annotatedValidationOrdered)
+  def ordered(sub: Boolean = true): (RDD[Article], RDD[Article]) = if (sub) (subTrainOrdered, subValidationOrdered) else (annotatedTrainOrdered, annotatedValidationOrdered)
+  def shuffled(sub: Boolean = true): (RDD[Article], RDD[Article]) = if (sub) (subTrainShuffled, subValidationShuffled) else (annotatedTrainShuffled, annotatedValidationShuffled)
+  def types(sub: Boolean = true): (RDD[Article], RDD[Article]) = if (sub) (subTrainOrderedTypes, subValidationOrdered) else (annotatedTrainOrderedTypes, annotatedValidationOrdered)
 
-  def by(name: String) = fetch("nyt/" + name)
+  def by(name: String): RDD[Article] = fetch("nyt/" + name)
 
   def jsonToTxt(name: String) = saveAsText(fetchJson("nyt/" + name).map(Article.toStringSerialized),name)
 

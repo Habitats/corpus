@@ -2,6 +2,7 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
+import no.habitats.corpus.TFIDF
 import no.habitats.corpus.common.W2VLoader
 import no.habitats.corpus.common.models.Article
 import org.deeplearning4j.datasets.iterator.DataSetIterator
@@ -10,8 +11,8 @@ import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j
 
-class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize: Int, phrases: Array[String] = Array()) extends DataSetIterator {
-  if(phrases.isEmpty) W2VLoader.preload()
+class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize: Int, tfidf: Option[TFIDF] = None) extends DataSetIterator {
+  if (tfidf.isEmpty) W2VLoader.preload()
 
   // 32 may be a good starting point,
   var counter = 0
@@ -25,7 +26,11 @@ class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize:
 
     for (i <- articles.toList.indices) {
       // We want to preserve order
-      features.putRow(i, if (phrases.isEmpty) articles(i).toDocumentVector else MLLibUtil.toVector(articles(i).toVector(phrases)))
+      val vector = tfidf match {
+        case None => articles(i).toDocumentVector
+        case Some(v) => MLLibUtil.toVector(v.toVector(articles(i)))
+      }
+      features.putRow(i, vector)
 
       // binary
       val v = if (articles(i).iptc.contains(label)) 1 else 0
@@ -35,10 +40,14 @@ class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize:
     counter += articles.size
     new DataSet(features, labels)
   }
+
   override def batch(): Int = Math.min(batchSize, Math.max(allArticles.size - counter, 0))
   override def cursor(): Int = counter
   override def totalExamples(): Int = allArticles.size
-  override def inputColumns(): Int = if (phrases.isEmpty) W2VLoader.featureSize else phrases.size
+  override def inputColumns(): Int = tfidf match {
+    case None => W2VLoader.featureSize
+    case Some(v) => v.phrases.size
+  }
   override def setPreProcessor(preProcessor: DataSetPreProcessor): Unit = throw new UnsupportedOperationException
   override def getLabels: util.List[String] = util.Arrays.asList(label, "not_" + label)
   override def totalOutcomes(): Int = 2
@@ -47,3 +56,5 @@ class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize:
   override def next(): DataSet = next(batch)
   override def hasNext: Boolean = counter < totalExamples()
 }
+
+

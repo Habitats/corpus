@@ -63,7 +63,7 @@ private class TextVectorLoader extends VectorLoader {
   lazy val documentVectors: Map[String, INDArray] = loadVectors(Config.documentVectors(W2VLoader.confidence))
   lazy val ids            : Set[String]           = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
 
-  override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
+  override def fromId(fb: String): Option[INDArray] = vectors.get(fb).map(_.dup)
   override def documentVector(a: Article): INDArray = {
     W2VLoader.calculateDocumentVector(a.ann)
     documentVectors.getOrElse(a.id, W2VLoader.calculateDocumentVector(a.ann))
