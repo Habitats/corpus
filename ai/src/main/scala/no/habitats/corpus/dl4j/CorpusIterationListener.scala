@@ -9,10 +9,11 @@ import scala.collection.JavaConverters._
 case class CorpusIterationListener() extends IterationListener {
   private var printIterations: Int                     = 5
   private var inv            : Boolean                 = false
-  var iterCount      : Long                    = 0
   private val res                                      = new CircularFifoQueue[Double](100)
   private val deltas         : CircularFifoQueue[Long] = new CircularFifoQueue[Long](8)
   private var delta                                    = System.currentTimeMillis
+
+  var iterCount: Long = 0
 
   def this(printIterations: Int) {
     this()
@@ -24,6 +25,8 @@ case class CorpusIterationListener() extends IterationListener {
   def invoke() = {
     this.inv = true
   }
+
+  def reset = {iterCount = 0}
 
   def iterationDone(model: Model, iteration: Int) {
     val result: Double = model.score

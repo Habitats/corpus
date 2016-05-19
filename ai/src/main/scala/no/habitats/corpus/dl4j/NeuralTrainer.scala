@@ -28,6 +28,7 @@ object NeuralTrainer {
       }
       trainIter.reset()
       NeuralEvaluation(net, testIter.asScala, i, label, Some(neuralPrefs)).log()
+      neuralPrefs.listener.reset
       testIter.reset()
     }
     net

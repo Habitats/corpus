@@ -91,7 +91,7 @@ if [ ! -d dl4j ]; then
 	git clone https://github.com/deeplearning4j/deeplearning4j.git
 	git pull
 	cd deeplearning4j
-	/usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dscala.binary.version=2.10.5 -Dspark.version=1.5.2
+	/usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip= true -Dscala.binary.version=2.10 -Dscala.version=2.10.5 -Dspark.version=1.5.2
 fi
 
 # Install MKL
