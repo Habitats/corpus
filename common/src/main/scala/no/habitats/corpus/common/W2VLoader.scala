@@ -60,13 +60,16 @@ private class BinaryVectorLoader extends VectorLoader {
 
 private class TextVectorLoader extends VectorLoader {
   lazy val vectors        : Map[String, INDArray] = loadVectors(Config.freebaseToWord2Vec(W2VLoader.confidence))
-  lazy val documentVectors: Map[String, INDArray] = loadVectors(Config.documentVectors(W2VLoader.confidence))
+  lazy val documentVectors: Map[String, INDArray] = {
+    if (!Config.cache) Log.v("Illegal cache access. Cache is disabled!")
+    loadVectors(Config.documentVectors(W2VLoader.confidence))
+  }
   lazy val ids            : Set[String]           = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
 
   override def fromId(fb: String): Option[INDArray] = vectors.get(fb).map(_.dup)
   override def documentVector(a: Article): INDArray = {
-    W2VLoader.calculateDocumentVector(a.ann)
-    documentVectors.getOrElse(a.id, W2VLoader.calculateDocumentVector(a.ann))
+    if (Config.cache) documentVectors.getOrElse(a.id, W2VLoader.calculateDocumentVector(a.ann))
+    else W2VLoader.calculateDocumentVector(a.ann)
   }
   override def contains(fb: String): Boolean = ids.contains(fb)
   override def preload(): Unit = vectors
@@ -90,8 +93,8 @@ sealed class SparkVectorLoader extends VectorLoader {
 
 object W2VLoader extends RddSerializer with VectorLoader {
 
-  implicit val formats = Serialization.formats(NoTypeHints)
-  lazy val loader: VectorLoader = if (Config.spark) new SparkVectorLoader() else new TextVectorLoader()
+  implicit val formats              = Serialization.formats(NoTypeHints)
+  lazy     val loader: VectorLoader = if (Config.spark) new SparkVectorLoader() else new TextVectorLoader()
 
   // TODO: NOT GOOD
   var confidence  = 0.5
