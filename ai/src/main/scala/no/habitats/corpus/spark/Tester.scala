@@ -140,6 +140,7 @@ object Tester {
 }
 
 sealed trait Testable {
+  import scala.collection.JavaConverters._
   val modelName: String
 
   def iter(test: Array[Article], label: String): DataSetIterator = ???
@@ -150,7 +151,7 @@ sealed trait Testable {
     if (iteration == 0) Log.r(s"Testing $modelName ...")
     val evals: Set[NeuralEvaluation] = models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
       val ffnTest = iter(test, models._1)
-      val rnnEval = NeuralEvaluation(models._2, ffnTest, i, models._1)
+      val rnnEval = NeuralEvaluation(models._2, ffnTest.asScala, i, models._1)
       rnnEval.log()
       rnnEval
     }

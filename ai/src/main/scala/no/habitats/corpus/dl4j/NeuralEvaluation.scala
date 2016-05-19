@@ -2,18 +2,17 @@ package no.habitats.corpus.dl4j
 
 import no.habitats.corpus.common.Log
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
-import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, GravesLSTM}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
+import org.nd4j.linalg.dataset.DataSet
 
-import scala.collection.JavaConverters._
 import scala.util.Try
 
-case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None) {
+case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[DataSet], epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None) {
   private lazy val eval = {
     val e = new Evaluation()
-    testIter.asScala.foreach(t => {
+    testIter.foreach(t => {
       val features = t.getFeatureMatrix
       val labels = t.getLabels
       if (t.getFeaturesMaskArray != null) {
@@ -74,6 +73,12 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: DataSetIterator, e
     //    Log.r2(confusion)
     Log.rr(statsHeader)
     Log.r2(stats)
+  }
+
+  def logv(i: Int) = {
+    //    Log.r2(confusion)
+    if (i == 0) Log.r(statsHeader, "spam.txt")
+    Log.r(stats, "spam.txt")
   }
 }
 

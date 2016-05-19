@@ -5,6 +5,8 @@ import org.bytedeco.javacpp.Pointer
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
+import scala.collection.JavaConverters._
+
 /**
   * Created by mail on 06.05.2016.
   */
@@ -13,15 +15,21 @@ object NeuralTrainer {
     //    Log.r(s"Training $label ...")
     //    Log.r2(s"Training $label ...")
     Log.v("Free bytes: " + Pointer.totalBytes())
+    var c = 0
     for (i <- 0 until neuralPrefs.epochs) {
-      net.fit(trainIter)
+      while (trainIter.hasNext) {
+        net.fit(trainIter.next())
+        c += 1
+        if (c % 10 == 0) {
+          val evaluation: NeuralEvaluation = NeuralEvaluation(net, testIter.asScala.take(2), i, label, Some(neuralPrefs))
+          evaluation.logv(c)
+          testIter.reset()
+        }
+      }
       trainIter.reset()
-      val eval = NeuralEvaluation(net, testIter, i, label, Some(neuralPrefs))
-      eval.log()
+      NeuralEvaluation(net, testIter.asScala, i, label, Some(neuralPrefs)).log()
       testIter.reset()
     }
-
     net
   }
-
 }

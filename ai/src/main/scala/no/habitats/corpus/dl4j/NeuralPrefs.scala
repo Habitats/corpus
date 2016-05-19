@@ -3,12 +3,12 @@ package no.habitats.corpus.dl4j
 import no.habitats.corpus.common.models.Article
 
 case class NeuralPrefs(
-                        learningRate: Double = 0.05,
+                        learningRate: Double ,
                         hiddenNodes: Int = 10,
                         train: Array[Article],
                         validation: Array[Article],
-                        minibatchSize: Int = 50,
-                        epochs: Int = 5,
+                        minibatchSize: Int,
+                        epochs: Int ,
                         histogram: Boolean = false,
                         phrases: Option[Array[String]] = None
                       ) {

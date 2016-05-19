@@ -94,6 +94,7 @@ object SparkUtil {
       case "trainFFNShuffled" => Trainer.trainFFNShuffled()
       case "trainFFNBalanced" => Trainer.trainFFNBalanced()
       case "trainFFNConfidence" => Trainer.trainFFNConfidence()
+      case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
 
       case "train" =>
         // DONE
@@ -101,8 +102,8 @@ object SparkUtil {
         // Trainer.trainNaiveBayesBoWSubsampled()
 
         // TODO
-        Trainer.trainFFNBoWSubsampled()
-        Trainer.trainFFNW2VSubsampled()
+//        Trainer.trainFFNBoWSubsampled()
+//        Trainer.trainFFNW2VSubsampled()
         Trainer.trainRNNSubsampled()
 
         Trainer.trainFFNBoWTime()

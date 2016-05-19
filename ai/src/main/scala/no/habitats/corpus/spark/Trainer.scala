@@ -122,6 +122,7 @@ object Trainer extends NeuralTrainer {
 }
 
 sealed trait NeuralTrainer {
+  import scala.collection.JavaConverters._
 
   implicit def collect(rdd: RDD[Article]): Array[Article] = rdd.collect()
 
@@ -149,7 +150,7 @@ sealed trait NeuralTrainer {
   def trainRNNW2V(train: RDD[Article], validation: RDD[Article], name: String) = {
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 500, epochs = 1)
+    val prefs = NeuralPrefs(learningRate = 0.50, train = train, validation = validation, minibatchSize = 500, epochs = 1, hiddenNodes = 200)
     Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, prefs, name))
   }
 
@@ -206,7 +207,7 @@ sealed trait NeuralTrainer {
     Log.v("Starting training ...")
     for (i <- 0 until neuralPrefs.epochs) {
       net = sparkNetwork.fitDataSet(rddTrain, 200, 2)
-      val eval = NeuralEvaluation(net, testIter, i, label, Some(neuralPrefs))
+      val eval = NeuralEvaluation(net, testIter.asScala, i, label, Some(neuralPrefs))
       eval.log()
       testIter.reset()
     }
@@ -225,7 +226,7 @@ sealed trait NeuralTrainer {
     Log.v("Starting training ...")
     for (i <- 0 until neuralPrefs.epochs) {
       net = sparkNetwork.fitDataSet(rddTrain, neuralPrefs.minibatchSize * 8, 8)
-      val eval = NeuralEvaluation(net, testIter, i, label, Some(neuralPrefs))
+      val eval = NeuralEvaluation(net, testIter.asScala, i, label, Some(neuralPrefs))
       eval.log()
       testIter.reset()
     }
