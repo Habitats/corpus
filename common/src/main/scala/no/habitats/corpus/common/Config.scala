@@ -143,7 +143,7 @@ object Config {
   def spark = args.spark.getOrElse(false)
   def learningRate = args.learningRate
   def miniBatchSize = args.miniBatchSize
-  def cache: Boolean = args.cache.getOrElse(false)
+  def cache: Boolean = args.cache.getOrElse(true)
 
   case class Arguments(
                         partitions: Option[Int] = None,

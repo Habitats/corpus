@@ -28,7 +28,7 @@ object Trainer extends NeuralTrainer {
 
   def trainFFNW2VSubsampled() = {
     val (train, validation) = Fetcher.ordered(true)
-    trainFFNW2V(train, validation, "subsampled-ffn-w2v")
+    trainFFNW2V(train, validation, "subsampled-ffn-w2v", learningRate = 0.5)
   }
 
   def trainFFNBoWSubsampled() = {
