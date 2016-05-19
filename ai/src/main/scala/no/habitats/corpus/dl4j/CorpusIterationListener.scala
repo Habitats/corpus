@@ -31,10 +31,10 @@ case class CorpusIterationListener() extends IterationListener {
     deltas.add(System.currentTimeMillis - delta)
     delta = System.currentTimeMillis
     if (printIterations <= 0) printIterations = 1
-    //    if (iterCount % printIterations == 0) {
-    //      invoke
-    //      Log.r(f"Score at iteration $iterCount is $result%.5f ($average%.5f) @ ${deltas.asScala.sum / deltas.size} ms [${(Pointer.totalBytes / 10e6).toInt}%4d MB]", "iterations.txt")
-    //    }
+    if (iterCount % printIterations == 0) {
+      invoke
+      //      Log.r(f"Score at iteration $iterCount is $result%.5f ($average%.5f) @ ${deltas.asScala.sum / deltas.size} ms [${(Pointer.totalBytes / 10e6).toInt}%4d MB]", "iterations.txt")
+    }
     iterCount += 1
   }
 

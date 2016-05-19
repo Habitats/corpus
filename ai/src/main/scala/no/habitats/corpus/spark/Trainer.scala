@@ -19,6 +19,8 @@ import scala.language.implicitConversions
 
 object Trainer extends NeuralTrainer {
 
+  implicit def seqthis(a: Double): Seq[Double] = Seq(a)
+
   // ### Best models
   // ## Subsampled
   def trainRNNSubsampled() = {
@@ -33,7 +35,7 @@ object Trainer extends NeuralTrainer {
 
   def trainFFNBoWSubsampled() = {
     val (train, validation) = Fetcher.ordered(true)
-    trainFFNBoW(train, validation, "subsampled-ffn-bow", termFrequencyThreshold = 5)
+    trainFFNBoW(train, validation, "subsampled-ffn-bow", termFrequencyThreshold = 5, learningRate = 0.5)
   }
 
   def trainNaiveBayesW2VSubsampled() = {
@@ -128,11 +130,13 @@ sealed trait NeuralTrainer {
 
   private val count: String = if (Config.count == Int.MaxValue) "all" else Config.count.toString
 
-  def trainFFNW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Double = Config.learningRate.getOrElse(0.05), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000)) = {
+  def trainFFNW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000)) = {
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = learningRate, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1)
-    Config.cats.foreach(c => trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name))
+    for{lr <- learningRate} yield {
+      val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1)
+      Config.cats.foreach(c => trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name))
+    }
   }
 
   def trainFFNSpark(train: RDD[Article], validation: RDD[Article], name: String) = {
@@ -154,14 +158,14 @@ sealed trait NeuralTrainer {
     Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, prefs, name))
   }
 
-  def trainFFNBoW(train: RDD[Article], validation: RDD[Article], name: String, termFrequencyThreshold: Int = 100) = {
+  def trainFFNBoW(train: RDD[Article], validation: RDD[Article], name: String, termFrequencyThreshold: Int = 100, learningRate: Double = Config.learningRate.getOrElse(0.05), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000)) = {
     Config.resultsFileName = s"train_$name.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val tfidf = TFIDF(train, termFrequencyThreshold)
     Log.toFile(TFIDF.serialize(tfidf), name + "-" + count + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
     Config.cats.zipWithIndex.foreach { case (c, i) => {
       val neuralPrefs = NeuralPrefs(
-        learningRate = 0.05, minibatchSize = 1000, histogram = false, epochs = 1,
+        learningRate = learningRate, minibatchSize = minibatchSize, histogram = false, epochs = 1,
         train = TFIDF.frequencyFilter(train, tfidf.phrases),
         validation = TFIDF.frequencyFilter(validation, tfidf.phrases))
       val net: MultiLayerNetwork = binaryFFNBoWTrainer(c, neuralPrefs, tfidf)

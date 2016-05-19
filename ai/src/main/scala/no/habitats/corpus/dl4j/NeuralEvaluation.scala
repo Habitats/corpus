@@ -42,7 +42,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
     "Accuracy" -> f"$accuracy%.3f",
     "F-score" -> f"$fscore%.3f",
     "Error" -> f"${neuralPrefs.map(_.listener.average).map(a => f"$a%.10f").getOrElse("N/A")}",
-    "Delta" -> f"${neuralPrefs.map(_.listener.iterationFrequency).map(a => f"$a%5d").getOrElse("N/A")}",
+    "Delta" -> f"${neuralPrefs.map(_.listener.iterationFrequency).map(a => f"$a%6d").getOrElse("N/A")}",
     "LR" -> f"${net.getLayerWiseConfigurations.getConf(0).getLayer.getLearningRate}",
     "MBS" -> f"${neuralPrefs.map(_.minibatchSize).getOrElse("N/A")}",
     "Hidden" -> f"$numHidden"
@@ -78,10 +78,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
 
   def logv(i: Int) = {
     //    Log.r2(confusion)
-    if (i == 0) {
-      Log.r(statsHeader, "spam.txt")
-      Log.h()
-    }
+    if (i == 0) Log.r(statsHeader, "spam.txt")
     Log.r(stats, "spam.txt")
   }
 }

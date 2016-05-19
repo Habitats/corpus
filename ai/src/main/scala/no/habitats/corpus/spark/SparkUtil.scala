@@ -9,8 +9,6 @@ import no.habitats.corpus.common.dl4j.FreebaseW2V
 import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.dl4j.TSNE
 import org.apache.spark.rdd.RDD
-import org.apache.spark.util.StatCounter
-import org.nd4j.linalg.factory.Nd4j
 
 import scala.collection.Map
 
@@ -95,15 +93,17 @@ object SparkUtil {
       case "trainFFNBalanced" => Trainer.trainFFNBalanced()
       case "trainFFNConfidence" => Trainer.trainFFNConfidence()
       case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
+      case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
 
       case "train" =>
         // DONE
         // Trainer.trainNaiveBayesW2VSubsampled()
         // Trainer.trainNaiveBayesBoWSubsampled()
+        // Trainer.trainFFNW2VSubsampled()
 
         // TODO
-//        Trainer.trainFFNBoWSubsampled()
-//        Trainer.trainFFNW2VSubsampled()
+        // Trainer.trainFFNBoWSubsampled()
+
         Trainer.trainRNNSubsampled()
 
         Trainer.trainFFNBoWTime()
