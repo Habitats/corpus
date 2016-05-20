@@ -12,7 +12,7 @@ import org.json4s.jackson.Serialization
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 
-import scala.collection.{Map, Set}
+import scala.collection.{Map, Set, mutable}
 
 //case class W2VLoader(confidence: Double) extends RddSerializer {
 //  lazy val vectors        : Map[String, INDArray] = loadVectors(Config.freebaseToWord2Vec(confidence))
@@ -59,16 +59,16 @@ private class BinaryVectorLoader extends VectorLoader {
 }
 
 private class TextVectorLoader extends VectorLoader {
-  lazy val vectors        : Map[String, INDArray] = loadVectors(Config.freebaseToWord2Vec(W2VLoader.confidence))
-  lazy val documentVectors: Map[String, INDArray] = {
+  lazy val vectors        : Map[String, INDArray]                          = loadVectors(Config.freebaseToWord2Vec(W2VLoader.confidence))
+  lazy val documentVectors: scala.collection.mutable.Map[String, INDArray] = {
     if (!Config.cache) Log.v("Illegal cache access. Cache is disabled!")
-    loadVectors(Config.documentVectors(W2VLoader.confidence))
+    mutable.Map[String, INDArray]() ++ loadVectors(Config.documentVectors(W2VLoader.confidence))
   }
-  lazy val ids            : Set[String]           = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
+  lazy val ids            : Set[String]                                    = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
 
   override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
   override def documentVector(a: Article): INDArray = {
-    if (Config.cache) documentVectors.getOrElse(a.id, W2VLoader.calculateDocumentVector(a.ann))
+    if (Config.cache) documentVectors.getOrElseUpdate(a.id, W2VLoader.calculateDocumentVector(a.ann))
     else W2VLoader.calculateDocumentVector(a.ann)
   }
   override def contains(fb: String): Boolean = ids.contains(fb)

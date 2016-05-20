@@ -10,8 +10,8 @@ configurations {
 dependencies {
     compile project(':common')
 
-    compile 'org.scalatra:scalatra_2.10:2.4.0'
-    compile 'org.scalatra:scalatra-json_2.10:2.4.0'
-    compile 'org.scalatra.scalate:scalate-core_2.10:1.7.1'
-    compile 'org.scalatra:scalatra-scalate_2.10:2.4.0'
+    compile 'org.scalatra:scalatra_' + project.scalaBinary + ':2.4.0'
+    compile 'org.scalatra:scalatra-json_' + project.scalaBinary + ':2.4.0'
+    compile 'org.scalatra.scalate:scalate-core_' + project.scalaBinary + ':1.7.1'
+    compile 'org.scalatra:scalatra-scalate_' + project.scalaBinary + ':2.4.0'
 }

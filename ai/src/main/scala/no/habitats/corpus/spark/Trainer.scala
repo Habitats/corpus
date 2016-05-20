@@ -156,7 +156,7 @@ sealed trait NeuralTrainer {
     W2VLoader.preload()
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = learningRate, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1, hiddenNodes = 200)
+    val prefs = NeuralPrefs(learningRate = learningRate, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1, hiddenNodes = 100)
     Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, prefs, name))
   }
 

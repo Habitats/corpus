@@ -6,8 +6,8 @@ sudo apt-get update
 sudo apt-get install -y htop unrar build-essential git unzip oracle-java8-installer
 echo "export JAVA_HOME=/usr/lib/jvm/java-8-oracle" >> ~/.profile && . ~/.profile
  
-sudo wget www.scala-lang.org/files/archive/scala-2.10.6.deb
-sudo dpkg -i scala-2.10.6.deb
+sudo wget www.scala-lang.org/files/archive/scala-'+project.scalaVersion+'.deb
+sudo dpkg -i scala-'+project.scalaVersion+'.deb
 
 echo "alias submit='spark-submit --class no.habitats.corpus.spark.SparkUtil --jars ~/corpus/ai/build/libs/ai-all.jar ~/corpus/ai/build/libs/ai.jar '" >> ~/.bashrc
 echo "alias build='cd ~/corpus/ && git pull && gradle ai:clean ai:shadowJar'" >> ~/.bashrc
@@ -99,8 +99,8 @@ if [ ! -d dl4j ]; then
 
 	cd ~/dl4j/libnd4j && bash buildnativeoperations.sh cpu && echo "export LIBND4J_HOME=`pwd`" >> ~/.profile && export LIBND4J_HOME=`pwd` && . ~/.profile
 	cd ~/dl4j/nd4j && /usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -pl '!:nd4j-cuda-7.5,!org.nd4j:nd4j-tests'
-	cd ~/dl4j/Canova && /usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dscala.binary.version=2.10 -Dscala.version=2.10.6 
-	cd ~/dl4j/deeplearning4j && /usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dscala.binary.version=2.10 -Dscala.version=2.10.6 
+	cd ~/dl4j/Canova && /usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dscala.binary.version=2.10 -Dscala.version='+project.scalaVersion+'
+	cd ~/dl4j/deeplearning4j && /usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dscala.binary.version=2.10 -Dscala.version='+project.scalaVersion+'
 fi
 
 git config --global user.email "mail@habitats.no"

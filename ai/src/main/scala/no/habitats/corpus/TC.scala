@@ -2,14 +2,16 @@ package no.habitats.corpus
 
 import java.io.File
 
-import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.common.models.{Annotation, Article}
+import no.habitats.corpus.common.{Config, Log}
 import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import org.apache.spark.rdd.RDD
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization._
 
+import scala.collection.immutable.LongMap
+import scala.collection.mutable
 import scala.io.Source
 import scala.util.Try
 
@@ -48,18 +50,21 @@ case class TC(rdd: RDD[Article]) {
 
 case class TFIDF(documentsWithTerm: Map[String, Int], phrases: Set[String], documentCount: Int) {
 
-  private val vocabSize  : Int           = phrases.size
-  private val phraseIndex: Array[String] = phrases.toArray.sorted
+  private val vocabSize  : Int             = phrases.size
+  private val phraseIndex: Array[String]   = phrases.toArray.sorted
+  private val memo       : mutable.Map[String, Vector] = mutable.Map[String, Vector]()
 
   def contains(id: String) = phrases.contains(id)
 
   def toVector(article: Article): Vector = {
-    val values: Seq[(Int, Double)] = for {
-      i <- phraseIndex.indices
-      w = phraseIndex(i) if article.ann.contains(w)
-      annotation = article.ann(w)
-    } yield (i, tfidf(article, annotation))
-    Vectors.sparse(phraseIndex.size, values)
+    memo.getOrElseUpdate(article.id, {
+      val values: Seq[(Int, Double)] = for {
+        i <- phraseIndex.indices
+        w = phraseIndex(i) if article.ann.contains(w)
+        annotation = article.ann(w)
+      } yield (i, tfidf(article, annotation))
+      Vectors.sparse(phraseIndex.size, values)
+    })
   }
 
   def inverseDocumentFrequency(annotation: Annotation): Double = documentsWithTerm.get(annotation.id).map(i => Math.log(documentCount.toDouble / i)).getOrElse(0)

@@ -1,6 +1,6 @@
 ## Install Scala
-sudo wget www.scala-lang.org/files/archive/scala-2.10.6.deb
-sudo dpkg -i scala-2.10.6.deb
+sudo wget www.scala-lang.org/files/archive/scala-'+project.scalaVersion+'.deb
+sudo dpkg -i scala-'+project.scalaVersion+'.deb
 
 ## Install SBT
 # Required

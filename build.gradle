@@ -3,6 +3,20 @@ plugins {
     id 'idea'
 }
 
+import org.apache.tools.ant.taskdefs.condition.Os
+
+project.ext {
+    scalaBinary = '2.10'
+    scalaVersion = '2.10.6'
+    javaVersion = '1.7'
+    dl4jVersion = '0.4-rc3.10-SNAPSHOT'
+    if (Os.isFamily(Os.FAMILY_WINDOWS)) {
+        os = 'windows-x86_64'
+    } else {
+        os = 'linux-x86_64'
+    }
+}
+
 subprojects {
     apply plugin: 'scala'
 
@@ -18,17 +32,15 @@ subprojects {
 
     tasks.withType(ScalaCompile) {
         scalaCompileOptions.useAnt = false
-        sourceCompatibility = "1.7"
-        targetCompatibility = "1.7"
+        sourceCompatibility = project.javaVersion
+        targetCompatibility = project.javaVersion
     }
-
-
 
     dependencies {
         testCompile group: 'junit', name: 'junit', version: '4.11'
-        testCompile 'org.scalatest:scalatest_2.10:3.0.0-M7'
-        compile group: 'org.scala-lang', name: 'scala-library', version: '2.10.6'
-        compile group: 'org.scala-lang', name: 'scala-compiler', version: '2.10.6'
-        compile group: 'org.scala-lang', name: 'scala-reflect', version: '2.10.6'
+        testCompile 'org.scalatest:scalatest_' + project.scalaBinary + ':3.0.0-M7'
+        compile group: 'org.scala-lang', name: 'scala-library', version: project.scalaVersion
+        compile group: 'org.scala-lang', name: 'scala-compiler', version: project.scalaVersion
+        compile group: 'org.scala-lang', name: 'scala-reflect', version: project.scalaVersion
     }
 }
