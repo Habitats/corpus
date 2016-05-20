@@ -7,28 +7,9 @@ configurations.all {
     exclude group: 'com.sun.jersey', module: 'jersey-core'
     exclude group: 'org.bytedeco', module: 'javacpp-presets' // https://github.com/bytedeco/javacv/issues/395#issuecomment-220213783
 
-    resolutionStrategy {
-        // fail eagerly on version conflict (includes transitive dependencies)
-        // e.g. multiple different versions of the same dependency (group and name are equal)
-//        failOnVersionConflict()
-
-        // force certain versions of dependencies (including transitive)
-        //  *append new forced modules:
-        force 'org.scala-lang:scala-library:2.10.6', 'org.scala-lang:scala-compiler:2.10.6', 'org.scala-lang:scala-reflect:2.10.6'
-        //  *replace existing forced modules with new ones:
-//        forcedModules = ['asm:asm-all:3.3.1']
-//
-//        // add dependency substitution rules
-//        dependencySubstitution {
-//            substitute module('org.gradle:api') with project(':api')
-//            substitute project(':util') with module('org.gradle:util:3.0')
-//        }
-//
-//        // cache dynamic versions for 10 minutes
-//        cacheDynamicVersionsFor 10 * 60, 'seconds'
-//        // don't cache changing modules at all
-//        cacheChangingModulesFor 0, 'seconds'
-    }
+//    resolutionStrategy {
+//        force 'org.scala-lang:scala-library:2.10.6', 'org.scala-lang:scala-compiler:2.10.6', 'org.scala-lang:scala-reflect:2.10.6'
+//    }
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os

@@ -97,10 +97,10 @@ if [ ! -d dl4j ]; then
 	git clone https://github.com/habitats/deeplearning4j.git
 	git clone https://github.com/deeplearning4j/Canova.git
 
-	cd ~/dl4j/libnd4j && bash buildnativeoperations.sh cpu && echo "export LIBND4J_HOME=`pwd`" >> ~/.profile && export LIBND4J_HOME=`pwd` && . ~./profile
+	cd ~/dl4j/libnd4j && bash buildnativeoperations.sh cpu && echo "export LIBND4J_HOME=`pwd`" >> ~/.profile && export LIBND4J_HOME=`pwd` && . ~/.profile
 	cd ~/dl4j/nd4j && /usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -pl '!:nd4j-cuda-7.5,!org.nd4j:nd4j-tests'
-	cd ~/dl4j/Canova && /usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true 
-	cd ~/dl4j/deeplearning4j && /usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dscala.binary.version=2.10 -Dscala.version=2.10.6 -Dspark.version=1.5.2
+	cd ~/dl4j/Canova && /usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dscala.binary.version=2.10 -Dscala.version=2.10.6 
+	cd ~/dl4j/deeplearning4j && /usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dscala.binary.version=2.10 -Dscala.version=2.10.6 
 fi
 
 git config --global user.email "mail@habitats.no"

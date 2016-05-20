@@ -16,7 +16,6 @@ import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
-import scala.io.Source
 import scala.util.Try
 
 object Tester {
@@ -110,8 +109,8 @@ object Tester {
     Config.resultsFileName = "test_time_decay.txt"
     Config.resultsCatsFileName = "test_time_decay_cats.txt"
     Log.h("Testing Time Decay")
-    testBuckets("time", FeedforwardTester("ffn-w2v-time-all"), _.id.toInt)
-    testBuckets("time", NaiveBayesTester("ffn-bow-time-all"), _.id.toInt)
+    //    testBuckets("time", FeedforwardTester("ffn-w2v-time-all"), _.id.toInt)
+    testBuckets("time", FeedforwardTester("ffn-bow-time-all"), _.id.toInt)
     //    testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
     //    testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
   }
@@ -141,7 +140,9 @@ object Tester {
 }
 
 sealed trait Testable {
+
   import scala.collection.JavaConverters._
+
   val modelName: String
 
   def iter(test: Array[Article], label: String): DataSetIterator = ???
@@ -164,7 +165,7 @@ sealed trait Testable {
 case class FeedforwardTester(modelName: String) extends Testable {
   lazy val ffa: Map[String, MultiLayerNetwork] = NeuralModelLoader.models(modelName)
 
-  override def iter(test: Array[Article], label: String): DataSetIterator = new FeedForwardIterator(test, label, 500, if(modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None)
+  override def iter(test: Array[Article], label: String): DataSetIterator = new FeedForwardIterator(test, label, 500, if (modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None)
   override def models(modelName: String): Map[String, MultiLayerNetwork] = ffa
 }
 
@@ -177,10 +178,11 @@ case class RecurrentTester(modelName: String) extends Testable {
 
 case class NaiveBayesTester(modelName: String) extends Testable {
 
-  def test(articles: Array[Article]) = {
+  override def test(articles: Array[Article], iteration: Int = 0) = {
     Log.r(s"Testing Naive Bayes [$modelName] ...")
     val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(c => (c, MLlibModelLoader.load(modelName, IPTC.trim(c)))).toMap
     val rdd: RDD[Article] = sc.parallelize(articles)
-    MlLibUtils.testMLlibModels(rdd, nb, if(modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None, sc.broadcast(Prefs()))
+    MlLibUtils.testMLlibModels(rdd, nb, if (modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None, sc.broadcast(Prefs()))
   }
+
 }
