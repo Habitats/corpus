@@ -111,7 +111,7 @@ object SparkUtil {
 
 //        Trainer.trainRNNSubsampled()
 
-//        Trainer.trainFFNBoWTime()
+        Trainer.trainFFNBoWTime()
         Trainer.trainFFNW2VTime()
 
 //        Trainer.trainFFNConfidence()
