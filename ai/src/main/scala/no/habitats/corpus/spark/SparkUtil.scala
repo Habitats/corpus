@@ -109,16 +109,16 @@ object SparkUtil {
 
         // TODO
 
-        Trainer.trainRNNSubsampled()
+//        Trainer.trainRNNSubsampled()
 
 //        Trainer.trainFFNBoWTime()
-//        Trainer.trainFFNW2VTime()
+        Trainer.trainFFNW2VTime()
 
-        Trainer.trainFFNConfidence()
-        Trainer.trainFFNOrderedTypes(true)
-
-        Trainer.trainFFNBoWOrdered()
-        Trainer.trainFFNOrderedTypes(false)
+//        Trainer.trainFFNConfidence()
+//        Trainer.trainFFNOrderedTypes(true)
+//
+//        Trainer.trainFFNBoWOrdered()
+//        Trainer.trainFFNOrderedTypes(false)
 
       // Testing
       case "testModels" => Tester.testModels()

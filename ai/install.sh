@@ -10,8 +10,8 @@ sudo apt-get install -y htop
 sudo apt-get install unrar
 
 ## .bashrc 
-echo "alias submit2='cd ~/corpus/ && git pull && gradle ai:shadowJar && spark-submit --class no.habitats.corpus.spark.SparkUtil ~/corpus/ai/build/libs/ai-all.jar local=false '" >> ~/.bashrc
-echo "alias submit='spark-submit --class no.habitats.corpus.spark.SparkUtil --jars ~/corpus/ai/build/libs/ai-all.jar ~/corpus/ai/build/libs/ai.jar local=false '" >> ~/.bashrc
+echo "alias submit2='cd ~/corpus/ && git pull && gradle ai:shadowJar && spark-submit --class no.habitats.corpus.spark.SparkUtil ~/corpus/ai/build/libs/ai-all.jar '" >> ~/.bashrc
+echo "alias submit='spark-submit --class no.habitats.corpus.spark.SparkUtil --jars ~/corpus/ai/build/libs/ai-all.jar ~/corpus/ai/build/libs/ai.jar '" >> ~/.bashrc
 echo "alias build='cd ~/corpus/ && git pull && gradle ai:clean ai:shadowJar'" >> ~/.bashrc
  
 # Git
@@ -39,6 +39,7 @@ fi
 # Gradle
 cd ~
 if [ ! -d opt ]; then
+	sudo apt-get install unzip
 	mkdir -p ~/opt/packages/gradle 
 	cd $_ 
 	wget --progress=bar:force:noscroll https://services.gradle.org/distributions/gradle-2.10-bin.zip 
@@ -48,8 +49,8 @@ if [ ! -d opt ]; then
 	    export GRADLE_HOME=\"\$HOME/opt/gradle\"
 	    PATH=\"\$PATH:\$GRADLE_HOME/bin\"
 	fi" >> ~/.profile
-	source ~/.profile
-	source ~/.bashrc
+	. ~/.profile
+	. ~/.bashrc
 fi
 
 
@@ -91,7 +92,7 @@ if [ ! -d dl4j ]; then
 	git clone https://github.com/deeplearning4j/deeplearning4j.git
 	git pull
 	cd deeplearning4j
-	/usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip= true -Dscala.binary.version=2.10 -Dscala.version=2.10.5 -Dspark.version=1.5.2
+	/usr/local/apache-maven-3.3.3/bin/mvn clean install -DskipTests -Dmaven.javadoc.skip=true -Dscala.binary.version=2.10 -Dscala.version=2.10.6 -Dspark.version=1.6.0
 fi
 
 # Install MKL

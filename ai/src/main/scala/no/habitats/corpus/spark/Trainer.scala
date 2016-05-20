@@ -82,13 +82,13 @@ object Trainer extends NeuralTrainer {
   def trainFFNBoWTime() = {
     val train = Fetcher.by("time/nyt_time_train.txt")
     val validation = Fetcher.by("time/nyt_time_0_validation.txt")
-    trainFFNBoW(train, validation, "ffn-bow-time", termFrequencyThreshold = 5)
+    trainFFNBoW(train, validation, "ffn-bow-time", termFrequencyThreshold = 5, learningRate = 1)
   }
 
   def trainFFNW2VTime() = {
     val train = Fetcher.by("time/nyt_time_train.txt")
     val validation = Fetcher.by("time/nyt_time_0_validation.txt")
-    trainFFNW2V(train, validation, "ffn-w2v-time")
+    trainFFNW2V(train, validation, "ffn-w2v-time", learningRate = 1.0)
   }
 
   // Misc

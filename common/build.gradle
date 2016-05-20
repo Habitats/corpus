@@ -36,14 +36,14 @@ dependencies {
 //        compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.8'
 //        compile 'org.nd4j:nd4j-x86:0.4-rc3.8'
 
-    compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.9-SNAPSHOT'
-    compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.9-SNAPSHOT'
-    compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.9-SNAPSHOT'
-    compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT'
+    compile 'org.deeplearning4j:deeplearning4j-nlp:0.4-rc3.10-SNAPSHOT'
+    compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.10-SNAPSHOT'
+    compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.10-SNAPSHOT'
+    compile 'org.nd4j:nd4j-native:0.4-rc3.10-SNAPSHOT'
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
-        compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT:windows-x86_64' // Native crash otherwise
+        compile 'org.nd4j:nd4j-native:0.4-rc3.10-SNAPSHOT:windows-x86_64' // Native crash otherwise
     } else {
-        compile 'org.nd4j:nd4j-native:0.4-rc3.9-SNAPSHOT:linux-x86_64' // Native crash otherwise
+        compile 'org.nd4j:nd4j-native:0.4-rc3.10-SNAPSHOT:linux-x86_64' // Native crash otherwise
     }
     compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
 
