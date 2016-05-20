@@ -6,10 +6,12 @@ configurations {
         exclude group: 'com.sun.jersey.jersey-test-framework', module: 'jersey-test-framework-grizzly2'
         exclude group: 'com.sun.jersey', module: 'jersey-json'
         exclude group: 'com.sun.jersey', module: 'jersey-core'
+        exclude group: 'org.bytedeco', module: 'javacpp-presets' // https://github.com/bytedeco/javacv/issues/395#issuecomment-220213783
     }
 }
 
 import org.apache.tools.ant.taskdefs.condition.Os
+
 dependencies {
     compile group: 'org.scala-lang', name: 'scala-library', version: '2.10.6'
     compile group: 'org.scala-lang', name: 'scala-compiler', version: '2.10.6'
@@ -40,10 +42,14 @@ dependencies {
     compile 'org.deeplearning4j:deeplearning4j-ui:0.4-rc3.10-SNAPSHOT'
     compile 'org.deeplearning4j:dl4j-spark:0.4-rc3.10-SNAPSHOT'
     compile 'org.nd4j:nd4j-native:0.4-rc3.10-SNAPSHOT'
+    compile 'org.bytedeco:javacpp:1.2'
+    compile 'org.bytedeco.javacpp-presets:opencv:3.1.0-1.2'
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {
         compile 'org.nd4j:nd4j-native:0.4-rc3.10-SNAPSHOT:windows-x86_64' // Native crash otherwise
+        compile 'org.bytedeco.javacpp-presets:opencv:3.1.0-1.2:windows-x86_64'
     } else {
         compile 'org.nd4j:nd4j-native:0.4-rc3.10-SNAPSHOT:linux-x86_64' // Native crash otherwise
+        compile 'org.bytedeco.javacpp-presets:opencv:3.1.0-1.2:linux-x86_64'
     }
     compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
 
