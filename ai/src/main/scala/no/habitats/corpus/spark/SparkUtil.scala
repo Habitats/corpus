@@ -135,8 +135,8 @@ object SparkUtil {
         //        // Ex 3
         //        Tester.testLengths()
         // Ex 4
-        Tester.testShuffledVsOrdered()
-      //        Tester.testTimeDecay()
+//        Tester.testShuffledVsOrdered()
+              Tester.testTimeDecay()
       // Ex 5
       //        Tester.testConfidence()
 

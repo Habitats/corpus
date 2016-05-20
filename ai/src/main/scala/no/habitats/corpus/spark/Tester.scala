@@ -110,7 +110,8 @@ object Tester {
     Config.resultsFileName = "test_time_decay.txt"
     Config.resultsCatsFileName = "test_time_decay_cats.txt"
     Log.h("Testing Time Decay")
-    testBuckets("time", FeedforwardTester("ffn-time"), _.id.toInt)
+    testBuckets("time", FeedforwardTester("ffn-w2v-time-all"), _.id.toInt)
+    testBuckets("time", NaiveBayesTester("ffn-bow-time-all"), _.id.toInt)
     //    testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
     //    testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
   }

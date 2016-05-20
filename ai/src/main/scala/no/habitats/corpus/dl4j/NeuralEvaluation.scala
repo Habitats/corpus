@@ -32,7 +32,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
 
   private lazy val fullStats = Seq[(String, String)](
     "Category" -> f"$label%41s",
-    "Epoch" -> f"${s"$epoch/${neuralPrefs.map(_.listener.iterCount - 1).getOrElse("N/A")}"}%6s",
+    "Epoch" -> f"${s"$epoch${neuralPrefs.map(i => "/"+(i.listener.iterCount - 1)).getOrElse("")}"}%6s",
     "TP" -> f"$tp%5d",
     "FP" -> f"$fp%5d",
     "FN" -> f"$fn%5d",
