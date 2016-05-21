@@ -78,7 +78,7 @@ object JsonSingle {
     jsonFile.createNewFile
     val p = new PrintWriter(jsonFile, "ISO-8859-1")
     (if (articles == Nil) Corpus.articlesFromXML(count = count) else articles)
-      .map(Article.toStringSerialized)
+      .map(Article.serialize)
       .foreach(p.println)
     p.close
   }
@@ -90,10 +90,12 @@ object JsonSingle {
     articles
   }
 
+  @Deprecated
   def toSingleJson(article: Article): String = {
     write(article.copy(body = article.body.replace("\n", " ")))
   }
 
+  @Deprecated
   def fromSingleJson(string: String): Article = {
     val a = read[Article](string)
     a.copy(body = Article.safeString(a.body), desc = a.desc.map(Article.safeString), hl = Article.safeString(a.hl)) // remove chars used for string serialization

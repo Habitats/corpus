@@ -34,14 +34,14 @@ object SparkUtil {
       case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "misc" =>
-        //        Fetcher.jsonToTxt("nyt_corpus_annotated_0.5.json")
-        //        Log.v(Fetcher.annotatedRdd.count())
-        CorpusStats(Fetcher.subTrainOrdered, "subsampled").termFrequencyAnalysis()
-      //        Trainer.trainFFNBoWTime()
+//        Log.v(Config.cats.mkString(", "))
+        Cacher.split(Fetcher.annotatedRdd, 10)
 
       // Generate datasets
       case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
-      case "computeDbAnnotations" => Cacher.computeAndCacheDBPediaAnnotationsToJson(Fetcher.annotatedRdd)
+      case "computeDbAnnotations" =>
+        val ids: Set[String] = (Fetcher.subTrainOrdered ++ Fetcher.subTestOrdered ++ Fetcher.subValidationOrdered).map(_.id).collect.toSet
+        Cacher.computeAndCacheDBPediaAnnotationsToJson(Fetcher.rdd.filter(a => ids.contains(a.id)).sortBy(_.id.toInt))
       case "computeDbAnnotationsConfidence" => Cacher.annotateAndCacheArticlesConfidence()
 
       case "wdToFbFromDump" => WikiData.extractFreebaseFromWikiDump()

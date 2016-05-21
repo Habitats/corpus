@@ -22,7 +22,15 @@ object Config {
   lazy val wikidataToFreebase = dataPath + "dbpedia/wd_to_fb.txt"
   lazy val wikidataToDbPedia  = dataPath + "dbpedia/wikidata_to_dbpedia.txt"
 
-  lazy val cats: Seq[String] = Try(Seq(Config.category)).getOrElse(IPTC.topCategories)
+  lazy val cats: Seq[String] = Config.category match {
+    case Some(s) if s.startsWith("!") => {
+      val startCat: String = s.substring(1, s.length)
+      val all: Seq[String] = IPTC.topCategories
+      all.takeRight(all.size - all.indexOf(startCat))
+    }
+    case Some(s) => Seq(s)
+    case None => IPTC.topCategories
+  }
 
   def freebaseToWord2VecIDs = dataPath + s"fb_ids_with_w2v.txt"
   def freebaseToWord2Vec(confidence: Double) = {
@@ -46,7 +54,7 @@ object Config {
     }
     formatPath(c)
   }
-  private val corpusConfig: String    = if(local) configRoot + "corpus_local.properties" else "/corpus_cluster.properties"
+  private val corpusConfig: String    = if (local) configRoot + "corpus_local.properties" else "/corpus_cluster.properties"
 
   def setArgs(arr: Array[String]) = {
     lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
@@ -138,7 +146,7 @@ object Config {
     case i => if (i == -1) Integer.MAX_VALUE else i
   }
   def job = args.job.getOrElse(conf.getProperty("job"))
-  def category = args.category.getOrElse(throw new IllegalArgumentException("NO CATEGORY DEFINED"))
+  def category = args.category
   def useApi = args.useApi.getOrElse(false)
   def spark = args.spark.getOrElse(false)
   def learningRate = args.learningRate

@@ -14,22 +14,28 @@ object Cacher extends RddSerializer {
   def annotateAndCacheArticles() = {
     val annotations = Spotlight.dbpediaAnnotations
     val rdd = Fetcher.rddMini.map(a => Spotlight.toDBPediaAnnotated(a, annotations))
-    saveAsText(rdd.map(Article.toStringSerialized), "nyt_corpus_annotated")
+    saveAsText(rdd.map(Article.serialize), "nyt_corpus_annotated")
   }
 
   def annotateAndCacheArticlesConfidence() = {
     val db25 = Spotlight.dbpediaAnnotationsMini25
     var rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db25)).map(_.toMinimal).filter(_.ann.nonEmpty)
-    saveAsText(rdd.map(Article.toStringSerialized), "nyt_mini_train_annotated_25")
+    saveAsText(rdd.map(Article.serialize), "nyt_mini_train_annotated_25")
     val db50 = Spotlight.dbpediaAnnotationsMini50
     rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db50)).map(_.toMinimal).filter(_.ann.nonEmpty)
-    saveAsText(rdd.map(Article.toStringSerialized), "nyt_mini_train_annotated_50")
+    saveAsText(rdd.map(Article.serialize), "nyt_mini_train_annotated_50")
     val db75 = Spotlight.dbpediaAnnotationsMini75
     rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db75)).map(_.toMinimal).filter(_.ann.nonEmpty)
-    saveAsText(rdd.map(Article.toStringSerialized), "nyt_mini_train_annotated_75")
+    saveAsText(rdd.map(Article.serialize), "nyt_mini_train_annotated_75")
     val db100 = Spotlight.dbpediaAnnotationsMini100
     rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db100)).map(_.toMinimal).filter(_.ann.nonEmpty)
-    saveAsText(rdd.map(Article.toStringSerialized), "nyt_mini_train_annotated_100")
+    saveAsText(rdd.map(Article.serialize), "nyt_mini_train_annotated_100")
+  }
+
+  def split(rdd: RDD[Article], i: Int) = {
+    val clean = rdd.map(_.copy(ann = Map())).map(Article.serialize)
+    saveAsText(clean, s"split_$i", partitions = i)
+    saveAsText(clean, "nyt_corpus")
   }
 
   def scrambler() = {
@@ -38,12 +44,12 @@ object Cacher extends RddSerializer {
       c <- Seq(25, 50, 75, 100, 0)
     } {
       val s = if (c != 0) s"confidence/nyt_mini_${n}_ordered_${c}.txt" else s"nyt_${n}_ordered.txt"
-      saveAsText(Fetcher.by(s).map(Article.toStringSerialized).sortBy(a => Math.random), s)
+      saveAsText(Fetcher.by(s).map(Article.serialize).sortBy(a => Math.random), s)
     }
   }
 
-  def computeAndCacheDBPediaAnnotationsToJson(rdd: RDD[Article]) = {
-    Spotlight.cacheDbpedia(rdd, 0.25, w2vFilter = true)
+  def computeAndCacheDBPediaAnnotationsToJson(rdd: RDD[Article], partition: Option[Int] = None) = {
+    Spotlight.cacheDbpedia(rdd, 0.25, w2vFilter = true, partition)
     //    Spotlight.cacheDbpedia(rdd, 0.5, w2vFilter = true)
     //    Spotlight.cacheDbpedia(rdd, 0.75, w2vFilter = true)
     //    Spotlight.cacheDbpedia(rdd, 1, w2vFilter = true)
@@ -52,9 +58,9 @@ object Cacher extends RddSerializer {
   def annotateAndCacheArticlesWithTypes() = {
     val annotations = Spotlight.dbpediaAnnotationsWithTypes
     val rdd = Fetcher.annotatedTrainOrdered.map(a => Spotlight.toDBPediaAnnotatedWithTypes(a, annotations))
-    saveAsText(rdd.map(Article.toStringSerialized), "nyt_train_ordered_types")
+    saveAsText(rdd.map(Article.serialize), "nyt_train_ordered_types")
     val rdd2 = Fetcher.subTrainOrdered.map(a => Spotlight.toDBPediaAnnotatedWithTypes(a, annotations))
-    saveAsText(rdd2.map(Article.toStringSerialized), "subsampled_train_ordered_types")
+    saveAsText(rdd2.map(Article.serialize), "subsampled_train_ordered_types")
   }
 
   def cacheMinimalArticles(rdd: RDD[Article], name: String) = {
@@ -63,13 +69,13 @@ object Cacher extends RddSerializer {
       .map(_.filterAnnotation(an => an.fb != Config.NONE && W2VLoader.contains(an.fb)))
       .map(_.toMinimal)
       .filter(_.ann.nonEmpty)
-      .map(Article.toStringSerialized)
+      .map(Article.serialize)
     saveAsText(minimal, name + "_minimal")
   }
 
   def cacheMiniCorpus() = {
     val rdd = sc.parallelize(Fetcher.rdd.map(Corpus.toIPTC).filter(_.iptc.nonEmpty).takeOrdered(100000)(Ordering.by(_.id.toInt * -1)), Config.partitions)
-    saveAsText(rdd.map(Article.toStringSerialized), "nyt_mini_ordered")
+    saveAsText(rdd.map(Article.serialize), "nyt_mini_ordered")
   }
 
   def cacheBalanced() = {
@@ -83,7 +89,7 @@ object Cacher extends RddSerializer {
         //      Set("weather")
         .foreach(c => {
         val balanced = createBalanced(c, rdd).filter(_.iptc.nonEmpty)
-        saveAsText(balanced.map(Article.toStringSerialized), s"${IPTC.trim(c)}_${kind}_balanced")
+        saveAsText(balanced.map(Article.serialize), s"${IPTC.trim(c)}_${kind}_balanced")
       })
     }
   }
@@ -119,7 +125,7 @@ object Cacher extends RddSerializer {
     val superSampled: Seq[RDD[Article]] = pairs.map { case (k, v) => v.union(sc.parallelize(v.takeSample(true, (max - counts(k)).toInt, Config.seed))) }
     val combined: RDD[Article] = superSampled.reduce(_ ++ _).sortBy(a => Math.random)
 
-    saveAsText(combined.map(Article.toStringSerialized), "supersampled" + maxLimit.map("_" + _).getOrElse(""))
+    saveAsText(combined.map(Article.serialize), "supersampled" + maxLimit.map("_" + _).getOrElse(""))
     rdd.unpersist()
   }
 
@@ -131,7 +137,7 @@ object Cacher extends RddSerializer {
     val min = counts.values.min.toInt
     val subSampled = pairs.map { case (k, v) => sc.parallelize(v.take(min)) }
     val combined: RDD[Article] = subSampled.reduce(_ ++ _).distinct().sortBy(a => Math.random)
-    saveAsText(combined.map(Article.toStringSerialized), s"subsampled_$name")
+    saveAsText(combined.map(Article.serialize), s"subsampled_$name")
   }
 
   def splitAndCache() = {
@@ -146,9 +152,9 @@ object Cacher extends RddSerializer {
     val r50 = Fetcher.miniMini50.filter(a => s100.contains(a.id))
     val r25 = Fetcher.miniMini25.filter(a => s100.contains(a.id))
     val r75 = Fetcher.miniMini75.filter(a => s100.contains(a.id))
-    saveAsText(r25.map(Article.toStringSerialized), "nyt_mini_train_annotated_25")
-    saveAsText(r50.map(Article.toStringSerialized), "nyt_mini_train_annotated_50")
-    saveAsText(r75.map(Article.toStringSerialized), "nyt_mini_train_annotated_75")
+    saveAsText(r25.map(Article.serialize), "nyt_mini_train_annotated_25")
+    saveAsText(r50.map(Article.serialize), "nyt_mini_train_annotated_50")
+    saveAsText(r75.map(Article.serialize), "nyt_mini_train_annotated_75")
   }
 
   def splitOrdered(rdd: RDD[Article], name: String = ""): Unit = {
@@ -159,17 +165,17 @@ object Cacher extends RddSerializer {
     val testIds = ids.slice((numArticles * 0.6).toInt, (numArticles * 0.8).toInt).map(_.toString).toSet
     val validationIds = ids.slice((numArticles * 0.8).toInt, numArticles.toInt).map(_.toString).toSet
 
-    val train = rdd.filter(a => trainIds.contains(a.id)).map(Article.toStringSerialized).sortBy(a => Math.random)
+    val train = rdd.filter(a => trainIds.contains(a.id)).map(Article.serialize).sortBy(a => Math.random)
     saveAsText(train, "nyt_train_ordered" + name)
-    val test = rdd.filter(a => testIds.contains(a.id)).map(Article.toStringSerialized).sortBy(a => Math.random)
+    val test = rdd.filter(a => testIds.contains(a.id)).map(Article.serialize).sortBy(a => Math.random)
     saveAsText(test, "nyt_test_ordered" + name)
-    val validation = rdd.filter(a => validationIds.contains(a.id)).map(Article.toStringSerialized).sortBy(a => Math.random)
+    val validation = rdd.filter(a => validationIds.contains(a.id)).map(Article.serialize).sortBy(a => Math.random)
     saveAsText(validation, "nyt_validation_ordered" + name)
   }
 
   def splitShuffled(rdd: RDD[Article]): Unit = {
     // Shuffled splits
-    val splits = rdd.map(Article.toStringSerialized).sortBy(a => Math.random).randomSplit(Array(0.6, 0.2, 0.2), Config.seed)
+    val splits = rdd.map(Article.serialize).sortBy(a => Math.random).randomSplit(Array(0.6, 0.2, 0.2), Config.seed)
     rdd.unpersist()
     saveAsText(splits(0), "nyt_train_shuffled")
     saveAsText(splits(1), "nyt_validation_shuffled")
@@ -213,15 +219,15 @@ object RelativeSplitter extends Splitter {
     val numTrain = (trainFraction * s).round.toInt
     val numTest, numVal = ((testValFraction * s) / 2).round.toInt
     val trainIds = ids.slice(0, numTrain).toSet
-    saveAsText(rdd.map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}_train")
+    saveAsText(rdd.map(Article.serialize), s"$name/nyt_${name}_${buckets}_train")
     for (i <- 0 until buckets) yield {
       val from = numTrain + i * (numTest + numVal)
       val until = numTrain + (i + 1) * (numTest + numVal)
       val bucketIds = Random.shuffle(ids.slice(from.toInt, until.toInt).toSet)
       val testIds = bucketIds.slice(0, bucketIds.size / 2)
       val valIds = bucketIds.slice(bucketIds.size / 2, bucketIds.size)
-      saveAsText(rdd.filter(a => testIds.contains(ordering(a))).map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}-${i}_test")
-      saveAsText(rdd.filter(a => valIds.contains(ordering(a))).map(Article.toStringSerialized), s"$name/nyt_${name}_${buckets}-${i}_validation")
+      saveAsText(rdd.filter(a => testIds.contains(ordering(a))).map(Article.serialize), s"$name/nyt_${name}_${buckets}-${i}_test")
+      saveAsText(rdd.filter(a => valIds.contains(ordering(a))).map(Article.serialize), s"$name/nyt_${name}_${buckets}-${i}_validation")
     }
     rdd.unpersist()
   }
@@ -234,7 +240,7 @@ object StaticSplitter extends Splitter {
     val bucketSize = count / buckets
     val ordered = rdd.sortBy(ordering).map(_.id).collect()
     val ids: Map[Int, Set[String]] = (0 until buckets).map(p => (p, ordered.slice(p * bucketSize - 1, (p + 1) * bucketSize).toSet)).toMap
-    ids.map { case (k, v) => (k, rdd.filter(a => v.contains(a.id)).map(Article.toStringSerialized)) }.foreach { case (k, v) => saveAsText(v, s"${name}_$k") }
+    ids.map { case (k, v) => (k, rdd.filter(a => v.contains(a.id)).map(Article.serialize)) }.foreach { case (k, v) => saveAsText(v, s"${name}_$k") }
     rdd.unpersist()
   }
 }

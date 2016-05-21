@@ -59,12 +59,12 @@ case class Article(id: String,
 object Article {
   def safeString(body: String): String = body.replaceAll("[\n\\[\\]\\~]", " ").replaceAll("\\s+", " ")
 
-  def toStringSerialized(a: Article) = {
+  def serialize(a: Article) = {
     Array(
-      a.id, a.hl, a.body, a.wc, a.date.getOrElse("N"), a.iptc.mkString("[", "~", "]"), a.url.getOrElse("N"), a.desc.mkString("[", "~", "]"), a.pred.mkString("[", "~", "]")).mkString("\t ") + "\t\t" + a.ann.values.map(Annotation.toStringSerialized).mkString("~")
+      a.id, a.hl, a.body, a.wc, a.date.getOrElse("N"), a.iptc.mkString("[", "~", "]"), a.url.getOrElse("N"), a.desc.mkString("[", "~", "]"), a.pred.mkString("[", "~", "]")).mkString("\t ") + "\t\t" + a.ann.values.map(Annotation.serialize).mkString("~")
   }
 
-  def fromStringSerialized(string: String): Article = {
+  def deserialize(string: String): Article = {
     val annSplit = string.split("\t\t")
     val s = annSplit(0).split("\t ")
     val a = if(annSplit.length > 1) annSplit(1) else ""
@@ -80,7 +80,7 @@ object Article {
       desc = toSet(s, 7),
       pred = toSet(s, 8),
       ann = a match {
-        case x if x.length > 0 => x.split("~").map(Annotation.fromStringSerialized).map(ann => (ann.id, ann)).toMap
+        case x if x.length > 0 => x.split("~").map(Annotation.deserialize).map(ann => (ann.id, ann)).toMap
         case _ => Map()
       })
   }

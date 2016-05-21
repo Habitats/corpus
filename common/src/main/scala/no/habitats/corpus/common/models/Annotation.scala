@@ -25,9 +25,9 @@ case class Annotation(articleId: String,
   override def toString: String = f"id: $id%20s > fb: $fb%10s > wb: $wd%10s > offset: $offset%5d > phrase: $phrase%50s > mc: $mc%3d > TF-IDF: $tfIdf%.10f"
 }
  object Annotation {
-   def toStringSerialized(a: Annotation) = Array(a.articleId, a.phrase, a.mc, a.offset, a.fb, a.wd, a.db, a.tfIdf).mkString("\t ")
+   def serialize(a: Annotation) = Array(a.articleId, a.phrase, a.mc, a.offset, a.fb, a.wd, a.db, a.tfIdf).mkString("\t ")
 
-   def fromStringSerialized(string: String): Annotation = {
+   def deserialize(string: String): Annotation = {
      val s = string.split("\t ")
      Annotation(s(0), s(1), s(2).toInt, s(3).toInt, s(4), s(5), s(6), s(7).toDouble)
    }

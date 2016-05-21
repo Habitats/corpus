@@ -15,7 +15,8 @@ configurations.all {
 
 dependencies {
     // Spark
-    compile('org.apache.spark:spark-core_' + project.scalaBinary + ':1.5.2') {
+    compile 'org.apache.spark:spark-mllib_' + project.scalaBinary + ':1.6.1'
+    compile('org.apache.spark:spark-core_' + project.scalaBinary + ':1.6.1') {
         exclude group: 'com.google.guava'
         // yields security error due to differing versions
         exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
@@ -25,7 +26,6 @@ dependencies {
         exclude group: 'com.sun.jersey', module: 'jersey-json'
         exclude group: 'com.sun.jersey', module: 'jersey-core'
     }
-    compile 'org.apache.spark:spark-mllib_' + project.scalaBinary + ':1.5.2'
     compile 'com.github.fommil.netlib:all:1.1.2'
     compile 'xml-apis:xml-apis:1.4.01' // To avoid https://tinyurl.com/j765vj6
 
@@ -34,9 +34,9 @@ dependencies {
     compile 'org.deeplearning4j:deeplearning4j-ui:' + project.dl4jVersion
     compile 'org.deeplearning4j:dl4j-spark:' + project.dl4jVersion
     compile 'org.nd4j:nd4j-native:' + project.dl4jVersion
+    compile 'org.nd4j:nd4j-native:' + project.dl4jVersion + ':' + project.os  // Native crash otherwise
     compile 'org.bytedeco:javacpp:1.2'
     compile 'org.bytedeco.javacpp-presets:opencv:3.1.0-1.2'
-    compile 'org.nd4j:nd4j-native:' + project.dl4jVersion + ':' + project.os  // Native crash otherwise
     compile 'org.bytedeco.javacpp-presets:opencv:3.1.0-1.2:' + project.os
     compile 'javax.ws.rs:javax.ws.rs-api:2.0.1'
 

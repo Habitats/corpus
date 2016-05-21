@@ -9,17 +9,10 @@ mainClassName = 'no.habitats.corpus.spark.SparkUtil'
 
 dependencies {
     compile project(':common')
-    testCompile group: 'junit', name: 'junit', version: '4.11'
-    testCompile 'org.scalatest:scalatest'+project.scalaBinary+':3.0.0-M7'
-    compile group: 'org.scala-lang', name: 'scala-library', version: ''+project.scalaVersion+''
-    compile group: 'org.scala-lang', name: 'scala-compiler', version: ''+project.scalaVersion+''
-    compile group: 'org.scala-lang', name: 'scala-reflect', version: ''+project.scalaVersion+''
     compile 'javax.mail:javax.mail-api:1.5.5'
     compile 'org.glassfish.jersey.core:jersey-server:2.22.2'
     compile 'org.glassfish.jersey.containers:jersey-container-servlet-core:2.22.2'
     compile 'org.glassfish.jersey.containers:jersey-container-servlet:2.22.2'
-
-
 }
 
 task pathingJar(type: Jar) {

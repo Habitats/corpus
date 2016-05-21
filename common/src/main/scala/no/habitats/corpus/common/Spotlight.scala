@@ -2,16 +2,17 @@ package no.habitats.corpus.common
 
 import dispatch._
 import no.habitats.corpus.common.CorpusContext.sc
+import no.habitats.corpus.common.CorpusExecutionContext.executionContext
 import no.habitats.corpus.common.models.{Annotation, Article, DBPediaAnnotation, Entity}
 import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
+import org.json4s.JsonAST.JValue
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 
 import scala.collection.Map
 import scala.concurrent.Await
-import scala.concurrent.ExecutionContext.Implicits.global
 import scala.concurrent.duration._
 
 object Spotlight extends RddSerializer {
@@ -54,7 +55,7 @@ object Spotlight extends RddSerializer {
 
   def fetchDbpediaAnnotations(dbpedia: String): Map[String, Seq[Annotation]] = {
     CorpusContext.sc.textFile("file:///" + dbpedia)
-      .map(DBPediaAnnotation.fromStringSerialized)
+      .map(DBPediaAnnotation.deserialize)
       .map(AnnotationUtils.fromDbpedia)
       //      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
       .groupBy(_.articleId)
@@ -65,12 +66,12 @@ object Spotlight extends RddSerializer {
   def fetchEntities(file: String): Map[String, Entity] = CorpusContext.sc.textFile("file:///" + file).map(Entity.fromSingleJson).map(e => (e.id, e)).collectAsMap()
 
   def fetchArticleMapping(file: String): Map[String, Set[String]] = {
-      CorpusContext.sc.textFile("file:///" + file).flatMap(l => {
-        val tokens = l.split(" ")
-        val dbpediaId = tokens.head
-        val articleIds = tokens.slice(1, tokens.size)
-        articleIds.map(id => (id, dbpediaId))
-      }).groupBy(_._1).map{case (k,v) => (k, v.map(_._2).toSet)}.collectAsMap()
+    CorpusContext.sc.textFile("file:///" + file).flatMap(l => {
+      val tokens = l.split(" ")
+      val dbpediaId = tokens.head
+      val articleIds = tokens.slice(1, tokens.size)
+      articleIds.map(id => (id, dbpediaId))
+    }).groupBy(_._1).map { case (k, v) => (k, v.map(_._2).toSet) }.collectAsMap()
   }
 
   lazy val dbpediaAnnotationsWithTypes: Map[String, Seq[Annotation]] = {
@@ -113,7 +114,7 @@ object Spotlight extends RddSerializer {
     //    .addParameter("types", "Person,Organisation,Location")
 
     // Let Spark handle the parallelism, it's pretty good at it
-    val res: String = Await.result(Http(request OK as.String), 15 minutes)
+    val res: String = Await.result(Http(request OK as.String), 60 days)
     val json = parse(res)
     //    Log.v(pretty(json))
     val resources = json \ "Resources" match {
@@ -136,23 +137,20 @@ object Spotlight extends RddSerializer {
     entities
   }
 
-  /** Store DBPedia annotations */
-  def cacheDbpedia(rdd: RDD[Article], confidence: Double, w2vFilter: Boolean = false) = {
-    Log.v("Calculating dbpedia ...")
-    val entities = rdd.flatMap { article =>
-      for {
-        entities <- fetchAnnotations(article.hl + "_" + article.body, confidence).groupBy(_.id).values
-        entity = entities.minBy(_.offset) if w2vFilter && WikiData.dbToWd.get(entity.id).flatMap(WikiData.wdToFb.get).exists(W2VLoader.contains)
-        db = new DBPediaAnnotation(article.id, mc = entities.size, entity)
-      } yield {
-        if (Math.random < 0.0001) Log.v(article.id)
-        db
-      }
-    }
+  def extractDbpediaAnnotations(article: Article, confidence: Double, w2vFilter: Boolean): Seq[DBPediaAnnotation] = {
+    val all = for {
+      firstEntities <- fetchAnnotations(article.hl + "_" + article.body, confidence).groupBy(_.id).values.toSeq
+      entity = firstEntities.minBy(_.offset) if w2vFilter && WikiData.dbToWd.get(entity.id).flatMap(WikiData.wdToFb.get).exists(W2VLoader.contains)
+      db = new DBPediaAnnotation(article.id, mc = firstEntities.size, entity)
+    } yield db
+    Log.v(s"Extracted ${all.size} from ${article.id} ...")
+    all
+  }
 
-    saveAsText(entities.map(DBPediaAnnotation.toStringSerialized), s"dbpedia_string_${confidence}")
-//    saveAsText(entities.map(DBPediaAnnotation.toSingleJson), s"dbpedia_json_${confidence}")
+  /** Store DBPedia annotations */
+  def cacheDbpedia(rdd: RDD[Article], confidence: Double, w2vFilter: Boolean = false, partition: Option[Int]) = {
+    Log.v("Calculating dbpedia ...")
+    val dbpediaAnnotations = rdd.flatMap(a => extractDbpediaAnnotations(a, confidence, w2vFilter))
+    saveAsText(dbpediaAnnotations.map(DBPediaAnnotation.serialize), s"dbpedia_string_${confidence}${partition.map("_" + _).getOrElse("")}")
   }
 }
-
-

@@ -19,18 +19,20 @@ case class Entity(
 object Entity {
   implicit val formats = Serialization.formats(NoTypeHints)
 
-  def toStringSerialized(entity: Entity): String =
+  def serialize(entity: Entity): String =
     Array(entity.id, entity.name, entity.offset.toString, entity.similarityScore.toString, entity.support.toString, entity.types.map(_.trim).mkString(",")).mkString("\t")
 
-  def fromStringSerialized(string: String): Entity = {
+  def deserialize(string: String): Entity = {
     val fields = string.split("\t")
     Entity(fields(0), fields(1), fields(2).toInt, fields(3).toFloat, fields(4).toInt, if (fields.length == 6) fields(5).split(",").toSet else Set())
   }
 
+  @Deprecated
   def toSingleJson(entity: Entity): String = {
     write(entity)
   }
 
+  @Deprecated
   def fromSingleJson(string: String): Entity = {
     read[Entity](string)
   }

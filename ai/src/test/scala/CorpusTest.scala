@@ -40,7 +40,7 @@ class CorpusTest extends FunSuite with Samples {
     val entities = Spotlight.fetchEntities(Config.dataPath + "dbpedia/dbpedia_json_0.25.json")
 
     val start = System.currentTimeMillis()
-    assert(entities.values.forall(e => Entity.fromStringSerialized(Entity.toStringSerialized(e)) == e))
+    assert(entities.values.forall(e => Entity.deserialize(Entity.serialize(e)) == e))
     Log.v("String serialization: " + (System.currentTimeMillis() - start))
     val start2 = System.currentTimeMillis()
     assert(entities.values.forall(e => Entity.fromSingleJson(Entity.toSingleJson(e)) == e))
@@ -66,7 +66,7 @@ class CorpusTest extends FunSuite with Samples {
     Log.v("Json serialization: " + (System.currentTimeMillis() - start2))
 
     val start = System.currentTimeMillis()
-    assert(dbpedia.forall(e => DBPediaAnnotation.fromStringSerialized(DBPediaAnnotation.toStringSerialized(e)) == e))
+    assert(dbpedia.forall(e => DBPediaAnnotation.deserialize(DBPediaAnnotation.serialize(e)) == e))
     Log.v("String serialization: " + (System.currentTimeMillis() - start))
   }
 
@@ -75,8 +75,8 @@ class CorpusTest extends FunSuite with Samples {
     val articles = Fetcher.rdd.take(100000)
     val annotations = articles.flatMap(_.ann.values)
     assert(annotations.forall(e => {
-      val s: String = Annotation.toStringSerialized(e)
-      val e2: Annotation = Annotation.fromStringSerialized(s)
+      val s: String = Annotation.serialize(e)
+      val e2: Annotation = Annotation.deserialize(s)
       e2 == e
     }))
 
@@ -86,8 +86,8 @@ class CorpusTest extends FunSuite with Samples {
     var i = 0
     val start = System.currentTimeMillis()
     assert(articles.forall(e => {
-      val serialized: String = Article.toStringSerialized(e)
-      val serialized1: Article = Article.fromStringSerialized(serialized)
+      val serialized: String = Article.serialize(e)
+      val serialized1: Article = Article.deserialize(serialized)
       serialized1 == e
     }))
     Log.v("String serialization: " + (System.currentTimeMillis() - start))
