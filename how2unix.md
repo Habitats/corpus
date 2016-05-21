@@ -1,6 +1,6 @@
 ## Install Scala
-sudo wget www.scala-lang.org/files/archive/scala-'+project.scalaVersion+'.deb
-sudo dpkg -i scala-'+project.scalaVersion+'.deb
+sudo wget www.scala-lang.org/files/archive/scala-2.11.6.deb
+sudo dpkg -i scala-2.11.6.deb
 
 ## Install SBT
 # Required
@@ -23,12 +23,12 @@ sudo apt-get install git
 ... just remove everything with mvn and use spark/build/mvn
 
 ## Install Spark
-wget http://apache.uib.no/spark/spark-1.6.0/spark-1.6.0.tgz
-tar xzf spark-1.6.0.tgz
-mv spark-1.6.0/ spark
+wget http://d3kbcqa49mib13.cloudfront.net/spark-1.6.1.tgz
+tar xzf spark-1.6.1.tgz
+mv spark-1.6.1/ spark
 cd spark
-./dev/change-scala-version.sh 2.10
-build/mvn -Pyarn -Phadoop-2.4 -Dscala-2.10 -DskipTests clean package
+./dev/change-scala-version.sh 2.11
+build/mvn -Pyarn -Phadoop-2.4 -Dscala-2.11 -DskipTests clean package
 
 ## Install gradle
 mkdir -p ~/opt/packages/gradle && cd $_ && wget https://services.gradle.org/distributions/gradle-2.10-bin.zip && unzip gradle-2.10-bin.zip && ln -s ~/opt/packages/gradle/gradle-2.10/ ~/opt/gradle && vim ~/.profile
