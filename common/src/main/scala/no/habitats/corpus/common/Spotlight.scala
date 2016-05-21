@@ -68,8 +68,8 @@ object Spotlight extends RddSerializer {
   def fetchArticleMapping(file: String): Map[String, Set[String]] = {
     CorpusContext.sc.textFile("file:///" + file).flatMap(l => {
       val tokens = l.split(" ")
-      val dbpediaId = tokens.head
       val articleIds = tokens.slice(1, tokens.size)
+      val dbpediaId = tokens.head
       articleIds.map(id => (id, dbpediaId))
     }).groupBy(_._1).map { case (k, v) => (k, v.map(_._2).toSet) }.collectAsMap()
   }

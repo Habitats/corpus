@@ -73,6 +73,16 @@ fi
 # DL4J
 cd ~
 if [ ! -d dl4j ]; then 
+	sudo add-apt-repository ppa:ubuntu-toolchain-r/test
+	sudo apt-get update
+	sudo apt-get install gcc-5 g++-5
+	sudo update-alternatives 
+	sudo update-alternatives --remove-all gcc
+	sudo update-alternatives --remove-all g++
+	sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-5 20
+	sudo update-alternatives --install /usr/bin/g++ g++ /usr/bin/g++-5 20
+	sudo update-alternatives --config gcc
+	sudo update-alternatives --config g++
 	mkdir ~/dl4j
 	cd ~/dl4j
 	git clone https://github.com/deeplearning4j/libnd4j.git

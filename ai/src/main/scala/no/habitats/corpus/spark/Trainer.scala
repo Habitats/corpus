@@ -118,7 +118,12 @@ object Trainer extends NeuralTrainer {
   // SPARK
   def trainFFNSparkOrdered() = {
     val (train, validation) = Fetcher.ordered(false)
-    trainFFNSpark(train, validation, "ffn-spark-ordered")
+    trainSpark(train, validation, "ffn-spark-ordered", sparkFFNTrainer)
+  }
+
+  def trainRNNSparkOrdered() = {
+    val (train, validation) = Fetcher.ordered(true)
+    trainSpark(train, validation, "ffn-spark-ordered", sparkRNNTrainer)
   }
 }
 
@@ -140,7 +145,7 @@ sealed trait NeuralTrainer {
     }
   }
 
-  def trainFFNSpark(train: RDD[Article], validation: RDD[Article], name: String) = {
+  def trainSpark(train: RDD[Article], validation: RDD[Article], name: String, trainer: (String, NeuralPrefs) => MultiLayerNetwork) = {
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     for {
@@ -148,7 +153,7 @@ sealed trait NeuralTrainer {
       mbs <- Seq(1000, 2000, 3000)
     } yield {
       val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = mbs, epochs = 1)
-      Config.cats.foreach(c => trainNeuralNetwork(c, sparkFFNTrainer, prefs, "ffn-spark"))
+      Config.cats.foreach(c => trainNeuralNetwork(c, trainer, prefs, "ffn-spark"))
     }
   }
 
@@ -202,7 +207,7 @@ sealed trait NeuralTrainer {
     System.gc()
   }
 
-  private def sparkRNNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
+  def sparkRNNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     var net = RNN.createBinary(neuralPrefs)
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
@@ -221,7 +226,7 @@ sealed trait NeuralTrainer {
     net
   }
 
-  private def sparkFFNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
+   def sparkFFNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     var net = FeedForward.create(neuralPrefs)
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
