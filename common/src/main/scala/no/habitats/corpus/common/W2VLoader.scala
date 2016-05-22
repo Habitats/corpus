@@ -74,7 +74,7 @@ private class TextVectorLoader extends VectorLoader {
   override def contains(fb: String): Boolean = ids.contains(fb)
   override def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = {
     if (Config.cache && documentVectors) this.documentVectors
-    else if(wordVectors) vectors
+    if (wordVectors) vectors
   }
 }
 
