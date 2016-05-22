@@ -146,13 +146,13 @@ object SparkUtil {
         Tester.testTimeDecay()
       // Ex 5
       //        Tester.testConfidence()
-
       case _ => Log.r("No job ... Exiting!")
     }
     Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
     sc.stop
-    Thread.sleep(Long.MaxValue)
-//    System.exit(0)
+    // If on cluster, pause to avoid termination of the screen/terminal
+    if(!Config.local) Thread.sleep(Long.MaxValue)
+    else System.exit(0)
   }
 
   def misc() = {
