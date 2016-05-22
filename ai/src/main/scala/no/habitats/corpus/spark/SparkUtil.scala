@@ -11,6 +11,7 @@ import no.habitats.corpus.dl4j.TSNE
 import org.apache.spark.rdd.RDD
 
 import scala.collection.Map
+import scala.util.Try
 
 object SparkUtil {
   val cacheDir = "cache"
@@ -21,137 +22,140 @@ object SparkUtil {
   }
 
   def main(args: Array[String]) = {
-    Config.setArgs(args)
+    Try {
 
-    Log.init()
-    Log.r(s"Starting Corpus job: ${args.mkString(", ")}")
-    val s = System.currentTimeMillis
+      Config.setArgs(args)
 
-    Log.i(f"Loading articles ...")
+      Log.init()
+      Log.r(s"Starting Corpus job: ${args.mkString(", ")}")
+      val s = System.currentTimeMillis
 
-    Config.job match {
-      // Misc
-      case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
-      case "printArticles" => printArticles(Config.count)
-      case "misc" =>
-        //        Log.v(Config.cats.mkString(", "))
-        Cacher.split(Fetcher.annotatedRdd, 10)
+      Log.i(f"Loading articles ...")
 
-      // Generate datasets
-      case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
-      case "computeDbAnnotations" =>
-        val ids: Set[String] = (Fetcher.subTrainOrdered ++ Fetcher.subTestOrdered ++ Fetcher.subValidationOrdered).map(_.id).collect.toSet
-        Cacher.computeAndCacheDBPediaAnnotationsToJson(Fetcher.rdd.filter(a => ids.contains(a.id)).sortBy(_.id.toInt))
-      case "computeDbAnnotationsConfidence" => Cacher.annotateAndCacheArticlesConfidence()
+      Config.job match {
+        // Misc
+        case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
+        case "printArticles" => printArticles(Config.count)
+        case "misc" =>
+          //        Log.v(Config.cats.mkString(", "))
+          Cacher.split(Fetcher.annotatedRdd, 10)
 
-      case "wdToFbFromDump" => WikiData.extractFreebaseFromWikiDump()
-      case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
-      case "combineIds" => Spotlight.combineAndCacheIds()
-      case "fbw2v" => FreebaseW2V.cacheWordVectors(Fetcher.miniMini25, 0.25)
-      case "fbw2vIds" => FreebaseW2V.cacheFbIds()
-      case "cacheW2V" => FreebaseW2V.cacheAll()
-      case "cacheDocumentVectors" =>
-        W2VLoader.cacheDocumentVectors(Fetcher.annotatedRddMini)
-        W2VLoader.cacheDocumentVectors(Fetcher.miniMini25)
+        // Generate datasets
+        case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
+        case "computeDbAnnotations" =>
+          val ids: Set[String] = (Fetcher.subTrainOrdered ++ Fetcher.subTestOrdered ++ Fetcher.subValidationOrdered).map(_.id).collect.toSet
+          Cacher.computeAndCacheDBPediaAnnotationsToJson(Fetcher.rdd.filter(a => ids.contains(a.id)).sortBy(_.id.toInt))
+        case "computeDbAnnotationsConfidence" => Cacher.annotateAndCacheArticlesConfidence()
 
-      case "cacheAnnotated" => Cacher.annotateAndCacheArticles()
-      case "cacheMiniCorpus" => Cacher.cacheMiniCorpus()
-      case "cacheAnnotatedWithTypes" => Cacher.annotateAndCacheArticlesWithTypes()
-      case "splitAndCache" => Cacher.splitAndCache() // REQUIREMENT FOR TRAINING
-      case "cacheBalanced" => Cacher.cacheBalanced()
-      case "cacheMinimal" => Cacher.cacheMinimalArticles(Fetcher.annotatedRdd, "nyt_corpus_annotated")
-      case "cacheSuperSampled" => Cacher.cacheSuperSampled(Some(100000))
-      case "cacheSubSampled" =>
-        Cacher.cacheSubSampledOrdered()
-        Cacher.cacheSubSampledShuffled()
-      case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
-      case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
-      case "cache" =>
-        Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".txt"), s.toString))
-      //        Cacher.cacheAndSplitLength()
-      //        Cacher.cacheAndSplitTime()
-      //        Cacher.cacheSubSampledOrdered()
-      //        Cacher.cacheSubSampledShuffled()
+        case "wdToFbFromDump" => WikiData.extractFreebaseFromWikiDump()
+        case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
+        case "combineIds" => Spotlight.combineAndCacheIds()
+        case "fbw2v" => FreebaseW2V.cacheWordVectors(Fetcher.miniMini25, 0.25)
+        case "fbw2vIds" => FreebaseW2V.cacheFbIds()
+        case "cacheW2V" => FreebaseW2V.cacheAll()
+        case "cacheDocumentVectors" =>
+          W2VLoader.cacheDocumentVectors(Fetcher.annotatedRddMini)
+          W2VLoader.cacheDocumentVectors(Fetcher.miniMini25)
 
-      // Display stats
-      case "iptcDistribution" => calculateIPTCDistribution()
-      case "tnesDocumentVectors" => tnesDocumentVectors()
-      case "tnesWordVectors" => tnesWordVectors()
-      case "stats" =>
-        //        CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").termFrequencyAnalysis()
-        //        CorpusStats(Fetcher.by("time/nyt_time_train.txt"), "time").termFrequencyAnalysis()
-        CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").lengthCorrelation()
-      //        Corpus.preloadAnnotations()
-      //        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
-      //        timeStats()
-      //        lengthStats()
+        case "cacheAnnotated" => Cacher.annotateAndCacheArticles()
+        case "cacheMiniCorpus" => Cacher.cacheMiniCorpus()
+        case "cacheAnnotatedWithTypes" => Cacher.annotateAndCacheArticlesWithTypes()
+        case "splitAndCache" => Cacher.splitAndCache() // REQUIREMENT FOR TRAINING
+        case "cacheBalanced" => Cacher.cacheBalanced()
+        case "cacheMinimal" => Cacher.cacheMinimalArticles(Fetcher.annotatedRdd, "nyt_corpus_annotated")
+        case "cacheSuperSampled" => Cacher.cacheSuperSampled(Some(100000))
+        case "cacheSubSampled" =>
+          Cacher.cacheSubSampledOrdered()
+          Cacher.cacheSubSampledShuffled()
+        case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
+        case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
+        case "cache" =>
+          Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".txt"), s.toString))
+        //        Cacher.cacheAndSplitLength()
+        //        Cacher.cacheAndSplitTime()
+        //        Cacher.cacheSubSampledOrdered()
+        //        Cacher.cacheSubSampledShuffled()
 
-      // Modelling
-      case "trainRNNW2V" => Trainer.trainRNNW2V()
-      case "trainFFNW2V" => Trainer.trainFFNW2V()
-      case "trainFFNBoW" => Trainer.trainFFNBoW()
-      case "trainNaiveW2V" => Trainer.trainNaiveW2V()
-      case "trainNaiveBOW" => Trainer.trainNaiveBoW()
+        // Display stats
+        case "iptcDistribution" => calculateIPTCDistribution()
+        case "tnesDocumentVectors" => tnesDocumentVectors()
+        case "tnesWordVectors" => tnesWordVectors()
+        case "stats" =>
+          //        CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").termFrequencyAnalysis()
+          //        CorpusStats(Fetcher.by("time/nyt_time_train.txt"), "time").termFrequencyAnalysis()
+          CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").lengthCorrelation()
+        //        Corpus.preloadAnnotations()
+        //        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
+        //        timeStats()
+        //        lengthStats()
 
-      case "trainRNNW2VSpark" => Trainer.trainRNNW2VSpark()
-      case "trainRNNBalanced" => Trainer.trainRNNBalanced()
+        // Modelling
+        case "trainRNNW2V" => Trainer.trainRNNW2V()
+        case "trainFFNW2V" => Trainer.trainFFNW2V()
+        case "trainFFNBoW" => Trainer.trainFFNBoW()
+        case "trainNaiveW2V" => Trainer.trainNaiveW2V()
+        case "trainNaiveBOW" => Trainer.trainNaiveBoW()
 
-      case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
-      case "trainFFNShuffled" => Trainer.trainFFNShuffled()
-      case "trainFFNBalanced" => Trainer.trainFFNBalanced()
-      case "trainFFNConfidence" => Trainer.trainFFNConfidence()
+        case "trainRNNW2VSpark" => Trainer.trainRNNW2VSpark()
+        case "trainRNNBalanced" => Trainer.trainRNNBalanced()
 
-      case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
-      case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
-      case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
+        case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
+        case "trainFFNShuffled" => Trainer.trainFFNShuffled()
+        case "trainFFNBalanced" => Trainer.trainFFNBalanced()
+        case "trainFFNConfidence" => Trainer.trainFFNConfidence()
 
-      case "train" =>
-      // DONE
-      // Trainer.trainNaiveBayesW2VSubsampled()
-      // Trainer.trainNaiveBayesBoWSubsampled()
-      // Trainer.trainFFNW2VSubsampled()
-      // Trainer.trainFFNBoWSubsampled()
+        case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
+        case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
+        case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
 
-      //   Trainer.trainFFNBoWTime()
-      //   Trainer.trainFFNW2VTime()
+        case "train" =>
+        // DONE
+        // Trainer.trainNaiveBayesW2VSubsampled()
+        // Trainer.trainNaiveBayesBoWSubsampled()
+        // Trainer.trainFFNW2VSubsampled()
+        // Trainer.trainFFNBoWSubsampled()
 
-      //         Trainer.trainFFNW2VOrdered()
+        //   Trainer.trainFFNBoWTime()
+        //   Trainer.trainFFNW2VTime()
 
-      // TODO
+        //         Trainer.trainFFNW2VOrdered()
 
-      //        Trainer.trainRNNSubsampled()
+        // TODO
 
-      //        Trainer.trainFFNConfidence()
-      //        Trainer.trainFFNOrderedTypes(true)
-      //
-      //        Trainer.trainFFNBoWOrdered()
-      //        Trainer.trainFFNOrderedTypes(false)
+        //        Trainer.trainRNNSubsampled()
 
-      // Testing
-      case "testModels" => Tester.testModels()
-      case "testFFNBoW" => Tester.testFFNBow()
-      case "testLengths" => Tester.testLengths()
-      case "testTimeDecay" => Tester.testTimeDecay()
-      case "testConfidence" => Tester.testConfidence()
-      case "test" =>
-        //        Tester.testModels()
-        //        // Ex 1
-        //        Tester.testEmbeddedVeBoW()
-        //        // Ex 2
-        //        Tester.testTypesInclusion()
-        //        // Ex 3
-        //        Tester.testLengths()
-        // Ex 4
-        //        Tester.testShuffledVsOrdered()
-        Tester.testTimeDecay()
-      // Ex 5
-      //        Tester.testConfidence()
-      case _ => Log.r("No job ... Exiting!")
-    }
-    Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
-    sc.stop
+        //        Trainer.trainFFNConfidence()
+        //        Trainer.trainFFNOrderedTypes(true)
+        //
+        //        Trainer.trainFFNBoWOrdered()
+        //        Trainer.trainFFNOrderedTypes(false)
+
+        // Testing
+        case "testModels" => Tester.testModels()
+        case "testFFNBoW" => Tester.testFFNBow()
+        case "testLengths" => Tester.testLengths()
+        case "testTimeDecay" => Tester.testTimeDecay()
+        case "testConfidence" => Tester.testConfidence()
+        case "test" =>
+          //        Tester.testModels()
+          //        // Ex 1
+          //        Tester.testEmbeddedVeBoW()
+          //        // Ex 2
+          //        Tester.testTypesInclusion()
+          //        // Ex 3
+          //        Tester.testLengths()
+          // Ex 4
+          //        Tester.testShuffledVsOrdered()
+          Tester.testTimeDecay()
+        // Ex 5
+        //        Tester.testConfidence()
+        case _ => Log.r("No job ... Exiting!")
+      }
+      Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
+      sc.stop
+    }.failed.map(f => {Log.e("Crash: " + f); f.printStackTrace()})
     // If on cluster, pause to avoid termination of the screen/terminal
-    if(!Config.local) Thread.sleep(Long.MaxValue)
+    if (!Config.local) Thread.sleep(Long.MaxValue)
     else System.exit(0)
   }
 
