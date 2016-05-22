@@ -24,11 +24,11 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
     val maxNumberOfFeatures = articles.map(_.ann.size).max
 
     // [miniBatchSize, inputSize, timeSeriesLength]
-    val features = Nd4j.create(articles.size, W2VLoader.featureSize, maxNumberOfFeatures)
-    val labels = Nd4j.create(articles.size, totalOutcomes, maxNumberOfFeatures)
+    val features = Nd4j.create(Array(articles.size, W2VLoader.featureSize, maxNumberOfFeatures), 'f')
+    val labels = Nd4j.create(Array(articles.size, totalOutcomes, maxNumberOfFeatures), 'f')
     // [miniBatchSize, timeSeriesLength]
-    val featureMask = Nd4j.zeros(articles.size, maxNumberOfFeatures)
-    val labelsMask = Nd4j.zeros(articles.size, maxNumberOfFeatures)
+    val featureMask = Nd4j.create(Array(articles.size, maxNumberOfFeatures), 'f')
+    val labelsMask = Nd4j.create(Array(articles.size, maxNumberOfFeatures), 'f')
 
     for (i <- articles.toList.indices) {
       val tokens: List[String] = articles(i).ann.values
