@@ -23,9 +23,10 @@ object Config {
   lazy val wikidataToDbPedia  = dataPath + "dbpedia/wikidata_to_dbpedia.txt"
 
   lazy val cats: Seq[String] = Config.category match {
-    case Some(s) if s.startsWith("!") => {
+    case Some(s) if s.startsWith("@") => {
       val startCat: String = s.substring(1, s.length)
       val all: Seq[String] = IPTC.topCategories
+      Log.r(s"Starting from $startCat ...")
       all.takeRight(all.size - all.indexOf(startCat))
     }
     case Some(s) => Seq(s)
@@ -64,6 +65,7 @@ object Config {
       job = props.get("job"),
       iptcFilter = props.get("iptcFilter").map(_.split(",").toSet),
       category = props.get("category"),
+      from = props.get("from"),
       count = props.get("count").map(_.toInt),
       spark = props.get("spark").map(_.toBoolean),
       useApi = props.get("useApi").map(_.toBoolean),
@@ -149,6 +151,7 @@ object Config {
   }
   def job = args.job.getOrElse(conf.getProperty("job"))
   def category = args.category
+  def from = args.from
   def useApi = args.useApi.getOrElse(false)
   def spark = args.spark.getOrElse(false)
   def learningRate = args.learningRate
@@ -163,6 +166,7 @@ object Config {
                         job: Option[String] = None,
                         count: Option[Int] = None,
                         category: Option[String] = None,
+                        from: Option[String] = None,
                         iptcFilter: Option[Set[String]] = None,
                         spark: Option[Boolean] = None,
                         useApi: Option[Boolean] = None,

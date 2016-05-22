@@ -24,15 +24,25 @@ object Tester {
     Config.resultsFileName = "test_all.txt"
     Config.resultsCatsFileName = "test_all.txt"
     Log.h("Testing models")
+    val rdd = Fetcher.annotatedTestOrdered.map(_.toMinimal)
+    rdd.cache()
+    val test = rdd.collect()
+    NaiveBayesTester("all-nb-w2v").test(test)
+    NaiveBayesTester("all-nb-bow").test(test)
+  }
+
+  def testSub() = {
+    Config.resultsFileName = "test_sub.txt"
+    Config.resultsCatsFileName = "test_sub.txt"
+    Log.h("Testing sub models")
     val rdd = Fetcher.subTestOrdered.map(_.toMinimal)
     rdd.cache()
     val test = rdd.collect()
-    RecurrentTester("rnn-w2v-sub-10").test(test)
-    RecurrentTester("rnn-w2v-balanced-10").test(test)
-    FeedforwardTester("ffn-w2v").test(test)
-
-    NaiveBayesTester("nb-w2v").test(test)
-    NaiveBayesTester("nb-bow").test(test)
+    RecurrentTester("sub-rnn-w2v").test(test)
+    FeedforwardTester("sub-ffn-w2v").test(test)
+    FeedforwardTester("sub-ffn-bow").test(test)
+    NaiveBayesTester("sub-nb-w2v").test(test)
+    NaiveBayesTester("sub-nb-bow").test(test)
   }
 
   def testEmbeddedVeBoW() = {
@@ -42,14 +52,10 @@ object Tester {
     val rdd = Fetcher.subTestOrdered.map(_.toMinimal)
     val test = rdd.collect()
 
-    RecurrentTester("rnn-w2v-sub-10").test(test)
-    FeedforwardTester("ffn-w2v").test(test)
-    NaiveBayesTester("nb-w2v").test(test)
-    NaiveBayesTester("nb-bow").test(test)
-  }
-
-  def testFNNOrdered() = {
-
+    FeedforwardTester("all-ffn-w2v").test(test)
+    FeedforwardTester("all-ffn-bow").test(test)
+    NaiveBayesTester("all-nb-w2v").test(test)
+    NaiveBayesTester("all-nb-bow").test(test)
   }
 
   def testFFNBow() = {
@@ -59,8 +65,8 @@ object Tester {
     val rdd = Fetcher.annotatedTestOrdered
     val test = rdd.collect()
 
-    val name: String = "ffn-bow-10000"
-    FeedforwardTester(name).test(test)
+    FeedforwardTester("ffn-bow-all").test(test)
+    FeedforwardTester("ffn-w2v-all").test(test)
   }
 
   def testTypesInclusion() = {
@@ -71,7 +77,8 @@ object Tester {
     val testOrdered = rddOrdered.collect()
 
     Log.r("Annotations with types ...")
-    FeedforwardTester("ffn-w2v-ordered-types").test(testOrdered)
+    FeedforwardTester("types-ffn-w2v").test(testOrdered)
+    FeedforwardTester("ffn-w2v").test(testOrdered)
 
     //    Log.r("Normal annotations ...")
     //    FeedforwardTester("ffn-w2v-ordered").test(testOrdered)

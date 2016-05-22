@@ -59,12 +59,12 @@ private class BinaryVectorLoader extends VectorLoader {
 }
 
 private class TextVectorLoader extends VectorLoader {
+  lazy val ids            : Set[String]                                    = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
   lazy val vectors        : Map[String, INDArray]                          = loadVectors(Config.freebaseToWord2Vec(W2VLoader.confidence))
   lazy val documentVectors: scala.collection.mutable.Map[String, INDArray] = {
     if (!Config.cache) Log.v("Illegal cache access. Cache is disabled!")
     mutable.Map[String, INDArray]() ++ loadVectors(Config.documentVectors(W2VLoader.confidence))
   }
-  lazy val ids            : Set[String]                                    = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
 
   override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
   override def documentVector(a: Article): INDArray = {

@@ -23,7 +23,6 @@ object SparkUtil {
 
   def main(args: Array[String]) = {
     Try {
-
       Config.setArgs(args)
 
       Log.init()
@@ -119,6 +118,8 @@ object SparkUtil {
         //         Trainer.trainFFNW2VOrdered()
 
         // TODO
+         Trainer.trainNaiveBoW()
+         Trainer.trainNaiveW2V()
 
         //        Trainer.trainRNNSubsampled()
 
@@ -134,6 +135,8 @@ object SparkUtil {
         case "testLengths" => Tester.testLengths()
         case "testTimeDecay" => Tester.testTimeDecay()
         case "testConfidence" => Tester.testConfidence()
+        case "testSub" =>
+//          Tester.sub
         case "test" =>
           //        Tester.testModels()
           //        // Ex 1
