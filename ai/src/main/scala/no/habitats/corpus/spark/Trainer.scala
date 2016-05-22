@@ -49,9 +49,9 @@ object Trainer extends NeuralTrainer {
   }
 
   // Chosen baseline
-  def trainFFNOrdered() = {
+  def trainFFNW2VOrdered() = {
     val (train, validation) = Fetcher.ordered(false)
-    trainFFNW2V(train, validation, "ffn-ordered")
+    trainFFNW2V(train, validation, "ffn-w2v")
   }
 
   // Ex1 - W2V vs. BOW
@@ -71,9 +71,9 @@ object Trainer extends NeuralTrainer {
   }
 
   // Ex3 - Types
-  def trainFFNOrderedTypes(sub: Boolean) = {
-    val (train, validation) = Fetcher.types(sub)
-    trainFFNW2V(train, validation, "ffa-w2v-types" + (if (sub) "-subsampled" else ""))
+  def trainFFNOrderedTypes() = {
+    val (train, validation) = Fetcher.types(false)
+    trainFFNW2V(train, validation, "ffa-w2v-types")
   }
 
   // Ex4 - Lenghts - Use baseline
