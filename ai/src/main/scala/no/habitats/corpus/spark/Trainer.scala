@@ -54,6 +54,11 @@ object Trainer extends NeuralTrainer {
     trainFFNW2V(train, validation, "ffn-w2v")
   }
 
+  def trainRNNOrdered() = {
+    val (train, validation) = Fetcher.ordered(true)
+    trainRNNW2V(train, validation, "rnn-w2v")
+  }
+
   // Ex1 - W2V vs. BOW
   def trainFFNBoWOrdered() = {
     val (train, validation) = Fetcher.ordered(false)
@@ -136,7 +141,7 @@ sealed trait NeuralTrainer {
   private val count: String = if (Config.count == Int.MaxValue) "all" else Config.count.toString
 
   def trainFFNW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000)) = {
-    W2VLoader.preload()
+    W2VLoader.preload(wordVectors = true, documentVectors = true)
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     for{lr <- learningRate} yield {
@@ -158,7 +163,7 @@ sealed trait NeuralTrainer {
   }
 
   def trainRNNW2V(train: RDD[Article], validation: RDD[Article], name: String, minibatchSize: Int = Config.miniBatchSize.getOrElse(500), learningRate: Double = Config.learningRate.getOrElse(0.50)) = {
-    W2VLoader.preload()
+    W2VLoader.preload(wordVectors = true, documentVectors = false)
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val prefs = NeuralPrefs(learningRate = learningRate, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1, hiddenNodes = 100)
@@ -183,7 +188,7 @@ sealed trait NeuralTrainer {
   }
 
   def trainNaiveBayesW2V(train: RDD[Article], validation: RDD[Article], name: String) = {
-    W2VLoader.preload()
+    W2VLoader.preload(wordVectors = true, documentVectors = true)
     trainNaiveBayes(train, validation, name, None)
   }
 

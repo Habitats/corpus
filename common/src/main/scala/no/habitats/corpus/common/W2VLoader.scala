@@ -48,14 +48,14 @@ sealed trait VectorLoader {
   def fromId(fb: String): Option[INDArray]
   def contains(fb: String): Boolean
   def documentVector(a: Article): INDArray
-  def preload(): Unit
+  def preload(wordVectors: Boolean, documentVectors: Boolean): Unit
 }
 
 private class BinaryVectorLoader extends VectorLoader {
   override def fromId(fb: String): Option[INDArray] = if (contains(fb)) Some(Nd4j.create(FreebaseW2V.gVec.getWordVector(fb))) else None
   override def documentVector(a: Article): INDArray = W2VLoader.calculateDocumentVector(a.ann)
   override def contains(fb: String): Boolean = FreebaseW2V.gVec.hasWord(fb)
-  override def preload(): Unit = FreebaseW2V.gVec
+  override def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = FreebaseW2V.gVec
 }
 
 private class TextVectorLoader extends VectorLoader {
@@ -72,9 +72,9 @@ private class TextVectorLoader extends VectorLoader {
     else W2VLoader.calculateDocumentVector(a.ann)
   }
   override def contains(fb: String): Boolean = ids.contains(fb)
-  override def preload(): Unit = {
-    if (Config.cache) documentVectors
-    vectors
+  override def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = {
+    if (Config.cache && documentVectors) this.documentVectors
+    else if(wordVectors) vectors
   }
 }
 
@@ -84,7 +84,7 @@ sealed class SparkVectorLoader extends VectorLoader {
   lazy val bVectors        : Broadcast[Map[String, INDArray]] = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.freebaseToWord2Vec(W2VLoader.confidence)))
   lazy val bDocumentVectors: Broadcast[Map[String, INDArray]] = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.documentVectors(W2VLoader.confidence)))
 
-  override def preload(): Unit = {
+  override def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = {
     bVectors
     bDocumentVectors
   }
@@ -103,7 +103,7 @@ object W2VLoader extends RddSerializer with VectorLoader {
   var confidence  = 0.5
   val featureSize = 1000
 
-  def preload(): Unit = loader.preload()
+  def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = loader.preload(wordVectors, documentVectors)
 
   def fromId(fb: String): Option[INDArray] = loader.fromId(fb)
 

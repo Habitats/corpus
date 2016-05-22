@@ -1,7 +1,7 @@
 package no.habitats.corpus.dl4j.networks
 
 import no.habitats.corpus.common.{Config, Log}
-import no.habitats.corpus.dl4j.{CorpusIterationListener, NeuralPrefs}
+import no.habitats.corpus.dl4j.NeuralPrefs
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
 import org.deeplearning4j.nn.conf.layers.{GravesLSTM, RnnOutputLayer}
 import org.deeplearning4j.nn.conf.{GradientNormalization, NeuralNetConfiguration, Updater}
@@ -54,10 +54,8 @@ object RNN {
     val net = new MultiLayerNetwork(conf)
     net.init()
     Log.v(s"Initialized network with ${net.numParams} params!")
-    net.setListeners(neuralPrefs.listener)
-    if (Config.histogram) {
-      net.setListeners(new HistogramIterationListener(2))
-    }
+    val listeners = Array(neuralPrefs.listener)
+    net.setListeners(Array(neuralPrefs.listener) ++ (if (Config.histogram) Array(new HistogramIterationListener(2)) else Nil): _*)
     net.setUpdater(null)
     net
   }

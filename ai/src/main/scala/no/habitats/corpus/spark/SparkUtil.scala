@@ -98,6 +98,7 @@ object SparkUtil {
       case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
       case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
       case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
+      case "trainRNNOrdered" => Trainer.trainRNNOrdered()
       case "trainRNNSpark" => Trainer.trainRNNSparkOrdered()
 
       case "train" =>

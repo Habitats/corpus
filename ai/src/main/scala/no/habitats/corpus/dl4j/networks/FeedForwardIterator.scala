@@ -12,7 +12,7 @@ import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j
 
 class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize: Int, tfidf: Option[TFIDF] = None) extends DataSetIterator {
-  if (tfidf.isEmpty) W2VLoader.preload()
+  if (tfidf.isEmpty) W2VLoader.preload(wordVectors = true, documentVectors = true)
 
   // 32 may be a good starting point,
   var counter = 0
