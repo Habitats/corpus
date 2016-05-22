@@ -26,7 +26,6 @@ object Config {
     case Some(s) if s.startsWith("@") => {
       val startCat: String = s.substring(1, s.length)
       val all: Seq[String] = IPTC.topCategories
-      Log.r(s"Starting from $startCat ...")
       all.takeRight(all.size - all.indexOf(startCat))
     }
     case Some(s) => Seq(s)
@@ -77,6 +76,7 @@ object Config {
     )
 
     Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
+    Log.v("Categories: " + cats.mkString(", "))
     Log.v("CORPUS CONFIG: " + corpusConfig + "\n\t" + conf.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
     if (local) Log.v("SPARK CONFIG: " + sparkConfig + "\n\t" + sparkProps.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
   }
