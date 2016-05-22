@@ -87,10 +87,16 @@ object SparkUtil {
       //        lengthStats()
 
       // Modelling
+      case "trainRNNW2V" => Trainer.trainRNNW2V()
+      case "trainFFNW2V" => Trainer.trainFFNW2V()
+      case "trainFFNBoW" => Trainer.trainFFNBoW()
+      case "trainNaiveW2V" => Trainer.trainNaiveW2V()
+      case "trainNaiveBOW" => Trainer.trainNaiveBoW()
+
+      case "trainRNNW2VSpark" => Trainer.trainRNNW2VSpark()
       case "trainRNNBalanced" => Trainer.trainRNNBalanced()
-      case "trainFFNOrdered" => Trainer.trainFFNW2VOrdered()
-      case "trainFFNOrderedTypes" => Trainer.trainFFNOrderedTypes()
-      case "trainFFNBoWOrdered" => Trainer.trainFFNBoWOrdered()
+
+      case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
       case "trainFFNShuffled" => Trainer.trainFFNShuffled()
       case "trainFFNBalanced" => Trainer.trainFFNBalanced()
       case "trainFFNConfidence" => Trainer.trainFFNConfidence()
@@ -98,8 +104,6 @@ object SparkUtil {
       case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
       case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
       case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
-      case "trainRNNOrdered" => Trainer.trainRNNOrdered()
-      case "trainRNNSpark" => Trainer.trainRNNSparkOrdered()
 
       case "train" =>
         // DONE

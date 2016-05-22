@@ -4,14 +4,14 @@ import java.io.File
 
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
-import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common._
+import no.habitats.corpus.common.models.Article
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkContext, SparkException}
 
 import scala.collection.Map
 
-object Fetcher extends RddSerializer{
+object Fetcher extends RddSerializer {
 
   //  lazy val balanced       : RDD[Article] = balanced(Config.category)
   lazy val minimal: Map[String, (Set[String], Set[String])] = Config.dataFile(Config.dataPath + "nyt/minimal.txt").getLines().toSeq.map(l => {
@@ -56,13 +56,14 @@ object Fetcher extends RddSerializer{
   lazy val subTrainShuffled     : RDD[Article] = fetch("nyt/subsampled_train_shuffled.txt", 0.6)
   lazy val subValidationShuffled: RDD[Article] = fetch("nyt/subsampled_validation_shuffled.txt", 0.2)
 
-  def ordered(sub: Boolean = true): (RDD[Article], RDD[Article]) = if (sub) (subTrainOrdered, subValidationOrdered) else (annotatedTrainOrdered, annotatedValidationOrdered)
-  def shuffled(sub: Boolean = true): (RDD[Article], RDD[Article]) = if (sub) (subTrainShuffled, subValidationShuffled) else (annotatedTrainShuffled, annotatedValidationShuffled)
-  def types(sub: Boolean = true): (RDD[Article], RDD[Article]) = if (sub) (subTrainOrderedTypes, subValidationOrdered) else (annotatedTrainOrderedTypes, annotatedValidationOrdered)
+  def ordered: (RDD[Article], RDD[Article]) = (annotatedTrainOrdered, annotatedValidationOrdered)
+  def subsampled: (RDD[Article], RDD[Article]) = (subTrainOrdered, subValidationOrdered)
+  def shuffled: (RDD[Article], RDD[Article]) = (annotatedTrainShuffled, annotatedValidationShuffled)
+  def types: (RDD[Article], RDD[Article]) = (annotatedTrainOrderedTypes, annotatedValidationOrdered)
 
   def by(name: String): RDD[Article] = fetch("nyt/" + name)
 
-  def jsonToTxt(name: String) = saveAsText(fetchJson("nyt/" + name).map(Article.serialize),name)
+  def jsonToTxt(name: String) = saveAsText(fetchJson("nyt/" + name).map(Article.serialize), name)
 
   def limit(rdd: RDD[Article], fraction: Double = 1): RDD[Article] = {
     val num = (Config.count * fraction).toInt

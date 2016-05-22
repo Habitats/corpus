@@ -18,51 +18,59 @@ import org.nd4j.linalg.dataset.DataSet
 import scala.language.implicitConversions
 
 object Trainer extends NeuralTrainer {
-
   implicit def seqthis(a: Double): Seq[Double] = Seq(a)
 
   // ### Best models
   // ## Subsampled
   def trainRNNSubsampled() = {
-    val (train, validation) = Fetcher.ordered(true)
-    trainRNNW2V(train, validation, "subsampled-rnn-w2v", learningRate = 0.5)
+    val (train, validation) = Fetcher.subsampled
+    trainRecurrentW2V(train, validation, "subsampled-rnn-w2v", learningRate = 0.5)
   }
 
   def trainFFNW2VSubsampled() = {
-    val (train, validation) = Fetcher.ordered(true)
-    trainFFNW2V(train, validation, "subsampled-ffn-w2v", learningRate = 0.5)
+    val (train, validation) = Fetcher.subsampled
+    trainFeedfowardW2V(train, validation, "subsampled-ffn-w2v", learningRate = 0.5)
   }
 
   def trainFFNBoWSubsampled() = {
-    val (train, validation) = Fetcher.ordered(true)
-    trainFFNBoW(train, validation, "subsampled-ffn-bow", termFrequencyThreshold = 5, learningRate = 0.5)
+    val (train, validation) = Fetcher.subsampled
+    trainFeedforwardBoW(train, validation, "subsampled-ffn-bow", learningRate = 0.5, termFrequencyThreshold = 5)
   }
 
-  def trainNaiveBayesW2VSubsampled() = {
-    val (train, validation) = Fetcher.ordered(true)
+  def trainNaiveW2VSubsampled() = {
+    val (train, validation) = Fetcher.subsampled
     trainNaiveBayesW2V(train, validation, "subsampled-nb-w2v")
   }
 
-  def trainNaiveBayesBoWSubsampled() = {
-    val (train, validation) = Fetcher.ordered(true)
+  def trainNaiveBoWSubsampled() = {
+    val (train, validation) = Fetcher.subsampled
     trainNaiveBayesBoW(train, validation, "subsampled-nb-bow", termFrequencyThreshold = 5)
   }
 
   // Chosen baseline
-  def trainFFNW2VOrdered() = {
-    val (train, validation) = Fetcher.ordered(false)
-    trainFFNW2V(train, validation, "ffn-w2v")
+  def trainRNNW2V() = {
+    val (train, validation) = Fetcher.ordered
+    trainRecurrentW2V(train, validation, "rnn-w2v")
   }
 
-  def trainRNNOrdered() = {
-    val (train, validation) = Fetcher.ordered(true)
-    trainRNNW2V(train, validation, "rnn-w2v")
+  def trainFFNW2V() = {
+    val (train, validation) = Fetcher.ordered
+    trainFeedfowardW2V(train, validation, "ffn-w2v")
   }
 
-  // Ex1 - W2V vs. BOW
-  def trainFFNBoWOrdered() = {
-    val (train, validation) = Fetcher.ordered(false)
-    trainFFNBoW(train, validation, "ffn-bow")
+  def trainFFNBoW() = {
+    val (train, validation) = Fetcher.ordered
+    trainFeedforwardBoW(train, validation, "ffn-bow", termFrequencyThreshold = 100)
+  }
+
+  def trainNaiveW2V() = {
+    val (train, validation) = Fetcher.ordered
+    trainNaiveBayesW2V(train, validation, "nb-w2v")
+  }
+
+  def trainNaiveBoW() = {
+    val (train, validation) = Fetcher.ordered
+    trainNaiveBayesBoW(train, validation, "nb-bow", termFrequencyThreshold = 100)
   }
 
   // Ex2 - Confidence
@@ -71,14 +79,14 @@ object Trainer extends NeuralTrainer {
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
     Seq(25, 50, 75, 100).foreach(confidence => {
       Log.r(s"Training with confidence ${confidence} ...")
-      trainFFNW2V(train = train(confidence), validation = validation(confidence), name = "ffa-confidence-" + confidence)
+      trainFeedfowardW2V(train = train(confidence), validation = validation(confidence), name = "ffa-confidence-" + confidence)
     })
   }
 
   // Ex3 - Types
-  def trainFFNOrderedTypes() = {
-    val (train, validation) = Fetcher.types(false)
-    trainFFNW2V(train, validation, "ffa-w2v-types")
+  def trainFFNW2VTypes() = {
+    val (train, validation) = Fetcher.types
+    trainFeedfowardW2V(train, validation, "ffa-w2v-types")
   }
 
   // Ex4 - Lenghts - Use baseline
@@ -87,26 +95,26 @@ object Trainer extends NeuralTrainer {
   def trainFFNBoWTime() = {
     val train = Fetcher.by("time/nyt_time_train.txt")
     val validation = Fetcher.by("time/nyt_time_0_validation.txt")
-    trainFFNBoW(train, validation, "ffn-bow-time", termFrequencyThreshold = 5, learningRate = 0.5)
+    trainFeedforwardBoW(train, validation, "ffn-bow-time", termFrequencyThreshold = 5, learningRate = 0.5)
   }
 
   def trainFFNW2VTime() = {
     val train = Fetcher.by("time/nyt_time_train.txt")
     val validation = Fetcher.by("time/nyt_time_0_validation.txt")
-    trainFFNW2V(train, validation, "ffn-w2v-time", learningRate = 0.5)
+    trainFeedfowardW2V(train, validation, "ffn-w2v-time", learningRate = 0.5)
   }
 
   // Misc
   def trainFFNShuffled(sub: Boolean = true) = {
-    val (train, validation) = Fetcher.shuffled(sub)
-    trainFFNBoW(train, validation, "ffn-shuffled")
+    val (train, validation) = Fetcher.shuffled
+    trainFeedforwardBoW(train, validation, "ffn-shuffled")
   }
 
   def trainRNNBalanced() = {
     Config.cats.foreach(c => {
       val train = Fetcher.balanced(IPTC.trim(c) + "_train", true)
       val validation = Fetcher.balanced(IPTC.trim(c) + "_validation", false)
-      trainRNNW2V(train, validation, "rnn-balanced")
+      trainRecurrentW2V(train, validation, "rnn-balanced")
     })
   }
 
@@ -116,19 +124,19 @@ object Trainer extends NeuralTrainer {
     Config.cats.foreach(c => {
       val train = Fetcher.balanced(IPTC.trim(c) + "_train", true)
       val validation = Fetcher.balanced(IPTC.trim(c) + "_validation", false)
-      trainFFNW2V(train, validation, "ffn-balanced")
+      trainFeedfowardW2V(train, validation, "ffn-balanced")
     })
   }
 
   // SPARK
   def trainFFNSparkOrdered() = {
-    val (train, validation) = Fetcher.ordered(false)
-    trainSpark(train, validation, "ffn-spark-ordered", sparkFFNTrainer)
+    val (train, validation) = Fetcher.ordered
+    trainSpark(train, validation, "ffn-w2v-spark", sparkFFNTrainer)
   }
 
-  def trainRNNSparkOrdered() = {
-    val (train, validation) = Fetcher.ordered(true)
-    trainSpark(train, validation, "ffn-spark-ordered", sparkRNNTrainer)
+  def trainRNNW2VSpark() = {
+    val (train, validation) = Fetcher.ordered
+    trainSpark(train, validation, "rnn-w2v-spark", sparkRNNTrainer)
   }
 }
 
@@ -140,37 +148,28 @@ sealed trait NeuralTrainer {
 
   private val count: String = if (Config.count == Int.MaxValue) "all" else Config.count.toString
 
-  def trainFFNW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000)) = {
+  def trainFeedfowardW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000)) = {
     W2VLoader.preload(wordVectors = true, documentVectors = true)
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    for{lr <- learningRate} yield {
+    for {lr <- learningRate} yield {
       val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1)
       Config.cats.foreach(c => trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name))
     }
   }
 
-  def trainSpark(train: RDD[Article], validation: RDD[Article], name: String, trainer: (String, NeuralPrefs) => MultiLayerNetwork) = {
-    Config.resultsFileName = s"train_${name}.txt"
-    Config.resultsCatsFileName = Config.resultsFileName
-    for {
-      lr <- Seq(0.075, 0.1, 0.2, 0.3, 0.4)
-      mbs <- Seq(1000, 2000, 3000)
-    } yield {
-      val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = mbs, epochs = 1)
-      Config.cats.foreach(c => trainNeuralNetwork(c, trainer, prefs, "ffn-spark"))
-    }
-  }
 
-  def trainRNNW2V(train: RDD[Article], validation: RDD[Article], name: String, minibatchSize: Int = Config.miniBatchSize.getOrElse(500), learningRate: Double = Config.learningRate.getOrElse(0.50)) = {
+  def trainRecurrentW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)), minibatchSize: Int = Config.miniBatchSize.getOrElse(500)) = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val prefs = NeuralPrefs(learningRate = learningRate, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1, hiddenNodes = 100)
-    Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, prefs, name))
+    for {lr <- learningRate} yield {
+      val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1, hiddenNodes = 100)
+      Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, prefs, name))
+    }
   }
 
-  def trainFFNBoW(train: RDD[Article], validation: RDD[Article], name: String, termFrequencyThreshold: Int = 100, learningRate: Double = Config.learningRate.getOrElse(0.05), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000)) = {
+  def trainFeedforwardBoW(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Double = Config.learningRate.getOrElse(0.05), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000), termFrequencyThreshold: Int = 100) = {
     Config.resultsFileName = s"train_$name.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val tfidf = TFIDF(train, termFrequencyThreshold)
@@ -212,6 +211,18 @@ sealed trait NeuralTrainer {
     System.gc()
   }
 
+  def trainSpark(train: RDD[Article], validation: RDD[Article], name: String, trainer: (String, NeuralPrefs) => MultiLayerNetwork) = {
+    Config.resultsFileName = s"train_${name}.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
+    for {
+      lr <- Seq(0.075, 0.1, 0.2, 0.3, 0.4)
+      mbs <- Seq(1000, 2000, 3000)
+    } yield {
+      val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = mbs, epochs = 1)
+      Config.cats.foreach(c => trainNeuralNetwork(c, trainer, prefs, "ffn-spark"))
+    }
+  }
+
   def sparkRNNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     var net = RNN.createBinary(neuralPrefs)
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
@@ -231,7 +242,7 @@ sealed trait NeuralTrainer {
     net
   }
 
-   def sparkFFNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
+  def sparkFFNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     var net = FeedForward.create(neuralPrefs)
     val sparkNetwork = new SparkDl4jMultiLayer(sc, net)
 
