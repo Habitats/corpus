@@ -172,7 +172,7 @@ sealed trait NeuralTrainer {
     Log.toFile(TFIDF.serialize(tfidf), name + "-" + count + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
     Config.cats.zipWithIndex.foreach { case (c, i) => {
       val neuralPrefs = NeuralPrefs(
-        learningRate = learningRate, minibatchSize = minibatchSize, histogram = false, epochs = 1,
+        learningRate = learningRate, minibatchSize = minibatchSize, epochs = 1,
         train = TFIDF.frequencyFilter(train, tfidf.phrases),
         validation = TFIDF.frequencyFilter(validation, tfidf.phrases))
       val net: MultiLayerNetwork = binaryFFNBoWTrainer(c, neuralPrefs, tfidf)

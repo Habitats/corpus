@@ -9,11 +9,10 @@ case class NeuralPrefs(
                         validation: Array[Article],
                         minibatchSize: Int,
                         epochs: Int ,
-                        histogram: Boolean = false,
                         phrases: Option[Array[String]] = None
                       ) {
 
   lazy val listener: CorpusIterationListener = CorpusIterationListener()
 
-  override def toString(): String = s"Hidden: $hiddenNodes - LR: $learningRate - Epochs: $epochs - Minibatch: $minibatchSize - Histogram: $histogram"
+  override def toString(): String = s"Hidden: $hiddenNodes - LR: $learningRate - Epochs: $epochs - Minibatch: $minibatchSize"
 }

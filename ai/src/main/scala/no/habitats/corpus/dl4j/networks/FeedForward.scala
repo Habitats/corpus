@@ -53,8 +53,8 @@ object FeedForward {
     net.init()
     Log.v(s"Initialized ${net.getLayers.length} layer Feedforward net [${net.numParams()} params] - ${neuralPrefs}")
     net.setListeners(neuralPrefs.listener)
-    if (neuralPrefs.histogram) {
-      net.setListeners(new HistogramIterationListener(1))
+    if (Config.histogram) {
+      net.setListeners(new HistogramIterationListener(2))
     }
 
     net
@@ -112,7 +112,7 @@ object FeedForward {
     net.init()
     Log.v(s"Initialized ${net.getLayers.length} layer Feedforward net with ${net.numParams()} params!")
     net.setListeners(neuralPrefs.listener)
-    if (neuralPrefs.histogram) {
+    if (Config.histogram) {
       net.setListeners(new HistogramIterationListener(1))
     }
 
