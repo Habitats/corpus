@@ -34,7 +34,7 @@ object SparkUtil {
       case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
       case "printArticles" => printArticles(Config.count)
       case "misc" =>
-//        Log.v(Config.cats.mkString(", "))
+        //        Log.v(Config.cats.mkString(", "))
         Cacher.split(Fetcher.annotatedRdd, 10)
 
       // Generate datasets
@@ -106,27 +106,26 @@ object SparkUtil {
       case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
 
       case "train" =>
-        // DONE
-        // Trainer.trainNaiveBayesW2VSubsampled()
-        // Trainer.trainNaiveBayesBoWSubsampled()
-        // Trainer.trainFFNW2VSubsampled()
-        // Trainer.trainFFNBoWSubsampled()
+      // DONE
+      // Trainer.trainNaiveBayesW2VSubsampled()
+      // Trainer.trainNaiveBayesBoWSubsampled()
+      // Trainer.trainFFNW2VSubsampled()
+      // Trainer.trainFFNBoWSubsampled()
 
       //   Trainer.trainFFNBoWTime()
       //   Trainer.trainFFNW2VTime()
 
-//         Trainer.trainFFNW2VOrdered()
+      //         Trainer.trainFFNW2VOrdered()
 
-        // TODO
+      // TODO
 
-//        Trainer.trainRNNSubsampled()
+      //        Trainer.trainRNNSubsampled()
 
-
-//        Trainer.trainFFNConfidence()
-//        Trainer.trainFFNOrderedTypes(true)
-//
-//        Trainer.trainFFNBoWOrdered()
-//        Trainer.trainFFNOrderedTypes(false)
+      //        Trainer.trainFFNConfidence()
+      //        Trainer.trainFFNOrderedTypes(true)
+      //
+      //        Trainer.trainFFNBoWOrdered()
+      //        Trainer.trainFFNOrderedTypes(false)
 
       // Testing
       case "testModels" => Tester.testModels()
@@ -143,17 +142,17 @@ object SparkUtil {
         //        // Ex 3
         //        Tester.testLengths()
         // Ex 4
-//        Tester.testShuffledVsOrdered()
-              Tester.testTimeDecay()
+        //        Tester.testShuffledVsOrdered()
+        Tester.testTimeDecay()
       // Ex 5
       //        Tester.testConfidence()
 
       case _ => Log.r("No job ... Exiting!")
     }
     Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
-    //    Thread.sleep(Long.MaxValue)
     sc.stop
-    System.exit(0)
+    Thread.sleep(Long.MaxValue)
+//    System.exit(0)
   }
 
   def misc() = {
