@@ -158,13 +158,12 @@ sealed trait NeuralTrainer {
     }
   }
 
-
-  def trainRecurrentW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)), minibatchSize: Int = Config.miniBatchSize.getOrElse(500)) = {
+  def trainRecurrentW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)), minibatchSize: Int = Config.miniBatchSize.getOrElse(500), hiddenNodes: Int = Config.hidden.getOrElse(100)): Seq[Unit] = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     for {lr <- learningRate} yield {
-      val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1, hiddenNodes = 100)
+      val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1, hiddenNodes = hiddenNodes)
       Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, prefs, name))
     }
   }

@@ -70,7 +70,8 @@ object Config {
       learningRate = props.get("lr").map(_.toDouble),
       miniBatchSize = props.get("mbs").map(_.toInt),
       cache = props.get("cache").map(_.toBoolean),
-      histogram = props.get("histogram").map(_.toBoolean)
+      histogram = props.get("histogram").map(_.toBoolean),
+      hidden = props.get("hidden").map(_.toInt)
     )
 
     Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
@@ -154,6 +155,7 @@ object Config {
   def miniBatchSize = args.miniBatchSize
   def cache: Boolean = args.cache.getOrElse(true)
   def histogram: Boolean = args.histogram.getOrElse(false)
+  def hidden = args.hidden
 
   case class Arguments(
                         partitions: Option[Int] = None,
@@ -167,6 +169,7 @@ object Config {
                         learningRate: Option[Double] = None,
                         miniBatchSize: Option[Int] = None,
                         cache: Option[Boolean] = None,
-                        histogram: Option[Boolean] = None
+                        histogram: Option[Boolean] = None,
+                      hidden: Option[Int]= None
                       )
 }

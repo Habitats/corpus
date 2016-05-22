@@ -42,9 +42,7 @@ object SparkUtil {
 
         // Generate datasets
         case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
-        case "computeDbAnnotations" =>
-          val ids: Set[String] = (Fetcher.subTrainOrdered ++ Fetcher.subTestOrdered ++ Fetcher.subValidationOrdered).map(_.id).collect.toSet
-          Cacher.computeAndCacheDBPediaAnnotationsToJson(Fetcher.rdd.filter(a => ids.contains(a.id)).sortBy(_.id.toInt))
+        case "computeDbAnnotations" => Cacher.computeAndCacheDBPediaAnnotationsToJson(Fetcher.rdd.sortBy(_.id.toInt))
         case "computeDbAnnotationsConfidence" => Cacher.annotateAndCacheArticlesConfidence()
 
         case "wdToFbFromDump" => WikiData.extractFreebaseFromWikiDump()
@@ -54,10 +52,10 @@ object SparkUtil {
         case "fbw2vIds" => FreebaseW2V.cacheFbIds()
         case "cacheW2V" => FreebaseW2V.cacheAll()
         case "cacheDocumentVectors" =>
-          W2VLoader.cacheDocumentVectors(Fetcher.annotatedRddMini)
+          W2VLoader.cacheDocumentVectors(Fetcher.annotatedRddMinimal)
           W2VLoader.cacheDocumentVectors(Fetcher.miniMini25)
 
-        case "cacheAnnotated" => Cacher.annotateAndCacheArticles()
+        case "cacheAnnotated" => Cacher.annotateAndCacheArticles(confidence = 0.25)
         case "cacheMiniCorpus" => Cacher.cacheMiniCorpus()
         case "cacheAnnotatedWithTypes" => Cacher.annotateAndCacheArticlesWithTypes()
         case "splitAndCache" => Cacher.splitAndCache() // REQUIREMENT FOR TRAINING

@@ -3,20 +3,23 @@ package no.habitats.corpus.spark
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
-import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.models.{Annotation, Article}
 import org.apache.spark.rdd.RDD
 
 import scala.util.Random
 
 object Cacher extends RddSerializer {
 
-  /** Fetch json RDD and compute IPTC and annotations */
-  def annotateAndCacheArticles() = {
-    val annotations = Spotlight.dbpediaAnnotations
-    val rdd = Fetcher.rddMini.map(a => Spotlight.toDBPediaAnnotated(a, annotations))
-    saveAsText(rdd.map(Article.serialize), "nyt_corpus_annotated")
+  def annotateAndCacheArticles(confidence: Double) = {
+    val allAnnotations: Map[String, Seq[Annotation]] = Spotlight.fetchDbpediaAnnotations(Config.dataPath + s"dbpedia/dbpedia_string_${confidence}_all.txt")
+    val rdd = Fetcher.rddMinimal.map(a => allAnnotations.get(a.id) match {
+      case Some(annotations) => a.copy(ann = annotations.map(annotation => (annotation.id, annotation)).toMap)
+      case None => a.copy(ann = Map())
+    }).filter(_.ann.nonEmpty)
+    saveAsText(rdd.map(Article.serialize), s"nyt_corpus_annotated_${confidence}")
   }
 
+  /** Fetch json RDD and compute IPTC and annotations */
   def annotateAndCacheArticlesConfidence() = {
     val db25 = Spotlight.dbpediaAnnotationsMini25
     var rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db25)).map(_.toMinimal).filter(_.ann.nonEmpty)
@@ -49,10 +52,10 @@ object Cacher extends RddSerializer {
   }
 
   def computeAndCacheDBPediaAnnotationsToJson(rdd: RDD[Article], partition: Option[Int] = None) = {
-    Spotlight.cacheDbpedia(rdd, 0.25, w2vFilter = true, partition)
+    //    Spotlight.cacheDbpedia(rdd, 0.25, w2vFilter = true, partition)
     //    Spotlight.cacheDbpedia(rdd, 0.5, w2vFilter = true)
-    //    Spotlight.cacheDbpedia(rdd, 0.75, w2vFilter = true)
-    //    Spotlight.cacheDbpedia(rdd, 1, w2vFilter = true)
+    Spotlight.cacheDbpedia(rdd, 0.75, w2vFilter = true, partition)
+    Spotlight.cacheDbpedia(rdd, 1, w2vFilter = true, partition)
   }
 
   def annotateAndCacheArticlesWithTypes() = {
@@ -107,9 +110,9 @@ object Cacher extends RddSerializer {
     all.filter(a => idLabeled.contains(a.id) || idOther.contains(a.id))
   }
 
-  def cacheAndSplitTime() = RelativeSplitter.split(Fetcher.annotatedRddMini, 20, a => a.id.toInt, "time")
+  def cacheAndSplitTime() = RelativeSplitter.split(Fetcher.annotatedRddMinimal, 20, a => a.id.toInt, "time")
 
-  def cacheAndSplitLength() = StaticSplitter.split(Fetcher.annotatedRddMini, 10, a => a.wc, "length")
+  def cacheAndSplitLength() = StaticSplitter.split(Fetcher.annotatedRddMinimal, 10, a => a.wc, "length")
 
   def cacheSuperSampled(maxLimit: Option[Int] = None) = {
     val rdd = Fetcher.annotatedTrainOrdered
@@ -141,7 +144,7 @@ object Cacher extends RddSerializer {
   }
 
   def splitAndCache() = {
-    val rdd = Fetcher.annotatedRddMini
+    val rdd = Fetcher.annotatedRddMinimal
     rdd.cache()
     splitOrdered(rdd)
     splitShuffled(rdd)

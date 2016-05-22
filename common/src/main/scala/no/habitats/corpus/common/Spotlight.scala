@@ -11,7 +11,6 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 
-import scala.collection.Map
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
@@ -63,7 +62,7 @@ object Spotlight extends RddSerializer {
       .collect.toMap
   }
 
-  def fetchEntities(file: String): Map[String, Entity] = CorpusContext.sc.textFile("file:///" + file).map(Entity.fromSingleJson).map(e => (e.id, e)).collectAsMap()
+  def fetchEntities(file: String): Map[String, Entity] = CorpusContext.sc.textFile("file:///" + file).map(Entity.fromSingleJson).map(e => (e.id, e)).collect.toMap
 
   def fetchArticleMapping(file: String): Map[String, Set[String]] = {
     CorpusContext.sc.textFile("file:///" + file).flatMap(l => {
@@ -71,7 +70,7 @@ object Spotlight extends RddSerializer {
       val articleIds = tokens.slice(1, tokens.size)
       val dbpediaId = tokens.head
       articleIds.map(id => (id, dbpediaId))
-    }).groupBy(_._1).map { case (k, v) => (k, v.map(_._2).toSet) }.collectAsMap()
+    }).groupBy(_._1).map { case (k, v) => (k, v.map(_._2).toSet) }.collect.toMap
   }
 
   lazy val dbpediaAnnotationsWithTypes: Map[String, Seq[Annotation]] = {
