@@ -200,7 +200,8 @@ sealed trait NeuralTrainer {
     Config.resultsCatsFileName = Config.resultsFileName
     val prefs = sc.broadcast(Prefs())
     val models = MlLibUtils.multiLabelClassification(prefs, train, validation, tfidf)
-    models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$name-$count/${name}_${IPTC.trim(c)}.bin") }
+    val fullName = name + (if(Config.count != Int.MaxValue) s"_$count" else "")
+    models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$fullName/${name}_${IPTC.trim(c)}.bin") }
   }
 
   private def trainNeuralNetwork(label: String, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, neuralPrefs: NeuralPrefs, name: String) = {

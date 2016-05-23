@@ -11,8 +11,8 @@ import org.nd4j.linalg.factory.Nd4j
 
 object NeuralModelLoader {
 
-  def coefficientsPath(name: String, label: String, count: Int): String = s"${name}/coefficients-${name}_${label}_${if (count == Int.MaxValue) "all" else count}.bin"
-  def confPath(name: String, label: String, count: Int): String = s"${name}/conf-${name}_${label}_${if (count == Int.MaxValue) "all" else count}.json"
+  def coefficientsPath(name: String, label: String, count: Int): String = s"${name}/coefficients-${name}_${label}${if (count != Int.MaxValue) s"_$count" else ""}.bin"
+  def confPath(name: String, label: String, count: Int): String = s"${name}/conf-${name}_${label}${if (count != Int.MaxValue) s"_$count" else ""}.json"
 
   // Returns ("sport", <model>) pairs
   def bestModels(name: String): Map[String, MultiLayerNetwork] = bestModel("conf-" + name).zip(bestModel("coefficients-" + name))

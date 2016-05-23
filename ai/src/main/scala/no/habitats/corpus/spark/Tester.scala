@@ -37,11 +37,12 @@ object Tester {
     val rdd = Fetcher.subTestOrdered.map(_.toMinimal)
     rdd.cache()
     val test = rdd.collect()
-    RecurrentTester("sub-rnn-w2v").test(test)
-    FeedforwardTester("sub-ffn-w2v").test(test)
-    FeedforwardTester("sub-ffn-bow").test(test)
-    NaiveBayesTester("sub-nb-bow").test(test)
-    NaiveBayesTester("sub-nb-w2v").test(test)
+    val includeExampleBased = true
+    RecurrentTester("sub-rnn-w2v").test(test, includeExampleBased)
+    FeedforwardTester("sub-ffn-w2v").test(test, includeExampleBased)
+    FeedforwardTester("sub-ffn-bow").test(test, includeExampleBased)
+    NaiveBayesTester("sub-nb-bow").test(test, includeExampleBased)
+    NaiveBayesTester("sub-nb-w2v").test(test, includeExampleBased)
   }
 
   def testEmbeddedVsBoW() = {
@@ -51,8 +52,8 @@ object Tester {
     val rdd = Fetcher.annotatedTestOrdered.map(_.toMinimal)
     val test = rdd.collect()
 
-//    FeedforwardTester("all-ffn-w2v").test(test, includeExampleBased = true)
-//    FeedforwardTester("all-ffn-bow").test(test, includeExampleBased = true)
+    //    FeedforwardTester("all-ffn-w2v").test(test, includeExampleBased = true)
+    //    FeedforwardTester("all-ffn-bow").test(test, includeExampleBased = true)
     NaiveBayesTester("all-nb-bow").test(test)
     NaiveBayesTester("all-nb-w2v").test(test)
   }
