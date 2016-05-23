@@ -2,7 +2,7 @@ package no.habitats.corpus.common.dl4j
 
 import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common.{Config, Log, TFIDF, W2VLoader}
-import org.deeplearning4j.nn.conf.layers.{DenseLayer, GravesLSTM}
+import org.deeplearning4j.nn.conf.layers.GravesLSTM
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.factory.Nd4j
@@ -16,23 +16,17 @@ case class NeuralPredictor(net: MultiLayerNetwork, article: Article, label: Stri
 
   def correct(log: Boolean = false): Boolean = {
     val (trueRes, falseRes) = if (isRecurrent) recurrentPrediction else feedforwardPrediction
-    if(log) Log.v(s"Prediction for $label: $falseRes - $trueRes")
+    if (log) Log.v(s"Prediction for $label: $falseRes - $trueRes")
     trueRes > falseRes
   }
 
   def feedforwardPrediction: (Double, Double) = {
     val features = Nd4j.create(1, featureDimensions)
-    val labels = Nd4j.create(1, 2)
     val vector = modelType match {
       case None => article.toDocumentVector
       case Some(v) => MLLibUtil.toVector(v.toVector(article))
     }
     features.putRow(0, vector)
-
-    // binary
-    val v = if (article.iptc.contains(label)) 1 else 0
-    labels.putScalar(Array(0, v), 1.0)
-
     val predicted = net.output(features, false)
     val falseRes = predicted.getScalar(0).getDouble(0)
     val trueRes = predicted.getScalar(1).getDouble(0)
@@ -50,7 +44,6 @@ case class NeuralPredictor(net: MultiLayerNetwork, article: Article, label: Stri
 
     // [miniBatchSize, inputSize, timeSeriesLength]
     val features = Nd4j.create(1, featureDimensions, numFeatures)
-    val labels = Nd4j.create(1, 2, numFeatures)
     // [miniBatchSize, timeSeriesLength]
     val featureMask = Nd4j.zeros(1, numFeatures)
     val labelsMask = Nd4j.zeros(1, numFeatures)
@@ -77,16 +70,18 @@ case class NeuralPredictor(net: MultiLayerNetwork, article: Article, label: Stri
 object NeuralPredictor {
   val loadedModes: mutable.Map[String, Map[String, MultiLayerNetwork]] = mutable.Map()
 
-  def predict(articles: Seq[Article], models: Map[String, MultiLayerNetwork], modelType: Option[TFIDF]): Seq[Article] = {
-    for {article <- articles} yield {
-      val predicted: Set[String] = models.filter { case (label, model) => NeuralPredictor(model, article, label, modelType).correct() }.keySet
-      article.copy(pred = predicted)
-    }
+  def predictAll(articles: Seq[Article], models: Map[String, MultiLayerNetwork], modelType: Option[TFIDF]): Seq[Article] = {
+    for {article <- articles} yield predict(models, article, modelType)
+  }
+
+  def predict(models: Map[String, MultiLayerNetwork], article: Article, modelType: Option[TFIDF]): Article = {
+    val predicted: Set[String] = models.filter { case (label, model) => NeuralPredictor(model, article, label, modelType).correct() }.keySet
+    article.copy(pred = predicted)
   }
 
   def predict(article: Article, modelName: String): Set[String] = {
     val models = loadedModes.getOrElseUpdate(modelName, NeuralModelLoader.models(modelName))
-    val modelType = if(modelName.toLowerCase.contains("bow")) Some(TFIDF.deserialize(modelName)) else None
+    val modelType = if (modelName.toLowerCase.contains("bow")) Some(TFIDF.deserialize(modelName)) else None
     val predictors: Map[String, NeuralPredictor] = models.map { case (label, model) => (label, new NeuralPredictor(model, article, label, modelType)) }
     val results: Set[String] = predictors.map { case (label, predictor) => s"$label: ${predictor.correct()}" }.toSet
     results

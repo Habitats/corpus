@@ -26,7 +26,9 @@ object MlLibUtils {
   /** Created either a BoW or a squashed W2V document vector */
   def toVector(tfidf: Option[TFIDF], a: Article): Vector = {
     tfidf match {
+      // Use w2v document vector
       case None => a.documentVectorMlLib
+      // Use BoW phrase vector
       case Some(v) => v.toVector(a)
     }
   }

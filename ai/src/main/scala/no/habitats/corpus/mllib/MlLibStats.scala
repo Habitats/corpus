@@ -39,12 +39,6 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
     // Data stats
     "Categories" -> f"${totalCats.toInt}",
     "Pred/True" -> f"${totalPredictions / totalCats}%.3f",
-    "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
-    "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
-    "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
-    "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f",
-    "H-Loss" -> f"${exampleBased.hloss}%.3f",
-    "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f",
 
     // Label-based
     "Ma.Recall" -> f"${macroAverage.recall}%.3f",
@@ -61,7 +55,15 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
     "Ex.Recall" -> f"${exampleBased.recall}%.3f",
     "Ex.Precision" -> f"${exampleBased.precision}%.3f",
     "Ex.Accuracy" -> f"${exampleBased.accuracy}%.3f",
-    "Ex.F-score" -> f"${exampleBased.fscore}%.3f"
+    "Ex.F-score" -> f"${exampleBased.fscore}%.3f",
+    "H-Loss" -> f"${exampleBased.hloss}%.3f",
+    "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f",
+
+    // Label stats
+    "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
+    "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
+    "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
+    "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
   )
 }
 
@@ -86,10 +88,11 @@ case class ExampleBased(predicted: Seq[Article], cats: Set[String]) {
 
 // Label-based metrics
 case class Measure(tp: Int, fp: Int, fn: Int, tn: Int) {
-  val recall    = tp.toDouble / (tp + fn + 0.00001)
-  val precision = tp.toDouble / (tp + fp + 0.00001)
+  val recall    = if (fn == 0) 1 else tp.toDouble / (tp + fn)
+  val precision = if (fp == 0) 1 else tp.toDouble / (tp + fp)
   val accuracy  = (tp + tn).toDouble / (tp + fp + fn + tn)
-  val fscore    = (2 * tp).toDouble / (2 * (tp + fp + fn + 0.00001))
+  val fscore    = 2 * (precision * recall) / (precision + recall + 0.0001)
+  override def toString = s"TP: $tp - FP: $fp - FN: $fn - TN: $tn"
 }
 
 case class LabelResult(category: String, tp: Int, fp: Int, fn: Int, tn: Int) {

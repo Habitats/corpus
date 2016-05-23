@@ -9,7 +9,7 @@ import no.habitats.corpus.common.mllib.MLlibModelLoader
 import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.dl4j.NeuralEvaluation
 import no.habitats.corpus.dl4j.networks.{FeedForwardIterator, RNNIterator}
-import no.habitats.corpus.mllib.{ExampleBased, MlLibUtils, Prefs}
+import no.habitats.corpus.mllib.{MlLibUtils, Prefs}
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
@@ -33,8 +33,8 @@ object Tester {
     val rdd = Fetcher.annotatedTestOrdered.map(_.toMinimal)
     rdd.cache()
     val test = rdd.collect()
-    tester("all-ffn-w2v").test(test, includeExampleBased = true)
-    tester("all-ffn-bow").test(test, includeExampleBased = true)
+    tester("all-ffn-w2v").test(test, predict = true)
+    tester("all-ffn-bow").test(test, predict = true)
     tester("all-nb-w2v").test(test)
     tester("all-nb-bow").test(test)
   }
@@ -58,15 +58,16 @@ object Tester {
 
   def testEmbeddedVsBoW() = {
     Config.resultsFileName = "test_embedded_vs_bow.txt"
-    Config.resultsCatsFileName = "test_embedded_vs_bow.txt"
+    Config.resultsCatsFileName = "test_embedded_vs_bow_cats.txt"
     Log.h("Testing embedded vs. BoW")
     val rdd = Fetcher.annotatedTestOrdered.map(_.toMinimal)
     val test = rdd.collect()
 
-    //    FeedforwardTester("all-ffn-w2v").test(test, includeExampleBased = true)
-    //    FeedforwardTester("all-ffn-bow").test(test, includeExampleBased = true)
-    tester("all-nb-bow").test(test)
-    tester("all-nb-w2v").test(test)
+    val predict = true
+    tester("all-ffn-bow").test(test, predict)
+    tester("all-nb-bow").test(test, predict)
+    tester("all-ffn-w2v").test(test, predict)
+    tester("all-nb-w2v").test(test, predict)
   }
 
   def testFFNBow() = {
@@ -169,17 +170,16 @@ sealed trait Testable {
 
   def verify: Boolean = Try(models(modelName)).isSuccess
 
-  def test(test: Array[Article], includeExampleBased: Boolean = false, iteration: Int = 0) = {
-    NeuralEvaluation.log(labelBased(test, iteration), Config.cats, iteration, if (includeExampleBased) Some(exampleBased(test)) else None)
+  def test(test: Array[Article], predict: Boolean = false, iteration: Int = 0) = {
+    NeuralEvaluation.log(labelBased(test, iteration), IPTC.topCategories, iteration, if (predict) Some(predicted(test)) else None)
   }
 
-  def exampleBased(test: Array[Article]) = {
+  def predicted(test: Array[Article]): Seq[Article] = {
     val modelType = if (modelName.toLowerCase.contains("bow")) Some(TFIDF.deserialize(modelName)) else None
-    val predicted = NeuralPredictor.predict(test.toSeq, models(modelName), modelType)
-    ExampleBased(predicted, IPTC.topCategories.toSet)
+    NeuralPredictor.predictAll(test.toSeq, models(modelName), modelType)
   }
 
-  def labelBased(test: Array[Article], iteration: Int): Set[NeuralEvaluation] = {
+  def labelBased(test: Array[Article], iteration: Int): Seq[NeuralEvaluation] = {
     if (iteration == 0) Log.r(s"Testing $modelName ...")
     models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
       val ffnTest = iter(test, models._1)
@@ -187,7 +187,7 @@ sealed trait Testable {
       rnnEval.log()
       rnnEval
     }
-    }.toSet
+    }
   }
 }
 
