@@ -83,22 +83,14 @@ object Cacher extends RddSerializer {
 
   def cacheBalanced() = {
     val train = Fetcher.annotatedTrainOrdered
-    val validation = Fetcher.annotatedValidationOrdered
-    val test = Fetcher.annotatedTestOrdered
-    val splits = Seq("train" -> train, "validation" -> validation, "test" -> test)
-    splits.foreach { case (kind, rdd) =>
-      rdd.cache()
-      IPTC.topCategories
-        //      Set("weather")
-        .foreach(c => {
-        val balanced = createBalanced(c, rdd).filter(_.iptc.nonEmpty)
-        saveAsText(balanced.map(Article.serialize), s"${IPTC.trim(c)}_${kind}_balanced")
-      })
-    }
+    Config.cats.foreach(c => {
+      val balanced = subsampledBalanced(c, train).filter(_.iptc.nonEmpty)
+      saveAsText(balanced.map(Article.serialize), s"nyt_${IPTC.trim(c)}_balanced")
+    })
   }
 
   /** Create a new dataset with all articles with a given label, and the same amount of randomly sampled articles other labels */
-  def createBalanced(label: String, all: RDD[Article]): RDD[Article] = {
+  def subsampledBalanced(label: String, all: RDD[Article]): RDD[Article] = {
     val labels: Map[Boolean, Set[String]] = all
       .map(a => (a.id, a.iptc))
       .groupBy(_._2.contains(label))
@@ -108,6 +100,24 @@ object Cacher extends RddSerializer {
     val idOther: Set[String] = labels(false).take(idLabeled.size)
     // Need to shuffle the examples for training purposes
     all.filter(a => idLabeled.contains(a.id) || idOther.contains(a.id))
+  }
+
+  def supersampledBalanced(label: String, all: RDD[Article]): RDD[Article] = {
+    val total: Int = all.count.toInt
+    val labelIds: Array[Article] = all.filter(_.iptc.contains(label)).collect()
+    if(labelIds.isEmpty) throw new IllegalStateException(s"Cannot supersample $label with no candidates!")
+    val missing = total - labelIds.size
+    val r = new Random(0)
+    val fillers = for {
+      i <- 0 until missing
+      toCopy = labelIds(r.nextInt(labelIds.size))
+    } yield  toCopy.copy(id = s"${toCopy.id}_$i")
+    (sc.parallelize(fillers, Config.partitions) ++ all).sortBy(a => Math.random)
+  }
+
+  def cacheSupersampledBalanced() = for(c <- Config.cats) {
+    val balanced: RDD[Article] = supersampledBalanced(c, Fetcher.annotatedTrainOrdered)
+    saveAsText(balanced.map(Article.serialize), s"nyt_${c}_superbalanced")
   }
 
   def cacheAndSplitTime() = RelativeSplitter.split(Fetcher.annotatedRddMinimal, 20, a => a.id.toInt, "time")

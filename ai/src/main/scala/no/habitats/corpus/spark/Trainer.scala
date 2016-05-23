@@ -110,20 +110,32 @@ object Trainer extends NeuralTrainer {
   }
 
   def trainRNNBalanced() = {
+    Config.resultsFileName = "train_rnn_bow_balanced.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
+    val validation = Fetcher.annotatedValidationOrdered
     Config.cats.foreach(c => {
-      val train = Fetcher.balanced(IPTC.trim(c) + "_train", true)
-      val validation = Fetcher.balanced(IPTC.trim(c) + "_validation", false)
-      trainRecurrentW2V(train, validation, "rnn-balanced")
+      val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
+      trainFeedfowardW2V(train, validation, "rnn-w2v-balanced")
+    })
+  }
+
+  def trainNaiveBalanced() = {
+    Config.resultsFileName = "train_nb_bow_balanced.txt"
+    Config.resultsCatsFileName = Config.resultsFileName
+    val validation = Fetcher.annotatedValidationOrdered
+    Config.cats.foreach(c => {
+      val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
+      trainNaiveBayesBoW(train, validation, "nb-balanced", termFrequencyThreshold = 5)
     })
   }
 
   def trainFFNBalanced() = {
-    Config.resultsFileName = "train_ffn.txt"
+    Config.resultsFileName = "train_ffn_w2v_balanced.txt"
     Config.resultsCatsFileName = Config.resultsFileName
+    val validation = Fetcher.annotatedValidationOrdered
     Config.cats.foreach(c => {
-      val train = Fetcher.balanced(IPTC.trim(c) + "_train", true)
-      val validation = Fetcher.balanced(IPTC.trim(c) + "_validation", false)
-      trainFeedfowardW2V(train, validation, "ffn-balanced")
+      val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
+      trainFeedfowardW2V(train, validation, "ffn-w2v-balanced")
     })
   }
 

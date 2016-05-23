@@ -58,7 +58,7 @@ object SparkUtil {
         case "cacheMiniCorpus" => Cacher.cacheMiniCorpus()
         case "cacheAnnotatedWithTypes" => Cacher.annotateAndCacheArticlesWithTypes()
         case "splitAndCache" => Cacher.splitAndCache() // REQUIREMENT FOR TRAINING
-        case "cacheBalanced" => Cacher.cacheBalanced()
+        case "cacheSuperBalanced" => Cacher.cacheSupersampledBalanced()
         case "cacheMinimal" => Cacher.cacheMinimalArticles(Fetcher.annotatedRdd, "nyt_corpus_annotated")
         case "cacheSuperSampled" => Cacher.cacheSuperSampled(Some(100000))
         case "cacheSubSampled" =>
@@ -105,9 +105,14 @@ object SparkUtil {
         case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
         case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
 
+        case "trainFFNSuperbalanced" => Trainer.trainFFNBalanced()
+        case "trainRNNSuperbalanced" => Trainer.trainRNNBalanced()
+        case "trainNaiveSuperbalanced" => Trainer.trainNaiveBalanced()
+
         case "trainFFNBoWTime" => Trainer.trainFFNBoWTime()
-        case "trainFFNW2VTrime" => Trainer.trainFFNW2VTime()
-        case "trainFFNW2VTrime" => Trainer.trainFFNW2VTime()
+        case "trainFFNW2VTime" => Trainer.trainFFNW2VTime()
+        case "trainFFNW2VTime" => Trainer.trainFFNW2VTime()
+          
 
         case "train" =>
           // DONE
