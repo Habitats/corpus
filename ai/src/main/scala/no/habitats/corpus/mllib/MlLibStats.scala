@@ -1,28 +1,28 @@
 package no.habitats.corpus.mllib
 
 import no.habitats.corpus.common.models.Article
-import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
 case class MLStats(predicted: RDD[Article], cats: Set[String]) {
   predicted.cache()
-  lazy val totalCats        = predicted.map(_.iptc.size).sum
-  lazy val totalPredictions = predicted.map(_.pred.size).sum
+  lazy val totalCats       : Double = predicted.map(_.iptc.size).sum
+  lazy val totalPredictions: Double = predicted.map(_.pred.size).sum
 
   val predset = predicted.collect()
-  lazy val labelMetrics = LabelMetrics(predset)
-  lazy val exampleBased = ExampleBased(predset, cats)
-  lazy val microAverage = MicroAverage(predset, cats)
-  lazy val macroAverage = MacroAverage(predset, cats)
+  lazy val labelMetrics: LabelMetrics = LabelMetrics(predset)
+  lazy val exampleBased: ExampleBased = ExampleBased(predset, cats)
+  lazy val microAverage: MicroAverage = MicroAverage(predset, cats)
+  lazy val macroAverage: MacroAverage = MacroAverage(predset, cats)
 
   // Formatted stats
-  lazy val realCategoryDistribution      = predicted.flatMap(_.iptc).map((_, 1)).reduceByKey(_ + _).collect.toMap
-  lazy val predictedCategoryDistribution = predicted.flatMap(_.pred).map((_, 1)).reduceByKey(_ + _).collect.toMap
-  lazy val catStats                      = {
+  lazy val realCategoryDistribution     : Map[String, Int] = predicted.flatMap(_.iptc).map((_, 1)).reduceByKey(_ + _).collect.toMap
+  lazy val predictedCategoryDistribution: Map[String, Int] = predicted.flatMap(_.pred).map((_, 1)).reduceByKey(_ + _).collect.toMap
+
+  lazy val catStats: Seq[Seq[(String, String)]] = {
     macroAverage.labelStats.toSeq.sortBy(_._1).map(c => {
       Seq[(String, String)](
         "Cat" -> f"${c._1}%45s",
-        "# Real" -> f"${realCategoryDistribution(c._1)}%5d",
+        "# Real" -> f"${realCategoryDistribution.getOrElse(c._1, 0)}%5d",
         "# Pred" -> f"${predictedCategoryDistribution.getOrElse(c._1, 0)}%5d",
         "TP" -> f"${c._2.tp}%5d",
         "FP" -> f"${c._2.fp}%5d",
@@ -32,9 +32,10 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
         "Precision" -> f"${c._2.precision}%.3f",
         "Accuracy" -> f"${c._2.accuracy}%.3f",
         "F-score" -> f"${c._2.fscore}%.3f")
-    }).toSeq
+    })
   }
-  lazy val stats                         = Seq[(String, String)](
+
+  lazy val stats = Seq[(String, String)](
     // Data stats
     "Categories" -> f"${totalCats.toInt}",
     "Pred/True" -> f"${totalPredictions / totalCats}%.3f",
@@ -85,10 +86,10 @@ case class ExampleBased(predicted: Seq[Article], cats: Set[String]) {
 
 // Label-based metrics
 case class Measure(tp: Int, fp: Int, fn: Int, tn: Int) {
-  val recall    = tp.toDouble / (tp + fn)
+  val recall    = tp.toDouble / (tp + fn + 0.00001)
   val precision = tp.toDouble / (tp + fp + 0.00001)
   val accuracy  = (tp + tn).toDouble / (tp + fp + fn + tn)
-  val fscore    = (2 * tp).toDouble / (2 * tp + fp + fn)
+  val fscore    = (2 * tp).toDouble / (2 * (tp + fp + fn + 0.00001))
 }
 
 case class LabelResult(category: String, tp: Int, fp: Int, fn: Int, tn: Int) {

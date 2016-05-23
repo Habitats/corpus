@@ -19,6 +19,13 @@ import scala.util.Try
 
 object Tester {
 
+  def tester(name: String) = name match {
+    case _ if name.contains("nb") => NaiveBayesTester(name)
+    case _ if name.contains("rnn") => RecurrentTester(name)
+    case _ if name.contains("ffn") => FeedforwardTester(name)
+    case _ => throw new IllegalStateException(s"Illegal model: $name")
+  }
+
   def testModels() = {
     Config.resultsFileName = "test_all.txt"
     Config.resultsCatsFileName = "test_all.txt"
@@ -26,9 +33,13 @@ object Tester {
     val rdd = Fetcher.annotatedTestOrdered.map(_.toMinimal)
     rdd.cache()
     val test = rdd.collect()
-    NaiveBayesTester("all-nb-w2v").test(test)
-    NaiveBayesTester("all-nb-bow").test(test)
+    tester("all-ffn-w2v").test(test, includeExampleBased = true)
+    tester("all-ffn-bow").test(test, includeExampleBased = true)
+    tester("all-nb-w2v").test(test)
+    tester("all-nb-bow").test(test)
   }
+
+  def verifyAll(): Boolean = new File(Config.modelPath).listFiles().map(_.getName).map(tester).forall(_.verify)
 
   def testSub() = {
     Config.resultsFileName = "test_sub.txt"
@@ -38,11 +49,11 @@ object Tester {
     rdd.cache()
     val test = rdd.collect()
     val includeExampleBased = true
-    RecurrentTester("sub-rnn-w2v").test(test, includeExampleBased)
-    FeedforwardTester("sub-ffn-w2v").test(test, includeExampleBased)
-    FeedforwardTester("sub-ffn-bow").test(test, includeExampleBased)
-    NaiveBayesTester("sub-nb-bow").test(test, includeExampleBased)
-    NaiveBayesTester("sub-nb-w2v").test(test, includeExampleBased)
+    tester("sub-rnn-w2v").test(test, includeExampleBased)
+    tester("sub-ffn-w2v").test(test, includeExampleBased)
+    tester("sub-ffn-bow").test(test, includeExampleBased)
+    tester("sub-nb-bow").test(test, includeExampleBased)
+    tester("sub-nb-w2v").test(test, includeExampleBased)
   }
 
   def testEmbeddedVsBoW() = {
@@ -54,8 +65,8 @@ object Tester {
 
     //    FeedforwardTester("all-ffn-w2v").test(test, includeExampleBased = true)
     //    FeedforwardTester("all-ffn-bow").test(test, includeExampleBased = true)
-    NaiveBayesTester("all-nb-bow").test(test)
-    NaiveBayesTester("all-nb-w2v").test(test)
+    tester("all-nb-bow").test(test)
+    tester("all-nb-w2v").test(test)
   }
 
   def testFFNBow() = {
@@ -65,8 +76,8 @@ object Tester {
     val rdd = Fetcher.annotatedTestOrdered
     val test = rdd.collect()
 
-    FeedforwardTester("ffn-bow-all").test(test)
-    FeedforwardTester("ffn-w2v-all").test(test)
+    tester("ffn-bow-all").test(test)
+    tester("ffn-w2v-all").test(test)
   }
 
   def testTypesInclusion() = {
@@ -77,8 +88,8 @@ object Tester {
     val testOrdered = rddOrdered.collect()
 
     Log.r("Annotations with types ...")
-    FeedforwardTester("types-ffn-w2v").test(testOrdered)
-    FeedforwardTester("ffn-w2v").test(testOrdered)
+    tester("types-ffn-w2v").test(testOrdered)
+    tester("ffn-w2v").test(testOrdered)
 
     //    Log.r("Normal annotations ...")
     //    FeedforwardTester("ffn-w2v-ordered").test(testOrdered)
@@ -107,9 +118,9 @@ object Tester {
     Config.resultsFileName = "test_lengths.txt"
     Config.resultsCatsFileName = "test_lengths_cats.txt"
     Log.h("Testing Lengths")
-    testBuckets("length", FeedforwardTester("ffn-w2v-ordered"), _.wc)
-    testBuckets("length", NaiveBayesTester("nb-bow"), _.id.toInt)
-    testBuckets("length", NaiveBayesTester("nb-w2v"), _.id.toInt)
+    testBuckets("length", tester("ffn-w2v-ordered"), _.wc)
+    testBuckets("length", tester("nb-bow"), _.id.toInt)
+    testBuckets("length", tester("nb-w2v"), _.id.toInt)
   }
 
   def testTimeDecay() = {
@@ -117,7 +128,7 @@ object Tester {
     Config.resultsCatsFileName = "test_time_decay_cats.txt"
     Log.h("Testing Time Decay")
     //    testBuckets("time", FeedforwardTester("ffn-w2v-time-all"), _.id.toInt)
-    testBuckets("time", FeedforwardTester("ffn-bow-time-all"), _.id.toInt)
+    testBuckets("time", tester("ffn-bow-time-all"), _.id.toInt)
     //    testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
     //    testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
   }
@@ -156,6 +167,8 @@ sealed trait Testable {
 
   def models(modelName: String): Map[String, MultiLayerNetwork] = ???
 
+  def verify: Boolean = Try(models(modelName)).isSuccess
+
   def test(test: Array[Article], includeExampleBased: Boolean = false, iteration: Int = 0) = {
     NeuralEvaluation.log(labelBased(test, iteration), Config.cats, iteration, if (includeExampleBased) Some(exampleBased(test)) else None)
   }
@@ -193,10 +206,12 @@ case class RecurrentTester(modelName: String) extends Testable {
 }
 
 case class NaiveBayesTester(modelName: String) extends Testable {
+  lazy val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(c => (c, MLlibModelLoader.load(modelName, IPTC.trim(c)))).toMap
+
+  override def verify: Boolean = Try(nb).isSuccess
 
   override def test(articles: Array[Article], includeExampleBased: Boolean = false, iteration: Int = 0) = {
     Log.r(s"Testing Naive Bayes [$modelName] ...")
-    val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(c => (c, MLlibModelLoader.load(modelName, IPTC.trim(c)))).toMap
     val rdd: RDD[Article] = sc.parallelize(articles)
     MlLibUtils.testMLlibModels(rdd, nb, if (modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None, sc.broadcast(Prefs()))
   }

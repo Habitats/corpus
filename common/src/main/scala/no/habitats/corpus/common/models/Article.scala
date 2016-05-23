@@ -42,8 +42,8 @@ case class Article(id: String,
   def toMinimal: Article = copy(body = "", desc = Set(), date = None, hl = "")
 
   lazy val documentVectorMlLib: Vector = {
-    val all = ann.map(_._2.fb).flatMap(W2VLoader.fromId)
-    val binary: INDArray = Transforms.round(W2VLoader.normalize(W2VLoader.squash(all)))
+    val normalize: INDArray = W2VLoader.normalize(toDocumentVector)
+    val binary: INDArray = Transforms.round(normalize)
     MLLibUtil.toVector(binary)
   }
 

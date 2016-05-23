@@ -134,6 +134,7 @@ object SparkUtil {
         //        Trainer.trainFFNOrderedTypes(false)
 
         // Testing
+        case "verifyModels" => Tester.verifyAll()
         case "testModels" => Tester.testModels()
         case "testFFNBoW" => Tester.testFFNBow()
         case "testLengths" => Tester.testLengths()

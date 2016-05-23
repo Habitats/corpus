@@ -1,7 +1,7 @@
 package no.habitats.corpus.mllib
 
+import no.habitats.corpus.common._
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{Config, IPTC, Log, TFIDF}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.linalg.Vector
@@ -26,7 +26,7 @@ object MlLibUtils {
   /** Created either a BoW or a squashed W2V document vector */
   def toVector(tfidf: Option[TFIDF], a: Article): Vector = {
     tfidf match {
-      case None => a.documentVectorMlLib.copy
+      case None => a.documentVectorMlLib
       case Some(v) => v.toVector(a)
     }
   }
@@ -43,6 +43,7 @@ object MlLibUtils {
   }
 
   def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], tfidf: Option[TFIDF], prefs: Broadcast[Prefs]): Map[String, NaiveBayesModel] = {
+    if (tfidf.isEmpty) W2VLoader.preload(wordVectors = true, documentVectors = true)
     val testing: RDD[(Article, Vector)] = test.map(t => (t, toVector(tfidf, t)))
     //    Log.v("Max:" + testing.map(_._2.toArray.max).max)
     //    Log.v("Min: " + testing.map(_._2.toArray.min).min)
