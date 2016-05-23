@@ -50,27 +50,27 @@ object Trainer extends NeuralTrainer {
   // Chosen baseline
   def trainRNNW2V() = {
     val (train, validation) = Fetcher.ordered
-    trainRecurrentW2V(train, validation, "rnn-w2v")
+    trainRecurrentW2V(train, validation, "all-rnn-w2v")
   }
 
   def trainFFNW2V() = {
     val (train, validation) = Fetcher.ordered
-    trainFeedfowardW2V(train, validation, "ffn-w2v")
+    trainFeedfowardW2V(train, validation, "all-ffn-w2v")
   }
 
   def trainFFNBoW() = {
     val (train, validation) = Fetcher.ordered
-    trainFeedforwardBoW(train, validation, "ffn-bow", termFrequencyThreshold = 100)
+    trainFeedforwardBoW(train, validation, "all-ffn-bow", termFrequencyThreshold = 100)
   }
 
   def trainNaiveW2V() = {
     val (train, validation) = Fetcher.ordered
-    trainNaiveBayesW2V(train, validation, "nb-w2v")
+    trainNaiveBayesW2V(train, validation, "all-nb-w2v")
   }
 
   def trainNaiveBoW() = {
     val (train, validation) = Fetcher.ordered
-    trainNaiveBayesBoW(train, validation, "nb-bow", termFrequencyThreshold = 100)
+    trainNaiveBayesBoW(train, validation, "all-nb-bow", termFrequencyThreshold = 100)
   }
 
   // Ex2 - Confidence
@@ -95,13 +95,13 @@ object Trainer extends NeuralTrainer {
   def trainFFNBoWTime() = {
     val train = Fetcher.by("time/nyt_time_train.txt")
     val validation = Fetcher.by("time/nyt_time_0_validation.txt")
-    trainFeedforwardBoW(train, validation, "ffn-bow-time", termFrequencyThreshold = 5, learningRate = 0.5)
+    trainFeedforwardBoW(train, validation, "time-ffn-bow", termFrequencyThreshold = 5, learningRate = 0.5)
   }
 
   def trainFFNW2VTime() = {
     val train = Fetcher.by("time/nyt_time_train.txt")
     val validation = Fetcher.by("time/nyt_time_0_validation.txt")
-    trainFeedfowardW2V(train, validation, "ffn-w2v-time", learningRate = 0.5)
+    trainFeedfowardW2V(train, validation, "time-ffn-w2v", learningRate = 0.5)
   }
 
   // Misc

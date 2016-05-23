@@ -43,7 +43,7 @@ case class Article(id: String,
 
   lazy val documentVectorMlLib: Vector = {
     val all = ann.map(_._2.fb).flatMap(W2VLoader.fromId)
-    val binary: INDArray = Transforms.ceil(W2VLoader.squash(all))
+    val binary: INDArray = Transforms.round(W2VLoader.normalize(W2VLoader.squash(all)))
     MLLibUtil.toVector(binary)
   }
 

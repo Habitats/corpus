@@ -105,21 +105,25 @@ object SparkUtil {
         case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
         case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
 
+        case "trainFFNBoWTime" => Trainer.trainFFNBoWTime()
+        case "trainFFNW2VTrime" => Trainer.trainFFNW2VTime()
+        case "trainFFNW2VTrime" => Trainer.trainFFNW2VTime()
+
         case "train" =>
-        // DONE
-        // Trainer.trainNaiveBayesW2VSubsampled()
-        // Trainer.trainNaiveBayesBoWSubsampled()
-        // Trainer.trainFFNW2VSubsampled()
-        // Trainer.trainFFNBoWSubsampled()
+          // DONE
+          // Trainer.trainNaiveBayesW2VSubsampled()
+          // Trainer.trainNaiveBayesBoWSubsampled()
+          // Trainer.trainFFNW2VSubsampled()
+          // Trainer.trainFFNBoWSubsampled()
 
-        //   Trainer.trainFFNBoWTime()
-        //   Trainer.trainFFNW2VTime()
+          //   Trainer.trainFFNBoWTime()
+          //   Trainer.trainFFNW2VTime()
 
-        //         Trainer.trainFFNW2VOrdered()
+          //         Trainer.trainFFNW2VOrdered()
 
-        // TODO
-         Trainer.trainNaiveBoW()
-         Trainer.trainNaiveW2V()
+          // TODO
+          Trainer.trainNaiveBoW()
+          Trainer.trainNaiveW2V()
 
         //        Trainer.trainRNNSubsampled()
 
@@ -136,7 +140,7 @@ object SparkUtil {
         case "testTimeDecay" => Tester.testTimeDecay()
         case "testConfidence" => Tester.testConfidence()
         case "testSub" =>
-//          Tester.sub
+        //          Tester.sub
         case "test" =>
           //        Tester.testModels()
           //        // Ex 1

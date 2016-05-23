@@ -64,7 +64,6 @@ object Config {
       job = props.get("job"),
       iptcFilter = props.get("iptcFilter").map(_.split(",").toSet),
       category = props.get("category"),
-      from = props.get("from"),
       count = props.get("count").map(_.toInt),
       spark = props.get("spark").map(_.toBoolean),
       useApi = props.get("useApi").map(_.toBoolean),
@@ -151,7 +150,6 @@ object Config {
   }
   def job = args.job.getOrElse(conf.getProperty("job"))
   def category = args.category
-  def from = args.from
   def useApi = args.useApi.getOrElse(false)
   def spark = args.spark.getOrElse(false)
   def learningRate = args.learningRate
@@ -166,7 +164,6 @@ object Config {
                         job: Option[String] = None,
                         count: Option[Int] = None,
                         category: Option[String] = None,
-                        from: Option[String] = None,
                         iptcFilter: Option[Set[String]] = None,
                         spark: Option[Boolean] = None,
                         useApi: Option[Boolean] = None,
@@ -174,6 +171,6 @@ object Config {
                         miniBatchSize: Option[Int] = None,
                         cache: Option[Boolean] = None,
                         histogram: Option[Boolean] = None,
-                      hidden: Option[Int]= None
+                        hidden: Option[Int] = None
                       )
 }
