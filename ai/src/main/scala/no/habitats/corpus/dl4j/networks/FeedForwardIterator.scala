@@ -2,9 +2,8 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
-import no.habitats.corpus.TFIDF
-import no.habitats.corpus.common.W2VLoader
 import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.{TFIDF, W2VLoader}
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.dataset.DataSet
@@ -20,20 +19,19 @@ class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize:
   override def next(num: Int): DataSet = {
     val articles = allArticles.slice(cursor, cursor + num)
 
-    // [miniBatchSize, inputSize, timeSeriesLength]
     val features = Nd4j.create(articles.size, inputColumns)
     val labels = Nd4j.create(articles.size, totalOutcomes)
 
-    for (i <- articles.toList.indices) {
-      // We want to preserve order
+    for (i <- articles.indices) {
+      val article: Article = articles(i)
       val vector = tfidf match {
-        case None => articles(i).toDocumentVector
-        case Some(v) => MLLibUtil.toVector(v.toVector(articles(i)))
+        case None => article.toDocumentVector
+        case Some(v) => MLLibUtil.toVector(v.toVector(article))
       }
       features.putRow(i, vector)
 
       // binary
-      val v = if (articles(i).iptc.contains(label)) 1 else 0
+      val v = if (article.iptc.contains(label)) 1 else 0
       labels.putScalar(Array(i, v), 1.0)
     }
 

@@ -6,8 +6,8 @@ plugins {
 import org.apache.tools.ant.taskdefs.condition.Os
 
 project.ext {
-    scalaBinary = project.hasProperty('scalaBinary') ? project.getProperty('scalaBinary') : '2.10'
-    scalaVersion = project.hasProperty('scalaVersion') ? project.getProperty('scalaVersion') : '2.10.6'
+    scalaBinary = project.hasProperty('scalaBinary') ? project.getProperty('scalaBinary') : '2.11'
+    scalaVersion = project.hasProperty('scalaVersion') ? project.getProperty('scalaVersion') : '2.11.6'
     javaVersion = scalaBinary == '2.11' ? '1.8' : '1.7'
     dl4jVersion = project.hasProperty('dl4j') ? project.getProperty('dl4j') : '0.4-rc3.10-SNAPSHOT'
     if (Os.isFamily(Os.FAMILY_WINDOWS)) {

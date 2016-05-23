@@ -1,6 +1,5 @@
 package no.habitats.corpus.spark
 
-import no.habitats.corpus.TFIDF
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common.dl4j.NeuralModelLoader
 import no.habitats.corpus.common.mllib.MLlibModelLoader

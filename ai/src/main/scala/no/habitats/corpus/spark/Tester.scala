@@ -2,15 +2,14 @@ package no.habitats.corpus.spark
 
 import java.io.File
 
-import no.habitats.corpus.TFIDF
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
-import no.habitats.corpus.common.dl4j.NeuralModelLoader
+import no.habitats.corpus.common.dl4j.{NeuralModelLoader, NeuralPredictor}
 import no.habitats.corpus.common.mllib.MLlibModelLoader
 import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.dl4j.NeuralEvaluation
 import no.habitats.corpus.dl4j.networks.{FeedForwardIterator, RNNIterator}
-import no.habitats.corpus.mllib.{MlLibUtils, Prefs}
+import no.habitats.corpus.mllib.{ExampleBased, MlLibUtils, Prefs}
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
@@ -41,21 +40,21 @@ object Tester {
     RecurrentTester("sub-rnn-w2v").test(test)
     FeedforwardTester("sub-ffn-w2v").test(test)
     FeedforwardTester("sub-ffn-bow").test(test)
-    NaiveBayesTester("sub-nb-w2v").test(test)
     NaiveBayesTester("sub-nb-bow").test(test)
+    NaiveBayesTester("sub-nb-w2v").test(test)
   }
 
-  def testEmbeddedVeBoW() = {
+  def testEmbeddedVsBoW() = {
     Config.resultsFileName = "test_embedded_vs_bow.txt"
     Config.resultsCatsFileName = "test_embedded_vs_bow.txt"
     Log.h("Testing embedded vs. BoW")
-    val rdd = Fetcher.subTestOrdered.map(_.toMinimal)
+    val rdd = Fetcher.annotatedTestOrdered.map(_.toMinimal)
     val test = rdd.collect()
 
-    FeedforwardTester("all-ffn-w2v").test(test)
-    FeedforwardTester("all-ffn-bow").test(test)
-    NaiveBayesTester("all-nb-w2v").test(test)
+//    FeedforwardTester("all-ffn-w2v").test(test, includeExampleBased = true)
+//    FeedforwardTester("all-ffn-bow").test(test, includeExampleBased = true)
     NaiveBayesTester("all-nb-bow").test(test)
+    NaiveBayesTester("all-nb-w2v").test(test)
   }
 
   def testFFNBow() = {
@@ -156,16 +155,25 @@ sealed trait Testable {
 
   def models(modelName: String): Map[String, MultiLayerNetwork] = ???
 
-  def test(test: Array[Article], iteration: Int = 0) = {
+  def test(test: Array[Article], includeExampleBased: Boolean = false, iteration: Int = 0) = {
+    NeuralEvaluation.log(labelBased(test, iteration), Config.cats, iteration, if (includeExampleBased) Some(exampleBased(test)) else None)
+  }
+
+  def exampleBased(test: Array[Article]) = {
+    val modelType = if (modelName.toLowerCase.contains("bow")) Some(TFIDF.deserialize(modelName)) else None
+    val predicted = NeuralPredictor.predict(test.toSeq, models(modelName), modelType)
+    ExampleBased(predicted, IPTC.topCategories.toSet)
+  }
+
+  def labelBased(test: Array[Article], iteration: Int): Set[NeuralEvaluation] = {
     if (iteration == 0) Log.r(s"Testing $modelName ...")
-    val evals: Set[NeuralEvaluation] = models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
+    models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
       val ffnTest = iter(test, models._1)
       val rnnEval = NeuralEvaluation(models._2, ffnTest.asScala, i, models._1)
       rnnEval.log()
       rnnEval
     }
     }.toSet
-    NeuralEvaluation.log(evals, Config.cats, iteration)
   }
 }
 
@@ -185,11 +193,10 @@ case class RecurrentTester(modelName: String) extends Testable {
 
 case class NaiveBayesTester(modelName: String) extends Testable {
 
-  override def test(articles: Array[Article], iteration: Int = 0) = {
+  override def test(articles: Array[Article], includeExampleBased: Boolean = false, iteration: Int = 0) = {
     Log.r(s"Testing Naive Bayes [$modelName] ...")
     val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(c => (c, MLlibModelLoader.load(modelName, IPTC.trim(c)))).toMap
     val rdd: RDD[Article] = sc.parallelize(articles)
     MlLibUtils.testMLlibModels(rdd, nb, if (modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None, sc.broadcast(Prefs()))
   }
-
 }

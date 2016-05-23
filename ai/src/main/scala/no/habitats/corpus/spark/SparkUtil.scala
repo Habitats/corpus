@@ -139,6 +139,7 @@ object SparkUtil {
         case "testLengths" => Tester.testLengths()
         case "testTimeDecay" => Tester.testTimeDecay()
         case "testConfidence" => Tester.testConfidence()
+        case "testW2VvsBoW" => Tester.testEmbeddedVsBoW()
         case "testSub" =>
         //          Tester.sub
         case "test" =>

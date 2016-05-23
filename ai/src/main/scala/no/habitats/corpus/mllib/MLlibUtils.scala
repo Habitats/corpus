@@ -1,8 +1,7 @@
 package no.habitats.corpus.mllib
 
-import no.habitats.corpus.TFIDF
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{Config, IPTC, Log}
+import no.habitats.corpus.common.{Config, IPTC, Log, TFIDF}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.linalg.Vector
@@ -68,7 +67,7 @@ object MlLibUtils {
     Log.toFile(labelCardinalityDistribution, s"stats/label_cardinality_distribution_${Config.count}.txt")
 
     val cats = IPTC.topCategories.toSet
-    val stats = MLStats(predicted, cats, prefs)
+    val stats = MLStats(predicted, cats)
     if (stats.catStats.nonEmpty) {
       val catHeader = stats.catStats.head.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 3}s").format(s._1)).mkString(f"${prefs.value.iteration}%3d# Category stats:\n", "", "\n")
       Log.r2(stats.catStats.map(c => c.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 3}s").format(s._2)).mkString("")).mkString(catHeader, "\n", "\n"))

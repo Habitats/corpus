@@ -4,7 +4,7 @@ import no.habitats.corpus.common.models.Article
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 
-case class MLStats(predicted: RDD[Article], cats: Set[String], prefs: Broadcast[Prefs]) {
+case class MLStats(predicted: RDD[Article], cats: Set[String]) {
   predicted.cache()
   lazy val totalCats        = predicted.map(_.iptc.size).sum
   lazy val totalPredictions = predicted.map(_.pred.size).sum
@@ -35,14 +35,6 @@ case class MLStats(predicted: RDD[Article], cats: Set[String], prefs: Broadcast[
     }).toSeq
   }
   lazy val stats                         = Seq[(String, String)](
-    "#" -> f"${prefs.value.iteration}%3d",
-
-    // Dynamic prefs
-    "TFT" -> f"${prefs.value.termFrequencyThreshold}",
-
-    "WD-Only" -> f"${prefs.value.wikiDataOnly}",
-    "WD-Broad" -> f"${prefs.value.wikiDataIncludeBroad}",
-
     // Data stats
     "Categories" -> f"${totalCats.toInt}",
     "Pred/True" -> f"${totalPredictions / totalCats}%.3f",

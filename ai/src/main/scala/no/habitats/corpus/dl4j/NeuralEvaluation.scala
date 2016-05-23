@@ -1,7 +1,9 @@
 package no.habitats.corpus.dl4j
 
 import no.habitats.corpus.common.Log
+
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
+import no.habitats.corpus.mllib.ExampleBased
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, GravesLSTM}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
@@ -85,7 +87,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
 
 object NeuralEvaluation {
 
-  def log(evals: Set[NeuralEvaluation], cats: Seq[String], iteration: Int) = {
+  def log(evals: Set[NeuralEvaluation], cats: Seq[String], iteration: Int, exampleBasedEval:Option[ExampleBased] = None) = {
     // Macro
     val maRecall = evals.map(_.recall).sum / cats.size
     val maPrecision = evals.map(_.precision).sum / cats.size
@@ -102,7 +104,7 @@ object NeuralEvaluation {
     val miAccuracy = (tp + tn).toDouble / (tp + fp + fn + tn)
     val miFscore = (2 * tp).toDouble / (2 * tp + fp + fn)
 
-    val stats = Seq[(String, String)](
+    val labelStats = Seq[(String, String)](
       "Ma.Recall" -> f"$maRecall%.3f",
       "Ma.Precision" -> f"$maPrecision%.3f",
       "Ma.Accuracy" -> f"$maAccuracy%.3f",
@@ -113,8 +115,14 @@ object NeuralEvaluation {
       "Mi.Accuracy" -> f"$miAccuracy%.3f",
       "Mi.F-score" -> f"$miFscore%.3f"
     )
-    Log.rr(stats.map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
-    Log.r(stats.map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
+
+    val exampleStats: Seq[(String, String)] = exampleBasedEval.map(exampleBasedEval => Seq[(String, String)](
+      "H-Loss" -> f"${exampleBasedEval.hloss}%.3f",
+      "Sub-Acc" -> f"${exampleBasedEval.subsetAcc}%.3f"
+    )).getOrElse(Nil)
+
+    Log.rr((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
+    Log.r((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
 
   }
 
