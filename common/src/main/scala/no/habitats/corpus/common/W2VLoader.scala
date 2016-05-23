@@ -97,7 +97,7 @@ sealed class SparkVectorLoader extends VectorLoader {
 object W2VLoader extends RddSerializer with VectorLoader {
 
   implicit val formats              = Serialization.formats(NoTypeHints)
-  lazy     val loader: VectorLoader = if (Config.spark) new SparkVectorLoader() else new TextVectorLoader()
+  lazy     val loader: VectorLoader = if (false) new SparkVectorLoader() else new TextVectorLoader()
 
   // TODO: NOT GOOD
   var confidence  = 0.5

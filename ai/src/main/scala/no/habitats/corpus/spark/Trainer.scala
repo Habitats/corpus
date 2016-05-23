@@ -16,7 +16,7 @@ import org.nd4j.linalg.dataset.DataSet
 
 import scala.language.implicitConversions
 
-object Trainer extends NeuralTrainer {
+object Trainer extends NeuralTrainer with Serializable {
   implicit def seqthis(a: Double): Seq[Double] = Seq(a)
 
   // ### Best models
@@ -115,7 +115,7 @@ object Trainer extends NeuralTrainer {
     val validation = Fetcher.annotatedValidationOrdered
     Config.cats.foreach(c => {
       val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
-      trainFeedfowardW2V(train, validation, "rnn-w2v-balanced")
+      ???
     })
   }
 
@@ -125,7 +125,7 @@ object Trainer extends NeuralTrainer {
     val validation = Fetcher.annotatedValidationOrdered
     Config.cats.foreach(c => {
       val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
-      trainNaiveBayesBoW(train, validation, "nb-balanced", termFrequencyThreshold = 5)
+      ???
     })
   }
 
@@ -135,7 +135,7 @@ object Trainer extends NeuralTrainer {
     val validation = Fetcher.annotatedValidationOrdered
     Config.cats.foreach(c => {
       val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
-      trainFeedfowardW2V(train, validation, "ffn-w2v-balanced")
+      ???
     })
   }
 
@@ -165,7 +165,11 @@ sealed trait NeuralTrainer {
     Config.resultsCatsFileName = Config.resultsFileName
     for {lr <- learningRate} yield {
       val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1)
+      if(Config.spark){
       Config.cats.foreach(c => trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name))
+      } else {
+        sc.parallelize(Config.cats).map(c => (c, brinaryFFNW2VTrainer(c, prefs))).foreach(n => NeuralModelLoader.save(n._2, n._1, Config.count, name + "-" + count))
+      }
     }
   }
 
@@ -212,7 +216,7 @@ sealed trait NeuralTrainer {
     Config.resultsCatsFileName = Config.resultsFileName
     val prefs = sc.broadcast(Prefs())
     val models = MlLibUtils.multiLabelClassification(prefs, train, validation, tfidf)
-    val fullName = name + (if(Config.count != Int.MaxValue) s"_$count" else "")
+    val fullName = name + (if (Config.count != Int.MaxValue) s"_$count" else "")
     models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$fullName/${name}_${IPTC.trim(c)}.bin") }
   }
 

@@ -112,7 +112,7 @@ object SparkUtil {
         case "trainFFNBoWTime" => Trainer.trainFFNBoWTime()
         case "trainFFNW2VTime" => Trainer.trainFFNW2VTime()
         case "trainFFNW2VTime" => Trainer.trainFFNW2VTime()
-          
+
 
         case "train" =>
           // DONE
@@ -164,11 +164,13 @@ object SparkUtil {
         case _ => Log.r("No job ... Exiting!")
       }
       Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
-      sc.stop
     }.failed.map(f => {Log.e("Crash: " + f); f.printStackTrace()})
     // If on cluster, pause to avoid termination of the screen/terminal
-    if (!Config.local) Thread.sleep(Long.MaxValue)
-    else System.exit(0)
+//    if (!Config.local)
+      Thread.sleep(Long.MaxValue)
+    sc.stop
+//    else
+//      System.exit(0)
   }
 
   def misc() = {

@@ -10,7 +10,7 @@ import scala.collection.JavaConverters._
 /**
   * Created by mail on 06.05.2016.
   */
-object NeuralTrainer {
+object NeuralTrainer extends Serializable{
   def train(label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): MultiLayerNetwork = {
     //    Log.r(s"Training $label ...")
     //    Log.r2(s"Training $label ...")
@@ -21,7 +21,7 @@ object NeuralTrainer {
         net.fit(trainIter.next())
         if (c % 10 == 0) {
           val evaluation: NeuralEvaluation = NeuralEvaluation(net, testIter.asScala.take(2), i, label, Some(neuralPrefs))
-          evaluation.logv(c)
+          evaluation.logv(label, c)
           testIter.reset()
         }
         c += 1

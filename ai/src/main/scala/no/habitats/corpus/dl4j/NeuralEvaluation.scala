@@ -1,7 +1,7 @@
 package no.habitats.corpus.dl4j
 
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{IPTC, Log}
+import no.habitats.corpus.common.{Config, IPTC, Log}
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import no.habitats.corpus.mllib._
 import org.deeplearning4j.eval.Evaluation
@@ -75,10 +75,10 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
     Log.r2(stats)
   }
 
-  def logv(i: Int) = {
+  def logv(label: String, i: Int) = {
     //    Log.r2(confusion)
-    if (i == 0) Log.r(statsHeader, "spam.txt")
-    Log.r(stats, "spam.txt")
+    if (i == 0) Log.toFile(statsHeader, s"spam_$label.txt", Config.dataPath + "spam")
+    Log.toFile(stats, s"spam_$label.txt", Config.dataPath + "spam")
   }
 }
 
