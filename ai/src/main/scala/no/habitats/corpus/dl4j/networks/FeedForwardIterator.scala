@@ -3,7 +3,7 @@ package no.habitats.corpus.dl4j.networks
 import java.util
 
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{TFIDF, W2VLoader}
+import no.habitats.corpus.common.{Config, TFIDF, W2VLoader}
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.dataset.DataSet
@@ -39,7 +39,7 @@ class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize:
     new DataSet(features, labels)
   }
 
-  override def batch(): Int = Math.min(batchSize, Math.max(allArticles.size - counter, 0))
+  override def batch(): Int = Math.min(Config.miniBatchSize.getOrElse(batchSize), Math.max(allArticles.size - counter, 0))
   override def cursor(): Int = counter
   override def totalExamples(): Int = allArticles.size
   override def inputColumns(): Int = tfidf match {

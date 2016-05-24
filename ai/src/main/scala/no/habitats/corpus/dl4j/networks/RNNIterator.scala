@@ -3,7 +3,7 @@ package no.habitats.corpus.dl4j.networks
 import java.util
 
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{IPTC, W2VLoader}
+import no.habitats.corpus.common.{Config, IPTC, W2VLoader}
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
@@ -59,7 +59,7 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
     counter += articles.size
     new DataSet(features, labels, featureMask, labelsMask)
   }
-  override def batch(): Int = Math.min(batchSize, Math.max(allArticles.size - counter, 0))
+  override def batch(): Int = Math.min(Config.miniBatchSize.getOrElse(batchSize), Math.max(allArticles.size - counter, 0))
   override def cursor(): Int = counter
   override def totalExamples(): Int = allArticles.size
   override def inputColumns(): Int = W2VLoader.featureSize

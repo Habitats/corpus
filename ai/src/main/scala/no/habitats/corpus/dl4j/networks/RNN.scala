@@ -35,7 +35,7 @@ object RNN {
       .regularization(true).l2(1e-5)
       .weightInit(WeightInit.XAVIER)
       .gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue).gradientNormalizationThreshold(1.0)
-      .learningRate(learningRate)
+      .learningRate(Config.learningRate.getOrElse(neuralPrefs.learningRate))
       .list()
       .layer(0, new GravesLSTM.Builder()
         .nIn(vectorSize)

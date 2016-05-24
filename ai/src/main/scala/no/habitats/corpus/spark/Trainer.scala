@@ -105,11 +105,6 @@ object Trainer extends NeuralTrainer with Serializable {
   }
 
   // Misc
-  def trainFFNShuffled(sub: Boolean = true) = {
-    val (train, validation) = Fetcher.shuffled
-    trainFeedforwardBoW(train, validation, "ffn-shuffled")
-  }
-
   def trainRNNBalanced() = {
     val name: String = "rnn_bow_balanced"
     Config.resultsFileName = "train_" + name + ".txt"
@@ -131,7 +126,7 @@ object Trainer extends NeuralTrainer with Serializable {
     Config.cats.foreach(c => {
       val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
       val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 1)
-       trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name)
+      trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name)
     })
   }
 
@@ -142,7 +137,7 @@ object Trainer extends NeuralTrainer with Serializable {
     val validation = Fetcher.annotatedValidationOrdered
     Config.cats.foreach(c => {
       val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
-      trainNaiveBayesBoW(train,validation,name,100)
+      trainNaiveBayesBoW(train, validation, name, 100)
     })
   }
 
@@ -154,7 +149,7 @@ object Trainer extends NeuralTrainer with Serializable {
     val validation = Fetcher.annotatedValidationOrdered
     Config.cats.foreach(c => {
       val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
-      trainNaiveBayesW2V(train,validation,name)
+      trainNaiveBayesW2V(train, validation, name)
     })
   }
 
@@ -178,7 +173,7 @@ sealed trait NeuralTrainer {
 
   private val count: String = if (Config.count == Int.MaxValue) "all" else Config.count.toString
 
-  def trainFeedfowardW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000)) = {
+  def trainFeedfowardW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(0.05), minibatchSize: Int = 1000) = {
     W2VLoader.preload(wordVectors = true, documentVectors = true)
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
@@ -192,7 +187,7 @@ sealed trait NeuralTrainer {
     }
   }
 
-  def trainRecurrentW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)), minibatchSize: Int = Config.miniBatchSize.getOrElse(500), hiddenNodes: Int = Config.hidden.getOrElse(100)): Seq[Unit] = {
+  def trainRecurrentW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(0.05), minibatchSize: Int = 500, hiddenNodes: Int = 100): Seq[Unit] = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
@@ -202,7 +197,7 @@ sealed trait NeuralTrainer {
     }
   }
 
-  def trainFeedforwardBoW(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Double = Config.learningRate.getOrElse(0.05), minibatchSize: Int = Config.miniBatchSize.getOrElse(1000), termFrequencyThreshold: Int = 100) = {
+  def trainFeedforwardBoW(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Double = 0.05, minibatchSize: Int = 1000, termFrequencyThreshold: Int = 100) = {
     Config.resultsFileName = s"train_$name.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val tfidf = TFIDF(train, termFrequencyThreshold)
