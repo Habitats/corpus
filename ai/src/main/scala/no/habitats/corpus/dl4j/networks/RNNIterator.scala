@@ -12,7 +12,7 @@ import org.nd4j.linalg.indexing.NDArrayIndex
 
 import scala.collection.JavaConverters._
 
-class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize: Int) extends DataSetIterator {
+class RNNIterator(allArticles: Seq[Article], label: Option[String], batchSize: Int) extends DataSetIterator {
   W2VLoader.preload(wordVectors = true, documentVectors = false)
 
   // 32 may be a good starting point,

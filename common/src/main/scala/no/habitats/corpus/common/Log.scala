@@ -36,10 +36,16 @@ object Log extends Logging {
     writer.close()
   }
 
+  def toFileHeader(m: String, fileName: String, path: String = Config.dataPath, overwrite: Boolean = false) = {
+    if (!headers.contains(fileName + m)) toFile(m, fileName, path, overwrite)
+    headers.add(fileName + m)
+  }
   def toFile(m: String, fileName: String, path: String = Config.dataPath, overwrite: Boolean = false) = {
     val resultsFile = new File(path + f"/$fileName")
-    Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
-    if(overwrite) FileUtils.deleteQuietly(resultsFile)
+    if(overwrite) {
+      Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
+      FileUtils.deleteQuietly(resultsFile)
+    }
     resultsFile.getParentFile.mkdirs()
     resultsFile.createNewFile()
     writeLine(m, resultsFile)
@@ -68,7 +74,7 @@ object Log extends Logging {
   }
 
   def rr(m: Any) = {
-    if(!headers.contains(m.toString)) {
+    if (!headers.contains(m.toString)) {
       r(m)
       headers.add(m.toString)
     }

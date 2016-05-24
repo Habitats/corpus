@@ -77,7 +77,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
 
   def logv(label: String, i: Int) = {
     //    Log.r2(confusion)
-    if (i == 0) Log.toFile(statsHeader, s"spam_$label.txt", Config.dataPath + "spam")
+    if (i == 0) Log.toFileHeader(statsHeader, s"spam_$label.txt", Config.dataPath + "spam")
     Log.toFile(stats, s"spam_$label.txt", Config.dataPath + "spam")
   }
 }

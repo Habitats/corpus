@@ -155,7 +155,7 @@ sealed trait NeuralTrainer {
 
   import scala.collection.JavaConverters._
 
-  implicit def collect(rdd: RDD[Article]): Array[Article] = rdd.collect()
+  implicit def collect(rdd: RDD[Article]): Seq[Article] = rdd.collect()
 
   private val count: String = if (Config.count == Int.MaxValue) "all" else Config.count.toString
 
@@ -165,10 +165,10 @@ sealed trait NeuralTrainer {
     Config.resultsCatsFileName = Config.resultsFileName
     for {lr <- learningRate} yield {
       val prefs = NeuralPrefs(learningRate = lr, train = train, validation = validation, minibatchSize = minibatchSize, epochs = 1)
-      if(Config.spark){
-      Config.cats.foreach(c => trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name))
-      } else {
+      if (Config.spark) {
         sc.parallelize(Config.cats).map(c => (c, brinaryFFNW2VTrainer(c, prefs))).foreach(n => NeuralModelLoader.save(n._2, n._1, Config.count, name + "-" + count))
+      } else {
+        Config.cats.foreach(c => trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name))
       }
     }
   }
