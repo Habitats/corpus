@@ -10,17 +10,9 @@ import org.apache.spark.rdd.RDD
 
 object MlLibUtils {
 
-  def multiLabelClassification(prefs: Broadcast[Prefs], train: RDD[Article], test: RDD[Article], tfidf: Option[TFIDF]): Map[String, NaiveBayesModel] = {
+  def multiLabelClassification(c: String, train: RDD[Article], test: RDD[Article], tfidf: Option[TFIDF]): NaiveBayesModel = {
     val training: RDD[(Set[String], Vector)] = train.map(a => (a.iptc, toVector(tfidf, a)))
-    //    Log.v("Max:" + training.map(_._2.toArray.max).max)
-    //    Log.v("Min: " + training.map(_._2.toArray.min).min)
-    training.cache
-
-    val catModelPairs: Map[String, NaiveBayesModel] = trainModelsNaiveBayedMultiNominal(training, prefs.value.categories)
-    //      val catModelPairs = trainModelsSVM(training)
-    Log.v("--- Training complete! ")
-
-    testMLlibModels(test, catModelPairs, tfidf, prefs)
+    trainModelsNaiveBayedMultiNominal(training, c)
   }
 
   /** Created either a BoW or a squashed W2V document vector */
@@ -33,15 +25,13 @@ object MlLibUtils {
     }
   }
 
-  def trainModelsNaiveBayedMultiNominal(training: RDD[(Set[String], Vector)], cats: Seq[String]): Map[String, NaiveBayesModel] = {
-    cats.map(c => {
-      Log.v(s"Training ... $c ...")
-      val labeledTraining: RDD[LabeledPoint] = training
-        .map(a => (if (a._1.contains(c)) 1 else 0, a._2))
-        .map(a => LabeledPoint(a._1, a._2))
-      val model = NaiveBayes.train(input = labeledTraining, lambda = 1.0, modelType = "multinomial")
-      (c, model)
-    }).toMap
+  def trainModelsNaiveBayedMultiNominal(training: RDD[(Set[String], Vector)], c: String): NaiveBayesModel = {
+    Log.v(s"Training ... $c ...")
+    val labeledTraining: RDD[LabeledPoint] = training
+      .map(a => (if (a._1.contains(c)) 1 else 0, a._2))
+      .map(a => LabeledPoint(a._1, a._2))
+    val model = NaiveBayes.train(input = labeledTraining, lambda = 1.0, modelType = "multinomial")
+    model
   }
 
   def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], tfidf: Option[TFIDF], prefs: Broadcast[Prefs]): Map[String, NaiveBayesModel] = {
