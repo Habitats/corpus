@@ -123,10 +123,10 @@ object W2VLoader extends RddSerializer with VectorLoader {
     // Max:  0.15866121649742126
     val min = -0.16
     val max = 0.16
-    combined.subi(min).divi(max - min)
+    combined.dup().subi(min).divi(max - min)
   }
 
-  def squash(vectors: Iterable[INDArray]): INDArray = vectors.reduce(_.addi(_)).divi(vectors.size)
+  def squash(vectors: Iterable[INDArray]): INDArray = vectors.map(_.dup).reduce(_.addi(_)).divi(vectors.size)
 
   def cacheDocumentVectors(rdd: RDD[Article]) = {
     val docVecs = rdd
