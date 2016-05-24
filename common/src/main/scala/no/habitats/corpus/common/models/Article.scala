@@ -53,7 +53,7 @@ case class Article(id: String,
 
   private lazy val documentVector: INDArray = W2VLoader.documentVector(this)
 
-  def toDocumentVector: INDArray = documentVector
+  def toDocumentVector: INDArray = documentVector.dup()
 }
 
 object Article {
