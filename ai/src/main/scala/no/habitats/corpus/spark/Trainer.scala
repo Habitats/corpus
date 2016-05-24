@@ -155,7 +155,7 @@ sealed trait NeuralTrainer {
 
   import scala.collection.JavaConverters._
 
-  implicit def collect(rdd: RDD[Article]): Seq[Article] = rdd.collect()
+  implicit def collect(rdd: RDD[Article]): Array[Article] = rdd.collect()
 
   private val count: String = if (Config.count == Int.MaxValue) "all" else Config.count.toString
 
