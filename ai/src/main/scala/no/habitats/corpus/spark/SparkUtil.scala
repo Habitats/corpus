@@ -97,7 +97,6 @@ object SparkUtil {
         case "trainRNNBalanced" => Trainer.trainRNNBalanced()
 
         case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
-        case "trainFFNShuffled" => Trainer.trainFFNShuffled()
 //        case "trainFFNBalanced" => Trainer.trainFFNBalanced()
         case "trainFFNConfidence" => Trainer.trainFFNConfidence()
 
