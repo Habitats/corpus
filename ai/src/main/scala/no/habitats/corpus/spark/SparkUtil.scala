@@ -98,36 +98,32 @@ object SparkUtil {
 
         case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
         case "trainFFNShuffled" => Trainer.trainFFNShuffled()
-        case "trainFFNBalanced" => Trainer.trainFFNBalanced()
+//        case "trainFFNBalanced" => Trainer.trainFFNBalanced()
         case "trainFFNConfidence" => Trainer.trainFFNConfidence()
 
         case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
         case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
         case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
 
-        case "trainFFNSuperbalanced" => Trainer.trainFFNBalanced()
+        case "trainFFNSuperbalanced" => Trainer.trainFFNW2VBalanced()
         case "trainRNNSuperbalanced" => Trainer.trainRNNBalanced()
-        case "trainNaiveSuperbalanced" => Trainer.trainNaiveBalanced()
+//        case "trainNaiveSuperbalanced" => Trainer.trainNaiveBalanced()
 
         case "trainFFNBoWTime" => Trainer.trainFFNBoWTime()
         case "trainFFNW2VTime" => Trainer.trainFFNW2VTime()
 
-
         case "train" =>
-          // DONE
-          // Trainer.trainNaiveBayesW2VSubsampled()
-          // Trainer.trainNaiveBayesBoWSubsampled()
-          // Trainer.trainFFNW2VSubsampled()
-          // Trainer.trainFFNBoWSubsampled()
+          //           Trainer.trainNaiveBayesW2VSubsampled()
+          //           Trainer.trainNaiveBayesBoWSubsampled()
+          //           Trainer.trainFFNW2VSubsampled()
+          //           Trainer.trainFFNBoWSubsampled()
+          //
+          //             Trainer.trainFFNBoWTime()
+          //             Trainer.trainFFNW2VTime()
 
-          //   Trainer.trainFFNBoWTime()
-          //   Trainer.trainFFNW2VTime()
-
-          //         Trainer.trainFFNW2VOrdered()
-
-          // TODO
-          Trainer.trainNaiveBoW()
-          Trainer.trainNaiveW2V()
+//          Try(Trainer.trainNaiveBoWBalanced())
+//          Try(Trainer.trainNaiveW2VBalanced())
+          Trainer.trainFFNW2VBalanced()
 
         //        Trainer.trainRNNSubsampled()
 

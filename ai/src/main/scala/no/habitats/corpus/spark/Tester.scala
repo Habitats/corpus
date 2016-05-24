@@ -35,6 +35,7 @@ object Tester {
     val test = rdd.collect()
     tester("all-ffn-w2v").test(test, predict = true)
     tester("all-ffn-bow").test(test, predict = true)
+    tester("all-rnn-bow").test(test, predict = true)
     tester("all-nb-w2v").test(test)
     tester("all-nb-bow").test(test)
   }

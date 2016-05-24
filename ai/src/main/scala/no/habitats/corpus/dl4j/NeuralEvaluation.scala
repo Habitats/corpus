@@ -76,9 +76,14 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
   }
 
   def logv(label: String, i: Int) = {
-    //    Log.r2(confusion)
-    if (i == 0) Log.toFileHeader(statsHeader, s"spam_$label.txt", Config.dataPath + "spam")
-    Log.toFile(stats, s"spam_$label.txt", Config.dataPath + "spam")
+    //        Log.r2(confusion)
+    if (Config.spark) {
+      if (i == 0) Log.toFileHeader(statsHeader, s"spam_$label.txt", Config.dataPath + "spam")
+      Log.toFile(stats, s"spam_$label.txt", Config.dataPath + "spam")
+    } else {
+      if (i == 0) Log.r(statsHeader, "spam.txt")
+      Log.r(stats, "spam.txt")
+    }
   }
 }
 
@@ -96,7 +101,7 @@ object NeuralEvaluation {
     val tn = evals.map(_.tn).sum
     val fp = evals.map(_.fp).sum
     val fn = evals.map(_.fn).sum
-    val mi = Measure(tp = tp,fp = fp,fn = fn,tn = tn)
+    val mi = Measure(tp = tp, fp = fp, fn = fn, tn = tn)
 
     val labelStats = Seq[(String, String)](
       "Ma.Recall" -> f"$maRecall%.3f",
@@ -134,13 +139,13 @@ object NeuralEvaluation {
         "Ex.Accuracy" -> f"${exampleBased.accuracy}%.3f",
         "Ex.F-score" -> f"${exampleBased.fscore}%.3f",
         "H-Loss" -> f"${exampleBased.hloss}%.3f",
-        "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f",
+        "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f"
 
         // Label stats
-        "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
-        "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
-        "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
-        "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
+//        "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
+//        "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
+//        "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
+//        "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
       )
     }).getOrElse(Nil)
 

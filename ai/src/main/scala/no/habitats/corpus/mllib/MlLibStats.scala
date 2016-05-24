@@ -4,7 +4,7 @@ import no.habitats.corpus.common.models.Article
 import org.apache.spark.rdd.RDD
 
 case class MLStats(predicted: RDD[Article], cats: Set[String]) {
-  predicted.cache()
+//  predicted.cache()
   lazy val totalCats       : Double = predicted.map(_.iptc.size).sum
   lazy val totalPredictions: Double = predicted.map(_.pred.size).sum
 
@@ -22,8 +22,8 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
     macroAverage.labelStats.toSeq.sortBy(_._1).map(c => {
       Seq[(String, String)](
         "Cat" -> f"${c._1}%45s",
-        "# Real" -> f"${realCategoryDistribution.getOrElse(c._1, 0)}%5d",
-        "# Pred" -> f"${predictedCategoryDistribution.getOrElse(c._1, 0)}%5d",
+//        "# Real" -> f"${realCategoryDistribution.getOrElse(c._1, 0)}%5d",
+//        "# Pred" -> f"${predictedCategoryDistribution.getOrElse(c._1, 0)}%5d",
         "TP" -> f"${c._2.tp}%5d",
         "FP" -> f"${c._2.fp}%5d",
         "FN" -> f"${c._2.fn}%5d",
@@ -60,10 +60,10 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
     "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f",
 
     // Label stats
-    "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
-    "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
-    "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
-    "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
+//    "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
+//    "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
+//    "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
+//    "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
   )
 }
 
@@ -88,23 +88,23 @@ case class ExampleBased(predicted: Seq[Article], cats: Set[String]) {
 
 // Label-based metrics
 case class Measure(tp: Int, fp: Int, fn: Int, tn: Int) {
-  val recall    = if (fn == 0) 1 else tp.toDouble / (tp + fn)
-  val precision = if (fp == 0) 1 else tp.toDouble / (tp + fp)
-  val accuracy  = (tp + tn).toDouble / (tp + fp + fn + tn)
-  val fscore    = 2 * (precision * recall) / (precision + recall + 0.0001)
+  lazy val recall    = if (fn == 0) 1 else tp.toDouble / (tp + fn)
+  lazy val precision = if (fp == 0) 1 else tp.toDouble / (tp + fp)
+  lazy val accuracy  = (tp + tn).toDouble / (tp + fp + fn + tn)
+  lazy val fscore    = 2 * (precision * recall) / (precision + recall + 0.0001)
   override def toString = s"TP: $tp - FP: $fp - FN: $fn - TN: $tn"
 }
 
 case class LabelResult(category: String, tp: Int, fp: Int, fn: Int, tn: Int) {
   lazy val m: Measure = Measure(tp = tp, fp = fp, fn = fn, tn = tn)
-  val recall    = m.recall
-  val precision = m.precision
-  val accuracy  = m.accuracy
-  val fscore    = m.fscore
+  lazy val recall     = m.recall
+  lazy val precision  = m.precision
+  lazy val accuracy   = m.accuracy
+  lazy val fscore     = m.fscore
 }
 
 case class MacroAverage(predicted: Seq[Article], cats: Set[String]) {
-  val labelStats: Map[String, LabelResult] = {
+  lazy val labelStats: Map[String, LabelResult] = {
     val l = for {
       c <- cats
       tp = predicted.count(p => p.iptc.contains(c) && p.pred.contains(c))
@@ -120,21 +120,21 @@ case class MacroAverage(predicted: Seq[Article], cats: Set[String]) {
   def fn(c: String): Int = labelStats(c).fn
   def tn(c: String): Int = labelStats(c).tn
 
-  val recall    = labelStats.values.map(_.recall).sum / labelStats.size
-  val precision = labelStats.values.map(_.precision).sum / labelStats.size
-  val accuracy  = labelStats.values.map(_.accuracy).sum / labelStats.size
-  val fscore    = labelStats.values.map(_.fscore).sum / labelStats.size
+  lazy val recall    = labelStats.values.map(_.recall).sum / labelStats.size
+  lazy val precision = labelStats.values.map(_.precision).sum / labelStats.size
+  lazy val accuracy  = labelStats.values.map(_.accuracy).sum / labelStats.size
+  lazy val fscore    = labelStats.values.map(_.fscore).sum / labelStats.size
 }
 
 case class MicroAverage(predicted: Seq[Article], cats: Set[String]) {
-  val tp = cats.toList.map(c => predicted.count(p => p.iptc.contains(c) && p.pred.contains(c))).sum
-  val fp = cats.toList.map(c => predicted.count(p => !p.iptc.contains(c) && p.pred.contains(c))).sum
-  val fn = cats.toList.map(c => predicted.count(p => p.iptc.contains(c) && !p.pred.contains(c))).sum
-  val tn = cats.toList.map(c => predicted.count(p => !p.iptc.contains(c) && !p.pred.contains(c))).sum
+  lazy val tp         = cats.toList.map(c => predicted.count(p => p.iptc.contains(c) && p.pred.contains(c))).sum
+  lazy val fp         = cats.toList.map(c => predicted.count(p => !p.iptc.contains(c) && p.pred.contains(c))).sum
+  lazy val fn         = cats.toList.map(c => predicted.count(p => p.iptc.contains(c) && !p.pred.contains(c))).sum
+  lazy val tn         = cats.toList.map(c => predicted.count(p => !p.iptc.contains(c) && !p.pred.contains(c))).sum
   lazy val m: Measure = Measure(tp = tp, fp = fp, fn = fn, tn = tn)
 
-  val recall    = m.recall
-  val precision = m.precision
-  val accuracy  = m.accuracy
-  val fscore    = m.fscore
+  lazy val recall    = m.recall
+  lazy val precision = m.precision
+  lazy val accuracy  = m.accuracy
+  lazy val fscore    = m.fscore
 }

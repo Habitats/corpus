@@ -110,32 +110,48 @@ object Trainer extends NeuralTrainer with Serializable {
   }
 
   def trainRNNBalanced() = {
-    Config.resultsFileName = "train_rnn_bow_balanced.txt"
+    val name: String = "rnn_bow_balanced"
+    Config.resultsFileName = "train_" + name + ".txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val validation = Fetcher.annotatedValidationOrdered
     Config.cats.foreach(c => {
       val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
-      ???
+      val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 1)
+      trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name)
     })
   }
 
-  def trainNaiveBalanced() = {
-    Config.resultsFileName = "train_nb_bow_balanced.txt"
+  def trainFFNW2VBalanced() = {
+    val name: String = "ffn_w2v_balanced"
+    Config.resultsFileName = "train_" + name + ".txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val validation = Fetcher.annotatedValidationOrdered
     Config.cats.foreach(c => {
       val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
-      ???
+      val prefs = NeuralPrefs(learningRate = 0.05, train = train, validation = validation, minibatchSize = 1000, epochs = 1)
+       trainNeuralNetwork(c, brinaryFFNW2VTrainer, prefs, name)
     })
   }
 
-  def trainFFNBalanced() = {
-    Config.resultsFileName = "train_ffn_w2v_balanced.txt"
+  def trainNaiveBoWBalanced() = {
+    val name: String = "nb_bow_balanced"
+    Config.resultsFileName = "train_" + name + ".txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val validation = Fetcher.annotatedValidationOrdered
     Config.cats.foreach(c => {
       val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
-      ???
+      trainNaiveBayesBoW(train,validation,name,100)
+    })
+  }
+
+  def trainNaiveW2VBalanced() = {
+    val name: String = "nb_w2v_balanced"
+    Config.resultsFileName = "train_" + name + ".txt"
+    Config.resultsCatsFileName = Config.resultsFileName
+    val validation = Fetcher.annotatedValidationOrdered
+    Config.cats.foreach(c => {
+      val train = Fetcher.by(s"balanced/nyt_${IPTC.trim(c)}_superbalanced.txt")
+      trainNaiveBayesW2V(train,validation,name)
     })
   }
 
@@ -211,7 +227,7 @@ sealed trait NeuralTrainer {
     trainNaiveBayes(TFIDF.frequencyFilter(train, tfidf.phrases), TFIDF.frequencyFilter(validation, tfidf.phrases), name, Some(tfidf))
   }
 
-  private def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], name: String, tfidf: Option[TFIDF] = None) = {
+  def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], name: String, tfidf: Option[TFIDF] = None) = {
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val prefs = sc.broadcast(Prefs())
@@ -220,7 +236,7 @@ sealed trait NeuralTrainer {
     models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$fullName/${name}_${IPTC.trim(c)}.bin") }
   }
 
-  private def trainNeuralNetwork(label: String, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, neuralPrefs: NeuralPrefs, name: String) = {
+  def trainNeuralNetwork(label: String, trainNetwork: (String, NeuralPrefs) => MultiLayerNetwork, neuralPrefs: NeuralPrefs, name: String) = {
     val net: MultiLayerNetwork = trainNetwork(label, neuralPrefs)
     NeuralModelLoader.save(net, label, Config.count, name + "-" + count)
     System.gc()
@@ -276,21 +292,21 @@ sealed trait NeuralTrainer {
     net
   }
 
-  private def binaryRNNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
+  def binaryRNNTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     val net = RNN.createBinary(neuralPrefs)
     val trainIter = new RNNIterator(neuralPrefs.train, Some(label), batchSize = neuralPrefs.minibatchSize)
     val testIter = new RNNIterator(neuralPrefs.validation, Some(label), batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
 
-  private def brinaryFFNW2VTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
+  def brinaryFFNW2VTrainer(label: String, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     val net = FeedForward.create(neuralPrefs)
     val trainIter = new FeedForwardIterator(neuralPrefs.train, label, batchSize = neuralPrefs.minibatchSize)
     val testIter = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
 
-  private def binaryFFNBoWTrainer(label: String, neuralPrefs: NeuralPrefs, tfidf: TFIDF): MultiLayerNetwork = {
+  def binaryFFNBoWTrainer(label: String, neuralPrefs: NeuralPrefs, tfidf: TFIDF): MultiLayerNetwork = {
     val net = FeedForward.createBoW(neuralPrefs, tfidf.phrases.size)
     val trainIter = new FeedForwardIterator(neuralPrefs.train, label, batchSize = neuralPrefs.minibatchSize, Some(tfidf))
     val testIter = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize, Some(tfidf))
