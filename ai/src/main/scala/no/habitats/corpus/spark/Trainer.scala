@@ -123,6 +123,7 @@ object Trainer extends NeuralTrainer with Serializable {
   }
 
   def trainFFNW2VBalanced() = {
+    W2VLoader.preload(wordVectors = true, documentVectors = true)
     val name: String = "ffn_w2v_balanced"
     Config.resultsFileName = "train_" + name + ".txt"
     Config.resultsCatsFileName = Config.resultsFileName
@@ -146,6 +147,7 @@ object Trainer extends NeuralTrainer with Serializable {
   }
 
   def trainNaiveW2VBalanced() = {
+    W2VLoader.preload(wordVectors = true, documentVectors = true)
     val name: String = "nb_w2v_balanced"
     Config.resultsFileName = "train_" + name + ".txt"
     Config.resultsCatsFileName = Config.resultsFileName
