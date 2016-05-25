@@ -73,7 +73,7 @@ object FeedForward {
       .iterations(1)
       .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
       .learningRate(Config.learningRate.getOrElse(neuralPrefs.learningRate))
-      .regularization(false)
+      .regularization(true).l2(1e-5)
       .updater(Updater.RMSPROP)
       .weightInit(WeightInit.XAVIER)
       .list()
