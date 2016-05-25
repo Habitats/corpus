@@ -24,8 +24,6 @@ object SparkUtil {
   def main(args: Array[String]) = {
     Try {
       Config.setArgs(args)
-
-      Log.v("asdasdasdaslol wtf dude")
       Log.init()
       Log.r(s"Starting Corpus job: ${args.mkString(", ")}")
       val s = System.currentTimeMillis
