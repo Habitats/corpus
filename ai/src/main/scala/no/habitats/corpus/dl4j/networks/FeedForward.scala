@@ -63,7 +63,7 @@ object FeedForward {
   def createBoW(neuralPrefs: NeuralPrefs, numInputs: Int): MultiLayerNetwork = {
     val numOutputs = 2
     val firstLayer = 1000
-    val secondLayer = 1500
+    val secondLayer = 500
     val thirdLayer = 500
 
     Log.rr(f"BoW - Count: ${Config.count} - $neuralPrefs")
