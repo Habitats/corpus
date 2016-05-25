@@ -6,8 +6,8 @@ sudo apt-get update
 sudo apt-get install -y htop unrar build-essential git unzip oracle-java8-installer
 echo "export JAVA_HOME=/usr/lib/jvm/java-8-oracle" >> ~/.profile && . ~/.profile
  
-sudo wget www.scala-lang.org/files/archive/scala-'+project.scalaVersion+'.deb
-sudo dpkg -i scala-'+project.scalaVersion+'.deb
+sudo wget www.scala-lang.org/files/archive/scala-2.11.7.deb
+sudo dpkg -i scala-2.11.7.deb
 
 echo "alias submit='spark-submit --class no.habitats.corpus.spark.SparkUtil --jars ~/corpus/ai/build/libs/ai-all.jar ~/corpus/ai/build/libs/ai.jar '" >> ~/.bashrc
 echo "alias build='cd ~/corpus/ && git pull && gradle ai:clean ai:shadowJar'" >> ~/.bashrc
