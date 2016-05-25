@@ -63,7 +63,7 @@ object FeedForward {
   def createBoW(neuralPrefs: NeuralPrefs, numInputs: Int): MultiLayerNetwork = {
     val numOutputs = 2
     val firstLayer = 1000
-    val secondLayer = 700
+    val secondLayer = 1000
     val thirdLayer = 500
 
     Log.rr(f"BoW - Count: ${Config.count} - $neuralPrefs")
@@ -91,18 +91,11 @@ object FeedForward {
         .name("1")
         .build()
       )
-      .layer(2, new DenseLayer.Builder()
-        .nIn(secondLayer)
-        .nOut(thirdLayer)
-        .activation("tanh")
-        .name("2")
-        .build()
-      )
-      .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+      .layer(2, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
         .activation("softmax")
-        .nIn(thirdLayer)
+        .nIn(secondLayer)
         .nOut(numOutputs)
-        .name("3")
+        .name("2")
         .build()
       )
       .pretrain(false)
