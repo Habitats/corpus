@@ -89,6 +89,11 @@ object Trainer extends NeuralTrainer with Serializable {
     trainFeedfowardW2V(train, validation, "ffa-w2v-types")
   }
 
+  def trainRNNW2VTypes() = {
+    val (train, validation) = Fetcher.types
+    trainRecurrentW2V(train, validation, "types-rrn-w2v")
+  }
+
   // Ex4 - Lenghts - Use baseline
 
   // Ex5 - Extrapolation

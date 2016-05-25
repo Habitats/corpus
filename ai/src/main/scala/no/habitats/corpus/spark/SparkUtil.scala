@@ -110,6 +110,8 @@ object SparkUtil {
         case "trainFFNBoWTime" => Trainer.trainFFNBoWTime()
         case "trainFFNW2VTime" => Trainer.trainFFNW2VTime()
 
+        case "trainRNNTypes" => Trainer.trainRNNW2VTypes()
+
         case "train" =>
           //           Trainer.trainNaiveBayesW2VSubsampled()
           //           Trainer.trainNaiveBayesBoWSubsampled()
