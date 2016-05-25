@@ -62,9 +62,9 @@ object FeedForward {
 
   def createBoW(neuralPrefs: NeuralPrefs, numInputs: Int): MultiLayerNetwork = {
     val numOutputs = 2
-    val firstLayer = 2000
-    val secondLayer = 500
-    val thirdLayer = 500
+    val firstLayer = 1000
+    val secondLayer = 300
+    val thirdLayer = 200
 
     Log.rr(f"BoW - Count: ${Config.count} - $neuralPrefs")
 
@@ -73,8 +73,8 @@ object FeedForward {
       .iterations(1)
       .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
       .learningRate(Config.learningRate.getOrElse(neuralPrefs.learningRate))
+      .regularization(false)
       .updater(Updater.RMSPROP)
-      .dropOut(0.5)
       .weightInit(WeightInit.XAVIER)
       .list()
       .layer(0, new DenseLayer.Builder()
@@ -84,11 +84,25 @@ object FeedForward {
         .name("0")
         .build()
       )
-      .layer(1, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
-        .activation("softmax")
+      .layer(1, new DenseLayer.Builder()
         .nIn(firstLayer)
-        .nOut(numOutputs)
+        .nOut(secondLayer)
+        .activation("tanh")
+        .name("1")
+        .build()
+      )
+      .layer(2, new DenseLayer.Builder()
+        .nIn(secondLayer)
+        .nOut(thirdLayer)
+        .activation("tanh")
         .name("2")
+        .build()
+      )
+      .layer(3, new OutputLayer.Builder(LossFunctions.LossFunction.MCXENT)
+        .activation("softmax")
+        .nIn(thirdLayer)
+        .nOut(numOutputs)
+        .name("3")
         .build()
       )
       .pretrain(false)
