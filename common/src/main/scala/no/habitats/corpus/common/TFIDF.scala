@@ -14,8 +14,8 @@ import scala.io.Source
 
 case class TFIDF(documentsWithTerm: Map[String, Int], phrases: Set[String], documentCount: Int) {
 
-  private val vocabSize  : Int             = phrases.size
-  private val phraseIndex: Array[String]   = phrases.toArray.sorted
+  private val vocabSize  : Int                         = phrases.size
+  private val phraseIndex: Array[String]               = phrases.toArray.sorted
   private val memo       : mutable.Map[String, Vector] = mutable.Map[String, Vector]()
 
   def contains(id: String) = phrases.contains(id)
@@ -45,10 +45,11 @@ object TFIDF {
 
   def apply(train: RDD[Article], threshold: Int): TFIDF = {
     val originalPhraseCount = train.flatMap(_.ann.keySet).distinct.count
-    val documentsWithTerm: Map[String, Int] = train.flatMap(_.ann.values).map(a => (a.id, 1)).reduceByKey(_ + _).filter(_._2 > threshold).collect.toMap
+    val documentsWithTerm: Map[String, Int] = train.flatMap(_.ann.values).map(a => (a.id, 1)).reduceByKey(_ + _).filter(_._2 > Config.termFrequencyThreshold.getOrElse(threshold)).collect.toMap
     val phrases = documentsWithTerm.keySet
     val filteredTrain: RDD[Article] = frequencyFilter(train, phrases)
     val documentCount: Long = filteredTrain.count
+    if (phrases.isEmpty) throw new IllegalStateException("TFIDF removed all phrases!")
     Log.v(s"Performaed TFIDF, and reduced vocab size from ${originalPhraseCount} to ${phrases.size}")
     new TFIDF(documentsWithTerm, phrases, documentCount.toInt)
   }

@@ -5,7 +5,6 @@ import no.habitats.corpus.common.models.Article
 case class NeuralPrefs(
                         learningRate: Double ,
                         hiddenNodes: Int = 10,
-                        train: Array[Article],
                         validation: Array[Article],
                         minibatchSize: Int,
                         epochs: Int ,

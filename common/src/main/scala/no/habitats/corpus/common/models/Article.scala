@@ -27,10 +27,10 @@ case class Article(id: String,
 
   def toStringFull: String = {
     val iptcstr = iptc.mkString(", ")
-    val annstr = ann.values.toSeq.sortBy(_.tfIdf).mkString("\n\t\t")
+    val annstr = ann.values.toSeq.sortBy(-_.tfIdf).mkString("\n\t\t")
     val dstr = desc.mkString(", ")
     val predstr = pred.mkString(", ")
-    f"$id - $hl - $wc - $date - $url\n\tDescriptors: $dstr\n\tIPTC:         $iptcstr\n\tPredictions: $predstr\n\tAnnotations (${ann.size}):\n\t\t$annstr\n"
+    f"$id - $hl - $wc - ${date.getOrElse("")} - ${url.getOrElse("")}\n\tDescriptors: $dstr\n\tIPTC:        $iptcstr\n\tPredictions: $predstr\n\tAnnotations (${ann.size}):\n\t\t$annstr\n"
   }
 
   def toResult: String = {
@@ -39,7 +39,7 @@ case class Article(id: String,
     f"$id - $hl - $url - IPTC >> $iptcstr >> PREDICTION >> $predstr"
   }
 
-  def toMinimal: Article = copy(body = "", desc = Set(), date = None, hl = "")
+  def toMinimal: Article = copy(body = "", hl = "")
 
   lazy val documentVectorMlLib: Vector = {
     val normalize: INDArray = W2VLoader.normalize(toDocumentVector)

@@ -10,14 +10,14 @@ import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j
 
-class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize: Int, tfidf: Option[TFIDF] = None) extends DataSetIterator {
+class FeedForwardIterator(training: Array[Article], label: String, batchSize: Int, tfidf: Option[TFIDF] = None) extends DataSetIterator {
   if (tfidf.isEmpty) W2VLoader.preload(wordVectors = true, documentVectors = true)
 
   // 32 may be a good starting point,
   var counter = 0
 
   override def next(num: Int): DataSet = {
-    val articles = allArticles.slice(cursor, cursor + num)
+    val articles = training.slice(cursor, cursor + num)
 
     val features = Nd4j.create(articles.size, inputColumns)
     val labels = Nd4j.create(articles.size, totalOutcomes)
@@ -39,9 +39,9 @@ class FeedForwardIterator(allArticles: Array[Article], label: String, batchSize:
     new DataSet(features, labels)
   }
 
-  override def batch(): Int = Math.min(Config.miniBatchSize.getOrElse(batchSize), Math.max(allArticles.size - counter, 0))
+  override def batch(): Int = Math.min(Config.miniBatchSize.getOrElse(batchSize), Math.max(training.size - counter, 0))
   override def cursor(): Int = counter
-  override def totalExamples(): Int = allArticles.size
+  override def totalExamples(): Int = training.size
   override def inputColumns(): Int = tfidf match {
     case None => W2VLoader.featureSize
     case Some(v) => v.phrases.size

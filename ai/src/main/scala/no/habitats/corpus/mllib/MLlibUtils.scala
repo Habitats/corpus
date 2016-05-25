@@ -34,16 +34,12 @@ object MlLibUtils {
     model
   }
 
-  def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], tfidf: Option[TFIDF], prefs: Broadcast[Prefs]): Map[String, NaiveBayesModel] = {
+  def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], tfidf: Option[TFIDF]): RDD[Article] = {
     if (tfidf.isEmpty) W2VLoader.preload(wordVectors = true, documentVectors = true)
     val testing: RDD[(Article, Vector)] = test.map(t => (t, toVector(tfidf, t)))
     //    Log.v("Max:" + testing.map(_._2.toArray.max).max)
     //    Log.v("Min: " + testing.map(_._2.toArray.min).min)
-    val predicted: RDD[Article] = predictCategories(catModelPairs, testing)
-
-    Log.v("--- Predictions complete! ")
-    evaluate(predicted, prefs)
-    catModelPairs
+    predictCategories(catModelPairs, testing)
   }
 
   def predictCategories(catModelPairs: Map[String, ClassificationModel], testing: RDD[(Article, Vector)], threshold: Double = 1d): RDD[Article] = {

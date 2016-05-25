@@ -42,44 +42,6 @@ object Config {
     //    s"r:/document_vectors_$confidence.json"
   }
 
-  def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.txt"
-
-  private var args        : Arguments = Arguments()
-  private var sparkConfig : String    = null
-  private val configRoot  : String    = {
-    val c = if (local) {
-      "%DROPBOX_HOME%/code/projects/corpus/common/src/main/resources/"
-    } else {
-      "~/corpus/"
-    }
-    formatPath(c)
-  }
-  private val corpusConfig: String    = if (local) configRoot + "corpus_local.properties" else "/corpus_cluster.properties"
-
-  def setArgs(arr: Array[String]) = {
-    lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
-    args = Arguments(
-      partitions = props.get("partitions").map(_.toInt),
-      rdd = props.get("rdd"),
-      job = props.get("job"),
-      iptcFilter = props.get("iptcFilter").map(_.split(",").toSet),
-      category = props.get("category"),
-      count = props.get("count").map(_.toInt),
-      spark = props.get("spark").map(_.toBoolean),
-      useApi = props.get("useApi").map(_.toBoolean),
-      learningRate = props.get("lr").map(_.toDouble),
-      miniBatchSize = props.get("mbs").map(_.toInt),
-      cache = props.get("cache").map(_.toBoolean),
-      histogram = props.get("histogram").map(_.toBoolean),
-      hidden = props.get("hidden").map(_.toInt)
-    )
-
-    Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
-    Log.v("Categories: " + cats.mkString(", "))
-    Log.v("CORPUS CONFIG: " + corpusConfig + "\n\t" + conf.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
-    if (local) Log.v("SPARK CONFIG: " + sparkConfig + "\n\t" + sparkProps.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
-  }
-
   def local: Boolean = System.getProperty("os.name").startsWith("Windows")
 
   def dataFile(s: String): BufferedSource = Try(Source.fromFile(s)(Codec.ISO8859)) match {
@@ -124,6 +86,20 @@ object Config {
     }
   }
 
+  def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.txt"
+
+  private var args        : Arguments = null
+  private var sparkConfig : String    = null
+  private val configRoot  : String    = {
+    val c = if (local) {
+      "%DROPBOX_HOME%/code/projects/corpus/common/src/main/resources/"
+    } else {
+      "~/corpus/"
+    }
+    formatPath(c)
+  }
+  private val corpusConfig: String    = if (local) configRoot + "corpus_local.properties" else "/corpus_cluster.properties"
+
   // static
   val testPath            : String      = formatPath(conf.getProperty("test_path"))
   val dataPath            : String      = formatPath(conf.getProperty("data_path"))
@@ -148,29 +124,72 @@ object Config {
   def count: Int = args.count.getOrElse(conf.getProperty("count").toInt) match {
     case i => if (i == -1) Integer.MAX_VALUE else i
   }
-  def job = args.job.getOrElse(conf.getProperty("job"))
-  def category = args.category
-  def useApi = args.useApi.getOrElse(false)
-  def spark = args.spark.getOrElse(false)
-  def learningRate = args.learningRate
-  def miniBatchSize = args.miniBatchSize
-  def cache: Boolean = args.cache.getOrElse(true)
-  def histogram: Boolean = args.histogram.getOrElse(false)
-  def hidden = args.hidden
+
+  def setArgs(arr: Array[String]) = {
+    lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
+    args = Arguments(
+      partitions = props.get("partitions").map(_.toInt),
+      rdd = props.get("rdd"),
+      job = props.get("job"),
+      iptcFilter = props.get("iptcFilter").map(_.split(",").toSet),
+      category = props.get("category"),
+      count = props.get("count").map(_.toInt),
+      spark = props.get("spark").map(_.toBoolean),
+      useApi = props.get("useApi").map(_.toBoolean),
+      learningRate = props.get("lr").map(_.toDouble),
+      l2 = props.get("l2").map(_.toDouble),
+      miniBatchSize = props.get("mbs").map(_.toInt),
+      cache = props.get("cache").map(_.toBoolean),
+      histogram = props.get("histogram").map(_.toBoolean),
+      hidden1 = props.get("h1").map(_.toInt),
+      hidden2 = props.get("h2").map(_.toInt),
+      hidden3 = props.get("h3").map(_.toInt),
+      tft = props.get("tft").map(_.toInt),
+      superSample = props.get("super").map(_.toBoolean),
+      iterations = props.get("iter").map(_.toInt)
+    )
+
+    Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
+    Log.v("Categories: " + cats.mkString(", "))
+    Log.v("CORPUS CONFIG: " + corpusConfig + "\n\t" + conf.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
+    if (local) Log.v("SPARK CONFIG: " + sparkConfig + "\n\t" + sparkProps.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
+  }
+
+  lazy val job                   : String          = args.job.getOrElse(conf.getProperty("job"))
+  lazy val cache                 : Boolean         = args.cache.getOrElse(true)
+  lazy val histogram             : Boolean         = args.histogram.getOrElse(false)
+  lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
+  lazy val spark                 : Boolean         = args.spark.getOrElse(false)
+  lazy val category              : Option[String]  = args.category
+  lazy val learningRate          : Option[Double]  = args.learningRate
+  lazy val miniBatchSize         : Option[Int]     = args.miniBatchSize
+  lazy val iterations            : Option[Int]     = args.iterations
+  lazy val hidden1               : Option[Int]     = args.hidden1
+  lazy val hidden2               : Option[Int]     = args.hidden2
+  lazy val hidden3               : Option[Int]     = args.hidden3
+  lazy val superSample           : Option[Boolean] = args.superSample
+  lazy val l2                    : Option[Double]  = args.l2
+  lazy val termFrequencyThreshold: Option[Int]     = args.tft
 
   case class Arguments(
-                        partitions: Option[Int] = None,
-                        rdd: Option[String] = None,
-                        job: Option[String] = None,
-                        count: Option[Int] = None,
-                        category: Option[String] = None,
-                        iptcFilter: Option[Set[String]] = None,
-                        spark: Option[Boolean] = None,
-                        useApi: Option[Boolean] = None,
-                        learningRate: Option[Double] = None,
-                        miniBatchSize: Option[Int] = None,
-                        cache: Option[Boolean] = None,
-                        histogram: Option[Boolean] = None,
-                        hidden: Option[Int] = None
+                        partitions: Option[Int],
+                        rdd: Option[String],
+                        job: Option[String],
+                        count: Option[Int],
+                        category: Option[String],
+                        iptcFilter: Option[Set[String]],
+                        spark: Option[Boolean],
+                        useApi: Option[Boolean],
+                        learningRate: Option[Double],
+                        l2: Option[Double],
+                        miniBatchSize: Option[Int],
+                        cache: Option[Boolean],
+                        histogram: Option[Boolean],
+                        hidden1: Option[Int],
+                        hidden2: Option[Int],
+                        hidden3: Option[Int],
+                        tft: Option[Int],
+                        iterations: Option[Int],
+                        superSample: Option[Boolean]
                       )
 }

@@ -2,6 +2,7 @@ package no.habitats.corpus.common.dl4j
 
 import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common.{Config, Log, TFIDF, W2VLoader}
+import org.apache.spark.rdd.RDD
 import org.deeplearning4j.nn.conf.layers.GravesLSTM
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.deeplearning4j.spark.util.MLLibUtil
@@ -70,7 +71,7 @@ case class NeuralPredictor(net: MultiLayerNetwork, article: Article, label: Stri
 object NeuralPredictor {
   val loadedModes: mutable.Map[String, Map[String, MultiLayerNetwork]] = mutable.Map()
 
-  def predictAll(articles: Seq[Article], models: Map[String, MultiLayerNetwork], modelType: Option[TFIDF]): Seq[Article] = {
+  def predictAll(articles: RDD[Article], models: Map[String, MultiLayerNetwork], modelType: Option[TFIDF]): RDD[Article] = {
     for {article <- articles} yield predict(models, article, modelType)
   }
 

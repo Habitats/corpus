@@ -1,5 +1,7 @@
 package no.habitats.corpus.dl4j.networks
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.dl4j.NeuralPrefs
 import org.deeplearning4j.nn.api.OptimizationAlgorithm
@@ -22,29 +24,32 @@ object RNN {
 
   private def build(output: Int, neuralPrefs: NeuralPrefs): MultiLayerNetwork = {
     val vectorSize = 1000
-    val hiddenNodes = neuralPrefs.hiddenNodes // should not be less than a quarter of the input size
-    val learningRate = neuralPrefs.learningRate
+    val hiddenNodes = Config.hidden1.getOrElse(neuralPrefs.hiddenNodes) // should not be less than a quarter of the input size
+    val learningRate = Config.learningRate.getOrElse(neuralPrefs.learningRate)
 
     Log.rr(f"Count: ${Config.count} - $neuralPrefs")
 
+    val i = new AtomicInteger(0)
     val conf = new NeuralNetConfiguration.Builder()
       .seed(Config.seed)
       .optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT)
-      .iterations(1)
+      .iterations(Config.iterations.getOrElse(1))
       .updater(Updater.RMSPROP)
-      .regularization(true).l2(1e-5)
+      .regularization(Config.l2.isDefined).l2(Config.l2.getOrElse(1e-5))
       .weightInit(WeightInit.XAVIER)
       .gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue).gradientNormalizationThreshold(1.0)
       .learningRate(Config.learningRate.getOrElse(neuralPrefs.learningRate))
       .list()
-      .layer(0, new GravesLSTM.Builder()
+      .layer(i.getAndIncrement(), new GravesLSTM.Builder()
         .nIn(vectorSize)
         .nOut(hiddenNodes)
+        .name(s"$i")
         .activation("softsign")
         .build())
-      .layer(1, new RnnOutputLayer.Builder()
+      .layer(i.getAndIncrement(), new RnnOutputLayer.Builder()
         .nIn(hiddenNodes)
         .nOut(output)
+        .name(s"$i")
         .activation("softmax")
         .lossFunction(LossFunctions.LossFunction.MCXENT)
         .build())

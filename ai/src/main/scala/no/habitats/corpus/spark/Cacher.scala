@@ -103,6 +103,7 @@ object Cacher extends RddSerializer {
   }
 
   def supersampledBalanced(label: String, all: RDD[Article]): RDD[Article] = {
+    Log.v(s"Performing supersampling of $label ...")
     val total: Int = all.count.toInt
     val labelIds: Array[Article] = all.filter(_.iptc.contains(label)).collect()
     if(labelIds.isEmpty) throw new IllegalStateException(s"Cannot supersample $label with no candidates!")
@@ -178,12 +179,21 @@ object Cacher extends RddSerializer {
     val testIds = ids.slice((numArticles * 0.6).toInt, (numArticles * 0.8).toInt).map(_.toString).toSet
     val validationIds = ids.slice((numArticles * 0.8).toInt, numArticles.toInt).map(_.toString).toSet
 
-    val train = rdd.filter(a => trainIds.contains(a.id)).map(Article.serialize).sortBy(a => Math.random)
-    saveAsText(train, "nyt_train_ordered" + name)
-    val test = rdd.filter(a => testIds.contains(a.id)).map(Article.serialize).sortBy(a => Math.random)
-    saveAsText(test, "nyt_test_ordered" + name)
-    val validation = rdd.filter(a => validationIds.contains(a.id)).map(Article.serialize).sortBy(a => Math.random)
-    saveAsText(validation, "nyt_validation_ordered" + name)
+    val train = rdd.filter(a => trainIds.contains(a.id))
+    saveAsText(train.map(Article.serialize).sortBy(a => Math.random), "nyt_train_ordered" + name)
+    val test = rdd.filter(a => testIds.contains(a.id))
+    saveAsText(test.map(Article.serialize).sortBy(a => Math.random), "nyt_test_ordered" + name)
+    val validation = rdd.filter(a => validationIds.contains(a.id))
+    saveAsText(validation.map(Article.serialize).sortBy(a => Math.random), "nyt_validation_ordered" + name)
+
+    savePhrases(train, validation, test)
+  }
+
+  def savePhrases(train: RDD[Article], validation: RDD[Article], test: RDD[Article]) = {
+    val trainIds = train.flatMap(_.ann.keySet).collect().toSet
+    val testIds = train.flatMap(_.ann.keySet).collect().toSet
+    val validationIds = train.flatMap(_.ann.keySet).collect().toSet
+    Log.toFile(trainIds.filter(id => testIds.contains(id) || validationIds.contains(id)).mkString("\n"), "phrases.txt")
   }
 
   def splitShuffled(rdd: RDD[Article]): Unit = {

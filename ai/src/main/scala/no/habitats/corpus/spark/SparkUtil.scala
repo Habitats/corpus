@@ -36,7 +36,8 @@ object SparkUtil {
         case "printArticles" => printArticles(Config.count)
         case "misc" =>
           //        Log.v(Config.cats.mkString(", "))
-          Cacher.split(Fetcher.annotatedRdd, 10)
+//          Cacher.split(Fetcher.annotatedRdd, 10)
+          Cacher.savePhrases(Fetcher.annotatedTrainOrdered, Fetcher.annotatedValidationOrdered, Fetcher.annotatedTestOrdered)
 
         // Generate datasets
         case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
@@ -90,27 +91,26 @@ object SparkUtil {
         case "trainFFNW2V" => Trainer.trainFFNW2V()
         case "trainFFNBoW" => Trainer.trainFFNBoW()
         case "trainNaiveW2V" => Trainer.trainNaiveW2V()
-        case "trainNaiveBOW" => Trainer.trainNaiveBoW()
+        case "trainNaiveBoW" => Trainer.trainNaiveBoW()
+
+        case "trainRNNSuperbalanced" => Trainer.trainRNNBalanced()
+        case "trainFFNW2VSuperbalanced" => Trainer.trainFFNW2VBalanced()
+        case "trainFFNBoWSuperbalanced" => Trainer.trainFFNBoWBalanced()
+        case "trainNaiveW2VSuperbalanced" => Trainer.trainNaiveW2VBalanced()
+        case "trainNaiveBoWSuperbalanced" => Trainer.trainNaiveBoWBalanced()
 
         case "trainRNNW2VSpark" => Trainer.trainRNNW2VSpark()
-        case "trainRNNBalanced" => Trainer.trainRNNBalanced()
-
-        case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
-//        case "trainFFNBalanced" => Trainer.trainFFNBalanced()
         case "trainFFNConfidence" => Trainer.trainFFNConfidence()
 
         case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
         case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
         case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
 
-        case "trainFFNSuperbalanced" => Trainer.trainFFNW2VBalanced()
-        case "trainRNNSuperbalanced" => Trainer.trainRNNBalanced()
-//        case "trainNaiveSuperbalanced" => Trainer.trainNaiveBalanced()
-
         case "trainFFNBoWTime" => Trainer.trainFFNBoWTime()
         case "trainFFNW2VTime" => Trainer.trainFFNW2VTime()
 
         case "trainRNNTypes" => Trainer.trainRNNW2VTypes()
+        case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
 
         case "train" =>
           //           Trainer.trainNaiveBayesW2VSubsampled()
