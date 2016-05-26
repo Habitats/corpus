@@ -18,15 +18,10 @@ object NeuralTrainer extends Serializable{
     var c = 0
     for (i <- 0 until neuralPrefs.epochs) {
       while (trainIter.hasNext) {
-        Log.v("1")
         net.fit(trainIter.next())
-        Log.v("2")
         if (c % 10 == 0) {
-          Log.v("3")
           val evaluation: NeuralEvaluation = NeuralEvaluation(net, testIter.asScala.take(2), i, label, Some(neuralPrefs))
-          Log.v("4")
           evaluation.logv(label, c)
-          Log.v("5")
           testIter.reset()
         }
         c += 1
