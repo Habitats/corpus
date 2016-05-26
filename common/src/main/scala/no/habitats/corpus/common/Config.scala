@@ -146,7 +146,8 @@ object Config {
       hidden3 = props.remove("h3").map(_.toInt),
       tft = props.remove("tft").map(_.toInt),
       superSample = props.remove("super").map(_.toBoolean),
-      iterations = props.remove("iter").map(_.toInt)
+      iterations = props.remove("iter").map(_.toInt),
+      logResults = props.remove("logres").map(_.toBoolean)
     )
     if (props.nonEmpty) {Log.v("Illegal props: " + props.mkString(", ")); System.exit(0)}
 
@@ -157,7 +158,7 @@ object Config {
   }
 
   lazy val job                   : String          = args.job.getOrElse(conf.getProperty("job"))
-  lazy val cache                 : Boolean         = args.cache.getOrElse(true)
+  lazy val cache                 : Boolean         = args.cache.getOrElse(false)
   lazy val histogram             : Boolean         = args.histogram.getOrElse(false)
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
   lazy val category              : Option[String]  = args.category
@@ -170,6 +171,7 @@ object Config {
   lazy val superSample           : Option[Boolean] = args.superSample
   lazy val l2                    : Option[Double]  = args.l2
   lazy val termFrequencyThreshold: Option[Int]     = args.tft
+  lazy val logResults            : Option[Boolean] = args.logResults
 
   case class Arguments(
                         partitions: Option[Int],
@@ -184,6 +186,7 @@ object Config {
                         miniBatchSize: Option[Int],
                         cache: Option[Boolean],
                         histogram: Option[Boolean],
+                        logResults: Option[Boolean],
                         hidden1: Option[Int],
                         hidden2: Option[Int],
                         hidden3: Option[Int],
