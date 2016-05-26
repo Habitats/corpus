@@ -42,9 +42,9 @@ case class Article(id: String,
   def toMinimal: Article = copy(body = "", hl = "")
 
   lazy val documentVectorMlLib: Vector = {
-//    val normalize: INDArray = W2VLoader.normalize(toDocumentVector)
+    val normalize: INDArray = W2VLoader.normalize(toDocumentVector)
 //    val binary: INDArray = Transforms.round(normalize, false)
-    MLLibUtil.toVector(toDocumentVector)
+    MLLibUtil.toVector(normalize)
   }
 
   def addIptc(broad: Boolean): Article = {
