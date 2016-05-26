@@ -114,7 +114,7 @@ object W2VLoader extends RddSerializer with VectorLoader {
     val combined = vectors.reduce(_.addi(_))
     //    val combined: INDArray = squash(vectors)
     val normalized = Transforms.round(normalize(combined))
-    combined
+    normalized
   }
 
   def normalize(combined: INDArray): INDArray = {
