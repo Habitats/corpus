@@ -84,7 +84,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
 
 object NeuralEvaluation {
 
-  def log(evals: Seq[NeuralEvaluation], cats: Seq[String], iteration: Int, predicted: Option[Seq[Article]] = None) = {
+  def log(evals: Seq[NeuralEvaluation], cats: Seq[String], iteration: Int, predicted: Option[Array[Article]] = None) = {
     // Macro
     val maRecall = evals.map(_.m.recall).sum / cats.size
     val maPrecision = evals.map(_.m.precision).sum / cats.size
@@ -119,20 +119,20 @@ object NeuralEvaluation {
 
       Seq[(String, String)](
         // Label-based
-        "Ma.Recall" -> f"${macroAverage.recall}%.3f",
-        "Ma.Precision" -> f"${macroAverage.precision}%.3f",
-        "Ma.Accuracy" -> f"${macroAverage.accuracy}%.3f",
-        "Ma.F-score" -> f"${macroAverage.fscore}%.3f",
-
-        "Mi.Recall" -> f"${microAverage.recall}%.3f",
-        "Mi.Precision" -> f"${microAverage.precision}%.3f",
-        "Mi.Accuracy" -> f"${microAverage.accuracy}%.3f",
-        "Mi.F-score" -> f"${microAverage.fscore}%.3f",
+        //        "Ma.Recall" -> f"${macroAverage.recall}%.3f",
+        //        "Ma.Precision" -> f"${macroAverage.precision}%.3f",
+        //        "Ma.Accuracy" -> f"${macroAverage.accuracy}%.3f",
+        //        "Ma.F-score" -> f"${macroAverage.fscore}%.3f",
+        //
+        //        "Mi.Recall" -> f"${microAverage.recall}%.3f",
+        //        "Mi.Precision" -> f"${microAverage.precision}%.3f",
+        //        "Mi.Accuracy" -> f"${microAverage.accuracy}%.3f",
+        //        "Mi.F-score" -> f"${microAverage.fscore}%.3f",
         // Example-based
-        "Ex.Recall" -> f"${exampleBased.recall}%.3f",
-        "Ex.Precision" -> f"${exampleBased.precision}%.3f",
-        "Ex.Accuracy" -> f"${exampleBased.accuracy}%.3f",
-        "Ex.F-score" -> f"${exampleBased.fscore}%.3f",
+        //        "Ex.Recall" -> f"${exampleBased.recall}%.3f",
+        //        "Ex.Precision" -> f"${exampleBased.precision}%.3f",
+        //        "Ex.Accuracy" -> f"${exampleBased.accuracy}%.3f",
+        //        "Ex.F-score" -> f"${exampleBased.fscore}%.3f",
         "H-Loss" -> f"${exampleBased.hloss}%.3f",
         "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f"
 
@@ -144,10 +144,8 @@ object NeuralEvaluation {
       )
     }).getOrElse(Nil)
 
-    Log.rr((labelStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
-    Log.r((labelStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
-    Log.rr((exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
-    Log.r((exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
+    Log.rr((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
+    Log.r((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
 
   }
 

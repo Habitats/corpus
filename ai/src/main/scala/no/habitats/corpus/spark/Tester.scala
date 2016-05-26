@@ -30,10 +30,10 @@ object Tester {
     Config.resultsFileName = "test_all.txt"
     Config.resultsCatsFileName = "test_all.txt"
     Log.h("Testing models")
-    val test = Fetcher.annotatedTestOrdered.map(_.toMinimal)
-    tester("all-ffn-w2v").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
-    tester("all-ffn-bow").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
-    tester("all-rnn-w2v").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
+    val test = Fetcher.annotatedTestOrdered.map(_.toMinimal).collect()
+//    tester("all-ffn-w2v").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
+    tester("all-ffn-bow").test(test, predict = false, shouldLogResults = Config.logResults.getOrElse(false))
+    tester("all-rnn-w2v").test(test, predict = false, shouldLogResults = Config.logResults.getOrElse(false))
     tester("all-nb-w2v").test(test)
     tester("all-nb-bow").test(test)
   }
@@ -44,7 +44,7 @@ object Tester {
     Config.resultsFileName = "test_sub.txt"
     Config.resultsCatsFileName = "test_sub.txt"
     Log.h("Testing sub models")
-    val test = Fetcher.subTestOrdered.map(_.toMinimal)
+    val test = Fetcher.subTestOrdered.map(_.toMinimal).collect()
     val includeExampleBased = true
     tester("sub-rnn-w2v").test(test, includeExampleBased)
     tester("sub-ffn-w2v").test(test, includeExampleBased)
@@ -57,7 +57,7 @@ object Tester {
     Config.resultsFileName = "test_embedded_vs_bow.txt"
     Config.resultsCatsFileName = "test_embedded_vs_bow_cats.txt"
     Log.h("Testing embedded vs. BoW")
-    val test = Fetcher.annotatedTestOrdered.map(_.toMinimal)
+    val test = Fetcher.annotatedTestOrdered.map(_.toMinimal).collect()
 
     val predict = true
     tester("all-ffn-bow").test(test, predict)
@@ -70,7 +70,7 @@ object Tester {
     Config.resultsFileName = "test_embedded_vs_bow.txt"
     Config.resultsCatsFileName = "test_embedded_vs_bow.txt"
     Log.h("Testing embedded vs. BoW")
-    val test = Fetcher.annotatedTestOrdered
+    val test = Fetcher.annotatedTestOrdered.collect()
 
     tester("ffn-bow-all").test(test)
     tester("ffn-w2v-all").test(test)
@@ -80,7 +80,7 @@ object Tester {
     Config.resultsFileName = "test_type_inclusion.txt"
     Config.resultsCatsFileName = "test_type_inclusion.txt"
     Log.h("Testing type inclusion")
-    val rddOrdered = Fetcher.subTestOrdered.map(_.toMinimal)
+    val rddOrdered = Fetcher.subTestOrdered.map(_.toMinimal).collect()
 
     Log.r("Annotations with types ...")
     tester("types-ffn-w2v").test(rddOrdered)
@@ -99,7 +99,7 @@ object Tester {
     // Shuffled
     Log.r("Shuffled ...")
     val rddShuffled = Fetcher.annotatedTestShuffled.map(_.toMinimal)
-    FeedforwardTester("ffn-w2v-shuffled").test(rddShuffled)
+    FeedforwardTester("ffn-w2v-shuffled").test(rddShuffled.collect())
 
     //    // Ordered
     //    Log.r("Ordered ...")
@@ -132,15 +132,15 @@ object Tester {
     Config.resultsCatsFileName = "test_confidence_cats.txt"
     Log.h("Testing Confidence Levels")
     for {confidence <- Seq(25, 50, 75, 100)}
-      yield FeedforwardTester(s"ffn-w2v-ordered-confidence-${confidence}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
+      yield FeedforwardTester(s"ffn-w2v-ordered-confidence-${confidence}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt").collect)
   }
 
   /** Test model on every test set matching name */
   def testBuckets(name: String, tester: Testable, criterion: Article => Double) = {
-    val rdds: Array[(Int, RDD[Article])] = new File(Config.dataPath + s"nyt/$name/").listFiles
+    val rdds: Array[(Int, Array[Article])] = new File(Config.dataPath + s"nyt/$name/").listFiles
       .map(_.getName).filter(_.contains(s"test"))
       .map(n => (n.split("_").filter(s => Try(s.toInt).isSuccess).head.toInt, n))
-      .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$name/$n")) }
+      .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$name/$n").collect) }
       .sortBy(_._1)
     rdds.foreach { case (index, n) => {
       Log.r2(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}")
@@ -162,13 +162,14 @@ sealed trait Testable {
 
   def verify: Boolean = Try(models(modelName)).isSuccess
 
-  def test(test: RDD[Article], predict: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
-    val predictedArticles: Option[RDD[Article]] = if (predict) Some(predicted(test)) else None
-    NeuralEvaluation.log(labelBased(test, iteration), IPTC.topCategories, iteration, predictedArticles.map(_.collect))
+  def test(test:Array[Article], predict: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
+    val predictedArticles: Option[Array[Article]] = if (predict) Some(predicted(test)) else None
+    NeuralEvaluation.log(labelBased(test, iteration), IPTC.topCategories, iteration, predictedArticles)
     if (shouldLogResults) predictedArticles.foreach(logResults)
+    System.gc()
   }
 
-  def logResults(articles: RDD[Article]) = {
+  def logResults(articles: Array[Article]) = {
     articles.sortBy(_.id).foreach(a => {
       a.pred.foreach(p => {
         val folder: String = Config.dataPath + s"res/predictions/$modelName/" + (if (a.iptc.contains(p)) "tp" else "fp")
@@ -177,15 +178,15 @@ sealed trait Testable {
     })
   }
 
-  def predicted(test: RDD[Article]): RDD[Article] = {
+  def predicted(test: Array[Article]): Array[Article] = {
     val modelType = if (modelName.toLowerCase.contains("bow")) Some(TFIDF.deserialize(modelName)) else None
     NeuralPredictor.predictAll(test, models(modelName), modelType)
   }
 
-  def labelBased(test: RDD[Article], iteration: Int): Seq[NeuralEvaluation] = {
+  def labelBased(test: Array[Article], iteration: Int): Seq[NeuralEvaluation] = {
     if (iteration == 0) Log.r(s"Testing $modelName ...")
     models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
-      val ffnTest = iter(test.collect, models._1)
+      val ffnTest = iter(test, models._1)
       val rnnEval = NeuralEvaluation(models._2, ffnTest.asScala, i, models._1)
       rnnEval.log()
       rnnEval
@@ -213,12 +214,13 @@ case class NaiveBayesTester(modelName: String) extends Testable {
 
   override def verify: Boolean = Try(nb).isSuccess
 
-  override def test(articles: RDD[Article], includeExampleBased: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
+  override def test(articles: Array[Article], includeExampleBased: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
     Log.r(s"Testing Naive Bayes [$modelName] ...")
     val predicted = MlLibUtils.testMLlibModels(articles, nb, if (modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None)
 
     Log.v("--- Predictions complete! ")
     MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()))
     if (shouldLogResults) logResults(predicted)
+    System.gc()
   }
 }

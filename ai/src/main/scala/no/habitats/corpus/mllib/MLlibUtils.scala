@@ -34,22 +34,22 @@ object MlLibUtils {
     model
   }
 
-  def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], tfidf: Option[TFIDF]): RDD[Article] = {
+  def testMLlibModels(test: Array[Article], catModelPairs: Map[String, NaiveBayesModel], tfidf: Option[TFIDF]): Array[Article] = {
     if (tfidf.isEmpty) W2VLoader.preload(wordVectors = true, documentVectors = true)
-    val testing: RDD[(Article, Vector)] = test.map(t => (t, toVector(tfidf, t)))
+    val testing: Array[(Article, Vector)] = test.map(t => (t, toVector(tfidf, t)))
     //    Log.v("Max:" + testing.map(_._2.toArray.max).max)
     //    Log.v("Min: " + testing.map(_._2.toArray.min).min)
     predictCategories(catModelPairs, testing)
   }
 
-  def predictCategories(catModelPairs: Map[String, ClassificationModel], testing: RDD[(Article, Vector)], threshold: Double = 1d): RDD[Article] = {
+  def predictCategories(catModelPairs: Map[String, ClassificationModel], testing: Array[(Article, Vector)], threshold: Double = 1d): Array[Article] = {
     testing.map(t => {
       val p = catModelPairs.map(c => (c._1, c._2.predict(t._2) >= threshold)).filter(_._2).keySet
       t._1.copy(pred = p)
     })
   }
 
-  def evaluate(predicted: RDD[Article], prefs: Broadcast[Prefs]) = {
+  def evaluate(predicted: Array[Article], prefs: Broadcast[Prefs]) = {
     val sampleResult = predicted.map(_.toResult).reduce(_ + "\n" + _)
     Log.toFile(sampleResult, s"stats/sample_result_${Config.count}.txt")
     val labelCardinalityDistribution = predicted.map(p => f"${p.iptc.size}%2d ${p.pred.size}%2d").reduce(_ + "\n" + _)

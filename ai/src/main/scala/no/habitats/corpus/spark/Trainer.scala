@@ -163,7 +163,7 @@ sealed trait NeuralTrainer {
     Config.resultsCatsFileName = Config.resultsFileName
     for {lr <- learningRate} yield {
       val prefs = NeuralPrefs(learningRate = lr, validation = validation, minibatchSize = minibatchSize, epochs = 1)
-      Config.cats.foreach(c => trainNeuralNetwork(c, binaryFFNW2VTrainer, prefs, name, processTraining(train, c, superSample)))
+      Config.cats.par.foreach(c => trainNeuralNetwork(c, binaryFFNW2VTrainer, prefs, name, processTraining(train, c, superSample)))
     }
   }
 

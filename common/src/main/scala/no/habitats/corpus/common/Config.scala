@@ -109,7 +109,6 @@ object Config {
   val broadMatch          : Boolean     = conf.getProperty("broad_match").toBoolean
   val wikiDataOnly        : Boolean     = conf.getProperty("wikidata_only").toBoolean
   val wikiDataIncludeBroad: Boolean     = conf.getProperty("wikidata_include_broad").toBoolean
-  val phraseSkipThreshold : Int         = conf.getProperty("term_frequency_threshold").toInt
   val minimumAnnotations  : Int         = conf.getProperty("minimum_annotations").toInt
   val iptcFilter          : Set[String] = Some(conf.getProperty("iptc_filter")).map(e => if (e.length > 0) e.split(",").toSet else Set[String]()).get
   val dbpediaSpotlightURL : String      = conf.getProperty("dbpedia_spotlight_url")

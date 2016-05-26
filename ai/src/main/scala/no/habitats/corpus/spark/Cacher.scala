@@ -41,6 +41,12 @@ object Cacher extends RddSerializer {
     saveAsText(clean, "nyt_corpus")
   }
 
+  def cacheTfidf() = {
+    val train = Fetcher.annotatedTrainOrdered
+    val tfidf = TFIDF(train, Config.termFrequencyThreshold.getOrElse(100))
+//    train.map(a => a.copy(ann = a.ann.values.map(an => (an.id, an.copy(tfidf = tfidf.tfidf(a, an))))))
+  }
+
   def scrambler() = {
     for {
       n <- Seq("train", "test", "validation")
@@ -106,17 +112,17 @@ object Cacher extends RddSerializer {
     Log.v(s"Performing supersampling of $label ...")
     val total: Int = all.count.toInt
     val labelIds: Array[Article] = all.filter(_.iptc.contains(label)).collect()
-    if(labelIds.isEmpty) throw new IllegalStateException(s"Cannot supersample $label with no candidates!")
+    if (labelIds.isEmpty) throw new IllegalStateException(s"Cannot supersample $label with no candidates!")
     val missing = total - labelIds.size
     val r = new Random(0)
     val fillers = for {
       i <- 0 until missing
       toCopy = labelIds(r.nextInt(labelIds.size))
-    } yield  toCopy.copy(id = s"${toCopy.id}_$i")
+    } yield toCopy.copy(id = s"${toCopy.id}_$i")
     (sc.parallelize(fillers, Config.partitions) ++ all).sortBy(a => Math.random)
   }
 
-  def cacheSupersampledBalanced() = for(c <- Config.cats) {
+  def cacheSupersampledBalanced() = for (c <- Config.cats) {
     val balanced: RDD[Article] = supersampledBalanced(c, Fetcher.annotatedTrainOrdered)
     saveAsText(balanced.map(Article.serialize), s"nyt_${c}_superbalanced")
   }
@@ -159,6 +165,7 @@ object Cacher extends RddSerializer {
     rdd.cache()
     splitOrdered(rdd)
     splitShuffled(rdd)
+    rdd.unpersist()
   }
 
   def cmon() = {
@@ -189,11 +196,13 @@ object Cacher extends RddSerializer {
     savePhrases(train, validation, test)
   }
 
-  def savePhrases(train: RDD[Article], validation: RDD[Article], test: RDD[Article]) = {
+  def savePhrases(train: RDD[Article], validation: RDD[Article], test: RDD[Article]): Set[String] = {
     val trainIds = train.flatMap(_.ann.keySet).collect().toSet
     val testIds = train.flatMap(_.ann.keySet).collect().toSet
     val validationIds = train.flatMap(_.ann.keySet).collect().toSet
-    Log.toFile(trainIds.filter(id => testIds.contains(id) || validationIds.contains(id)).mkString("\n"), "phrases.txt")
+    val phrasesToKeep: Set[String] = trainIds.filter(id => testIds.contains(id) || validationIds.contains(id))
+    //    Log.toFile(phrasesToKeep.mkString("\n"), "phrases.txt")
+    phrasesToKeep
   }
 
   def splitShuffled(rdd: RDD[Article]): Unit = {

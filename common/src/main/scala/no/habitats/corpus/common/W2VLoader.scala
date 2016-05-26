@@ -14,12 +14,6 @@ import org.nd4j.linalg.factory.Nd4j
 
 import scala.collection.{Map, Set, mutable}
 
-//case class W2VLoader(confidence: Double) extends RddSerializer {
-//  lazy val vectors        : Map[String, INDArray] = loadVectors(Config.freebaseToWord2Vec(confidence))
-//  lazy val documentVectors: Map[String, INDArray] = loadVectors(Config.documentVectors(confidence))
-//  lazy val ids            : Set[String]           = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
-//}
-
 sealed trait VectorLoader {
 
   def loadVectors(vectorFile: String, filter: Set[String] = Set.empty): Map[String, INDArray] = {
@@ -67,11 +61,13 @@ private class TextVectorLoader extends VectorLoader {
   }
 
   override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
+
   override def documentVector(a: Article): INDArray = {
     if (Config.cache) documentVectors.getOrElseUpdate(a.id, W2VLoader.calculateDocumentVector(a.ann))
     else W2VLoader.calculateDocumentVector(a.ann)
   }
   override def contains(fb: String): Boolean = ids.contains(fb)
+
   override def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = {
     if (Config.cache && documentVectors) this.documentVectors
     if (wordVectors) vectors
@@ -112,17 +108,18 @@ object W2VLoader extends RddSerializer with VectorLoader {
   def documentVector(a: Article): INDArray = loader.documentVector(a)
 
   def calculateDocumentVector(ann: Map[String, Annotation]): INDArray = {
-    val vectors: Iterable[INDArray] = ann.values.map(_.fb).flatMap(fromId)
-    val combined: INDArray = squash(vectors)
-    //    val combined = Nd4j.vstack(vectors: _*).mean(0) // supposed to be fast, but it's 3 times slower
-    combined.dup()
+    val vectors: Iterable[INDArray] = ann.values.map(an => (an.tfIdf, an.fb)).flatMap { case (tfidf, id) => fromId(id).map(_.mul(tfidf)) }
+    val combined = vectors.reduce(_.addi(_))
+    //    val combined: INDArray = squash(vectors)
+//        val normalized = normalize(combined)
+    combined
   }
 
   def normalize(combined: INDArray): INDArray = {
     // Min: -0.15568943321704865
     // Max:  0.15866121649742126
-    val min = -0.16
-    val max = 0.16
+    val max = combined.max(1).getDouble(0)
+    val min = combined.min(1).getDouble(0)
     combined.dup().subi(min).divi(max - min)
   }
 

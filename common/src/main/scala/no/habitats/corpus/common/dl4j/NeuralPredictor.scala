@@ -71,7 +71,7 @@ case class NeuralPredictor(net: MultiLayerNetwork, article: Article, label: Stri
 object NeuralPredictor {
   val loadedModes: mutable.Map[String, Map[String, MultiLayerNetwork]] = mutable.Map()
 
-  def predictAll(articles: RDD[Article], models: Map[String, MultiLayerNetwork], modelType: Option[TFIDF]): RDD[Article] = {
+  def predictAll(articles: Array[Article], models: Map[String, MultiLayerNetwork], modelType: Option[TFIDF]): Array[Article] = {
     for {article <- articles} yield predict(models, article, modelType)
   }
 

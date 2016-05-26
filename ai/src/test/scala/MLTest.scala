@@ -46,7 +46,7 @@ class MLTest extends FunSuite {
   // F + T = FP
 
   test("multi label") {
-    val pred = Seq[Article](
+    val pred = Array[Article](
       Article(id = "a1", iptc = abc, pred = acd),
       Article(id = "a2", iptc = acd, pred = acd),
       Article(id = "a3", iptc = bcd, pred = acd),

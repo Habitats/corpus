@@ -3,27 +3,22 @@ package no.habitats.corpus.mllib
 import no.habitats.corpus.common.models.Article
 import org.apache.spark.rdd.RDD
 
-case class MLStats(predicted: RDD[Article], cats: Set[String]) {
+case class MLStats(predicted: Array[Article], cats: Set[String]) {
 //  predicted.cache()
   lazy val totalCats       : Double = predicted.map(_.iptc.size).sum
   lazy val totalPredictions: Double = predicted.map(_.pred.size).sum
 
-  val predset = predicted.collect()
-  lazy val labelMetrics: LabelMetrics = LabelMetrics(predset)
-  lazy val exampleBased: ExampleBased = ExampleBased(predset, cats)
-  lazy val microAverage: MicroAverage = MicroAverage(predset, cats)
-  lazy val macroAverage: MacroAverage = MacroAverage(predset, cats)
+  lazy val labelMetrics: LabelMetrics = LabelMetrics(predicted)
+  lazy val exampleBased: ExampleBased = ExampleBased(predicted, cats)
+  lazy val microAverage: MicroAverage = MicroAverage(predicted, cats)
+  lazy val macroAverage: MacroAverage = MacroAverage(predicted, cats)
 
   // Formatted stats
-  lazy val realCategoryDistribution     : Map[String, Int] = predicted.flatMap(_.iptc).map((_, 1)).reduceByKey(_ + _).collect.toMap
-  lazy val predictedCategoryDistribution: Map[String, Int] = predicted.flatMap(_.pred).map((_, 1)).reduceByKey(_ + _).collect.toMap
 
   lazy val catStats: Seq[Seq[(String, String)]] = {
     macroAverage.labelStats.toSeq.sortBy(_._1).map(c => {
       Seq[(String, String)](
         "Cat" -> f"${c._1}%45s",
-//        "# Real" -> f"${realCategoryDistribution.getOrElse(c._1, 0)}%5d",
-//        "# Pred" -> f"${predictedCategoryDistribution.getOrElse(c._1, 0)}%5d",
         "TP" -> f"${c._2.tp}%5d",
         "FP" -> f"${c._2.fp}%5d",
         "FN" -> f"${c._2.fn}%5d",
@@ -67,7 +62,7 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
   )
 }
 
-case class LabelMetrics(predicted: Seq[Article]) {
+case class LabelMetrics(predicted: Array[Article]) {
   lazy val p                    = predicted.size.toDouble
   lazy val labelCardinality     = predicted.toList.map(_.iptc.size).sum / p
   lazy val labelDiversity       = predicted.map(_.iptc).size / p
@@ -76,7 +71,7 @@ case class LabelMetrics(predicted: Seq[Article]) {
 }
 
 // Example-based metrics
-case class ExampleBased(predicted: Seq[Article], cats: Set[String]) {
+case class ExampleBased(predicted: Array[Article], cats: Set[String]) {
   lazy val p         = predicted.size.toDouble
   lazy val subsetAcc = predicted.toList.count(p => p.pred == p.iptc) / p
   lazy val hloss     = predicted.toList.map(p => (p.iptc.union(p.pred) -- p.iptc.intersect(p.pred)).size.toDouble / p.iptc.union(p.pred).size).sum / p
@@ -103,7 +98,7 @@ case class LabelResult(category: String, tp: Int, fp: Int, fn: Int, tn: Int) {
   lazy val fscore     = m.fscore
 }
 
-case class MacroAverage(predicted: Seq[Article], cats: Set[String]) {
+case class MacroAverage(predicted: Array[Article], cats: Set[String]) {
   lazy val labelStats: Map[String, LabelResult] = {
     val l = for {
       c <- cats
@@ -126,7 +121,7 @@ case class MacroAverage(predicted: Seq[Article], cats: Set[String]) {
   lazy val fscore    = labelStats.values.map(_.fscore).sum / labelStats.size
 }
 
-case class MicroAverage(predicted: Seq[Article], cats: Set[String]) {
+case class MicroAverage(predicted: Array[Article], cats: Set[String]) {
   lazy val tp         = cats.toList.map(c => predicted.count(p => p.iptc.contains(c) && p.pred.contains(c))).sum
   lazy val fp         = cats.toList.map(c => predicted.count(p => !p.iptc.contains(c) && p.pred.contains(c))).sum
   lazy val fn         = cats.toList.map(c => predicted.count(p => p.iptc.contains(c) && !p.pred.contains(c))).sum

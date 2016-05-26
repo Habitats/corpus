@@ -17,6 +17,7 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
     articleLabelsStatistics(rdd)
     articleLengthsStatistics(rdd)
     annotationStatistics(rdd)
+    rdd.unpersist()
   }
 
   def termFrequencyAnalysis(): Unit = {

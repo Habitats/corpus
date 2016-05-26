@@ -66,6 +66,7 @@ object SparkUtil {
           Cacher.cacheSubSampledShuffled()
         case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
         case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
+        case "cacheTFIDF" => Cacher.cacheTfidf()
         case "cache" =>
           Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".txt"), s.toString))
         //        Cacher.cacheAndSplitLength()
