@@ -44,10 +44,10 @@ case class NeuralPredictor(net: MultiLayerNetwork, article: Article, label: Stri
     val numFeatures: Int = tokens.size
 
     // [miniBatchSize, inputSize, timeSeriesLength]
-    val features = Nd4j.create(1, featureDimensions, numFeatures)
+    val features = Nd4j.create(1, featureDimensions, numFeatures, 'f')
     // [miniBatchSize, timeSeriesLength]
-    val featureMask = Nd4j.zeros(1, numFeatures)
-    val labelsMask = Nd4j.zeros(1, numFeatures)
+    val featureMask = Nd4j.zeros(1, numFeatures, 'f')
+    val labelsMask = Nd4j.zeros(1, numFeatures, 'f')
 
     for (j <- tokens.indices) {
       val vector = modelType match {
