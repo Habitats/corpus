@@ -7,7 +7,7 @@ import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common.{Config, _}
 import no.habitats.corpus.dl4j.networks.{FeedForward, FeedForwardIterator, RNN, RNNIterator}
 import no.habitats.corpus.dl4j.{NeuralEvaluation, NeuralPrefs, NeuralTrainer}
-import no.habitats.corpus.mllib.MlLibUtils
+import no.habitats.corpus.mllib.{MlLibUtils, Prefs}
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.{AsyncDataSetIterator, DataSetIterator}
@@ -213,7 +213,8 @@ sealed trait NeuralTrainer {
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, c, superSample), validation, tfidf))).toMap
-    MlLibUtils.testMLlibModels(validation, models, tfidf)
+    val predicted = MlLibUtils.testMLlibModels(validation, models, tfidf)
+    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()))
     val fullName = name + (if (Config.count != Int.MaxValue) s"_$count" else "")
     models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$fullName/${name}_${IPTC.trim(c)}.bin") }
   }
