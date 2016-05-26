@@ -5,6 +5,7 @@ import java.util
 import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common.{Config, IPTC, W2VLoader}
 import org.deeplearning4j.datasets.iterator.DataSetIterator
+import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j
@@ -31,13 +32,13 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
     val labelsMask = Nd4j.create(Array(articles.size, maxNumberOfFeatures), 'f')
 
     for (i <- articles.toList.indices) {
-      val tokens: List[String] = articles(i).ann.values
+      val tokens = articles(i).ann.values
         // We want to preserve order
         .toSeq.sortBy(ann => ann.offset)
-        .map(_.fb)
+        .map(ann => (ann.tfIdf, ann.fb))
         .toList
       for (j <- tokens.indices) {
-        val vector = W2VLoader.fromId(tokens(j)).get
+        val vector: INDArray = W2VLoader.fromId(tokens(j)._2).get.mul(tokens(j)._1)
         features.put(Array(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.point(j)), vector)
         featureMask.putScalar(Array(i, j), 1.0)
       }
