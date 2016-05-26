@@ -113,8 +113,8 @@ object W2VLoader extends RddSerializer with VectorLoader {
     val vectors: Iterable[INDArray] = ann.values.map(an => (an.tfIdf, an.fb)).flatMap { case (tfidf, id) => fromId(id).map(_.mul(1)) }
     val combined = vectors.reduce(_.addi(_))
     //    val combined: INDArray = squash(vectors)
-    val normalized = Transforms.round(normalize(combined))
-    normalized
+//    val normalized = normalize(combined)
+    combined
   }
 
   def normalize(combined: INDArray): INDArray = {
