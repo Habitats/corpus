@@ -51,8 +51,8 @@ object SparkUtil {
         case "fbw2vIds" => FreebaseW2V.cacheFbIds()
         case "cacheW2V" => FreebaseW2V.cacheAll()
         case "cacheDocumentVectors" =>
-          W2VLoader.cacheDocumentVectors(Fetcher.annotatedRddMinimal)
-          W2VLoader.cacheDocumentVectors(Fetcher.miniMini25)
+          W2VLoader.cacheDocumentVectors(Fetcher.annotatedTrainOrdered)
+//          W2VLoader.cacheDocumentVectors(Fetcher.miniMini25)
 
         case "cacheAnnotated" => Cacher.annotateAndCacheArticles(confidence = 0.25)
         case "cacheMiniCorpus" => Cacher.cacheMiniCorpus()

@@ -112,11 +112,10 @@ object W2VLoader extends RddSerializer with VectorLoader {
     // Old way
     //    val vectors: Iterable[INDArray] = ann.values.map(_.fb).flatMap(fromId)
     //    val combined: INDArray = squash(vectors)
-    //    val normalized = Transforms.round(combined)
 
     // New way
     val vectors: Iterable[INDArray] = ann.values.map(an => (an.tfIdf, an.fb)).flatMap { case (tfidf, id) => fromId(id).map(_.mul(tfidf)) }
-    val combined = Transforms.round(W2VLoader.normalize(vectors.reduce(_.addi(_))))
+    val combined = vectors.reduce(_.addi(_))
     combined
   }
 
