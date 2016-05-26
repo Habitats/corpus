@@ -8,4 +8,4 @@ else
 fi
 cd ~/dl4j/libnd4j/ && ./buildnativeoperations.sh cpu
 cd ~/dl4j/nd4j && mvn clean install -DskipTests -Dmaven.javadoc.skip=true -pl '!:nd4j-cuda-7.5,!org.nd4j:nd4j-tests'
-cd ~/corpus/ && gradle ai:clean ai:jar ai:shadowJar -PscalaBinary=2.11 -PscalaVersion=2.11.6
+cd git pull && ~/corpus/ && gradle ai:clean ai:jar ai:shadowJar -PscalaBinary=2.11 -PscalaVersion=2.11.6
