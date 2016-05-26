@@ -109,7 +109,8 @@ object W2VLoader extends RddSerializer with VectorLoader {
   def documentVector(a: Article): INDArray = loader.documentVector(a)
 
   def calculateDocumentVector(ann: Map[String, Annotation]): INDArray = {
-    val vectors: Iterable[INDArray] = ann.values.map(an => (an.tfIdf, an.fb)).flatMap { case (tfidf, id) => fromId(id).map(_.mul(tfidf)) }
+//    val vectors: Iterable[INDArray] = ann.values.map(an => (an.tfIdf, an.fb)).flatMap { case (tfidf, id) => fromId(id).map(_.mul(tfidf)) }
+    val vectors: Iterable[INDArray] = ann.values.map(an => (an.tfIdf, an.fb)).flatMap { case (tfidf, id) => fromId(id).map(_.mul(1)) }
     val combined = vectors.reduce(_.addi(_))
     //    val combined: INDArray = squash(vectors)
     val normalized = Transforms.round(normalize(combined))
