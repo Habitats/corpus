@@ -4,6 +4,7 @@ import java.io.{File, FileNotFoundException, FileReader}
 import java.util.Properties
 
 import scala.collection.JavaConverters._
+import scala.collection.mutable
 import scala.io.{BufferedSource, Codec, Source}
 import scala.util.{Failure, Success, Try}
 
@@ -126,28 +127,28 @@ object Config {
   }
 
   def setArgs(arr: Array[String]) = {
-    lazy val props: Map[String, String] = arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
+    lazy val props: mutable.Map[String, String] = mutable.Map() ++ arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
     args = Arguments(
-      partitions = props.get("partitions").map(_.toInt),
-      rdd = props.get("rdd"),
-      job = props.get("job"),
-      iptcFilter = props.get("iptcFilter").map(_.split(",").toSet),
-      category = props.get("category"),
-      count = props.get("count").map(_.toInt),
-      spark = props.get("spark").map(_.toBoolean),
-      useApi = props.get("useApi").map(_.toBoolean),
-      learningRate = props.get("lr").map(_.toDouble),
-      l2 = props.get("l2").map(_.toDouble),
-      miniBatchSize = props.get("mbs").map(_.toInt),
-      cache = props.get("cache").map(_.toBoolean),
-      histogram = props.get("histogram").map(_.toBoolean),
-      hidden1 = props.get("h1").map(_.toInt),
-      hidden2 = props.get("h2").map(_.toInt),
-      hidden3 = props.get("h3").map(_.toInt),
-      tft = props.get("tft").map(_.toInt),
-      superSample = props.get("super").map(_.toBoolean),
-      iterations = props.get("iter").map(_.toInt)
+      partitions = props.remove("partitions").map(_.toInt),
+      rdd = props.remove("rdd"),
+      job = props.remove("job"),
+      iptcFilter = props.remove("iptcFilter").map(_.split(",").toSet),
+      category = props.remove("category"),
+      count = props.remove("count").map(_.toInt),
+      useApi = props.remove("useApi").map(_.toBoolean),
+      learningRate = props.remove("lr").map(_.toDouble),
+      l2 = props.remove("l2").map(_.toDouble),
+      miniBatchSize = props.remove("mbs").map(_.toInt),
+      cache = props.remove("cache").map(_.toBoolean),
+      histogram = props.remove("histogram").map(_.toBoolean),
+      hidden1 = props.remove("h1").map(_.toInt),
+      hidden2 = props.remove("h2").map(_.toInt),
+      hidden3 = props.remove("h3").map(_.toInt),
+      tft = props.remove("tft").map(_.toInt),
+      superSample = props.remove("super").map(_.toBoolean),
+      iterations = props.remove("iter").map(_.toInt)
     )
+    if (props.nonEmpty) {Log.v("Illegal props: " + props.mkString(", ")); System.exit(0)}
 
     Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
     Log.v("Categories: " + cats.mkString(", "))
@@ -159,7 +160,6 @@ object Config {
   lazy val cache                 : Boolean         = args.cache.getOrElse(true)
   lazy val histogram             : Boolean         = args.histogram.getOrElse(false)
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
-  lazy val spark                 : Boolean         = args.spark.getOrElse(false)
   lazy val category              : Option[String]  = args.category
   lazy val learningRate          : Option[Double]  = args.learningRate
   lazy val miniBatchSize         : Option[Int]     = args.miniBatchSize
@@ -178,7 +178,6 @@ object Config {
                         count: Option[Int],
                         category: Option[String],
                         iptcFilter: Option[Set[String]],
-                        spark: Option[Boolean],
                         useApi: Option[Boolean],
                         learningRate: Option[Double],
                         l2: Option[Double],
