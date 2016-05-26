@@ -9,6 +9,7 @@ import no.habitats.corpus.common.dl4j.FreebaseW2V
 import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.dl4j.TSNE
 import org.apache.spark.rdd.RDD
+import org.nd4j.linalg.factory.Nd4j
 
 import scala.collection.Map
 import scala.util.Try
@@ -22,6 +23,7 @@ object SparkUtil {
   }
 
   def main(args: Array[String]) = {
+    Nd4j.create(1)
     Try {
       Config.setArgs(args)
       Log.init()
@@ -51,7 +53,7 @@ object SparkUtil {
         case "fbw2vIds" => FreebaseW2V.cacheFbIds()
         case "cacheW2V" => FreebaseW2V.cacheAll()
         case "cacheDocumentVectors" =>
-          W2VLoader.cacheDocumentVectors(Fetcher.annotatedTrainOrdered)
+//          W2VLoader.cacheDocumentVectors(Fetcher.)
 //          W2VLoader.cacheDocumentVectors(Fetcher.miniMini25)
 
         case "cacheAnnotated" => Cacher.annotateAndCacheArticles(confidence = 0.25)

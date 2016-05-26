@@ -43,7 +43,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
     "Precision" -> f"${m.precision}%.3f",
     "Accuracy" -> f"${m.accuracy}%.3f",
     "F-score" -> f"${m.fscore}%.3f",
-    "Error" -> f"${neuralPrefs.map(_.listener.average).map(a => f"$a%.10f").getOrElse("N/A")}",
+    "Error" -> f"${neuralPrefs.map(_.listener.average).map(a => f"$a%.4f").getOrElse("N/A")}",
     "Delta" -> f"${neuralPrefs.flatMap(i => Try(i.listener.iterationFrequency).toOption).map(a => f"$a%6d").getOrElse("N/A")}",
     "LR" -> f"${net.getLayerWiseConfigurations.getConf(0).getLayer.getLearningRate}",
     "MBS" -> f"${neuralPrefs.map(_.minibatchSize).getOrElse("N/A")}",

@@ -32,7 +32,7 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
     val labelsMask = Nd4j.create(Array(articles.size, maxNumberOfFeatures), 'f')
 
     for (i <- articles.toList.indices) {
-      val tokens = articles(i).ann.values
+      val tokens: List[(Double, String)] = articles(i).ann.values
         // We want to preserve order
         .toSeq.sortBy(ann => ann.offset)
         .map(ann => (ann.tfIdf, ann.fb))
