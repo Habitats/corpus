@@ -23,14 +23,20 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
   override def next(num: Int): DataSet = {
     Log.v("6")
     val articles = allArticles.slice(cursor, cursor + num)
+    Log.v("7")
     val maxNumberOfFeatures = articles.map(_.ann.size).max
+    Log.v("8")
 
     // [miniBatchSize, inputSize, timeSeriesLength]
     val features = Nd4j.create(Array(articles.size, W2VLoader.featureSize, maxNumberOfFeatures), 'f')
+    Log.v("9")
     val labels = Nd4j.create(Array(articles.size, totalOutcomes, maxNumberOfFeatures), 'f')
+    Log.v("10")
     // [miniBatchSize, timeSeriesLength]
     val featureMask = Nd4j.create(Array(articles.size, maxNumberOfFeatures), 'f')
+    Log.v("11")
     val labelsMask = Nd4j.create(Array(articles.size, maxNumberOfFeatures), 'f')
+    Log.v("12")
 
     for (i <- articles.toList.indices) {
       val tokens: List[(Double, String)] = articles(i).ann.values
@@ -57,9 +63,12 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
       // Specify that an output exists at the final time step for this example
       labelsMask.putScalar(Array(i, tokens.size - 1), 1.0)
     }
+    Log.v("13")
 
     counter += articles.size
-    new DataSet(features, labels, featureMask, labelsMask)
+    val set: DataSet = new DataSet(features, labels, featureMask, labelsMask)
+    Log.v("14")
+    set
   }
   override def batch(): Int = Math.min(Config.miniBatchSize.getOrElse(batchSize), Math.max(allArticles.size - counter, 0))
   override def cursor(): Int = counter
