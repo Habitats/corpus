@@ -118,12 +118,12 @@ object Trainer extends NeuralTrainer with Serializable {
   def trainFFNW2VBalanced() = {
     W2VLoader.preload(wordVectors = true, documentVectors = true)
     val (train, validation) = Fetcher.ordered
-    trainFeedforwardW2V(train, validation, "balanced-ffn-w2v", superSampled = true)
+    trainFeedforwardW2V(train, validation, "balanced-ffn-w2v", superSample = true)
   }
 
   def trainFFNBoWBalanced() = {
     val (train, validation) = Fetcher.ordered
-    trainFeedforwardBoW(train, validation, "balanced-ffn-bow", termFrequencyThreshold = 100, superSampled = true)
+    trainFeedforwardBoW(train, validation, "balanced-ffn-bow", termFrequencyThreshold = 100, superSample = true)
   }
 
   def trainNaiveBoWBalanced() = {
@@ -157,27 +157,31 @@ sealed trait NeuralTrainer {
 
   private val count: String = if (Config.count == Int.MaxValue) "all" else Config.count.toString
 
-  def trainFeedforwardW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(0.05), minibatchSize: Int = 1000, superSampled: Boolean = false) = {
+  def trainFeedforwardW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(0.05), minibatchSize: Int = 1000, superSample: Boolean = false) = {
     W2VLoader.preload(wordVectors = true, documentVectors = true)
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     for {lr <- learningRate} yield {
       val prefs = NeuralPrefs(learningRate = lr, validation = validation, minibatchSize = minibatchSize, epochs = 1)
-      Config.cats.foreach(c => trainNeuralNetwork(c, binaryFFNW2VTrainer, prefs, name, if (superSampled) Cacher.supersampledBalanced(c, train) else train))
+      Config.cats.foreach(c => trainNeuralNetwork(c, binaryFFNW2VTrainer, prefs, name, processTraining(train, c, superSample)))
     }
   }
 
-  def trainRecurrentW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(0.05), minibatchSize: Int = 500, hiddenNodes: Int = 100, superSampled: Boolean = false): Seq[Unit] = {
+  def processTraining(train: RDD[Article], label: String, superSample: Boolean): RDD[Article] = {
+    if (Config.superSample.getOrElse(superSample)) Cacher.supersampledBalanced(label, train) else train
+  }
+
+  def trainRecurrentW2V(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Seq[Double] = Seq(0.05), minibatchSize: Int = 500, hiddenNodes: Int = 100, superSample: Boolean = false): Seq[Unit] = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     for {lr <- learningRate} yield {
       val prefs = NeuralPrefs(learningRate = lr, validation = validation, minibatchSize = minibatchSize, epochs = 1, hiddenNodes = hiddenNodes)
-      Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, prefs, name, if (superSampled) Cacher.supersampledBalanced(c, train) else train))
+      Config.cats.foreach(c => trainNeuralNetwork(c, binaryRNNTrainer, prefs, name, processTraining(train, c, superSample)))
     }
   }
 
-  def trainFeedforwardBoW(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Double = 0.05, minibatchSize: Int = 1000, termFrequencyThreshold: Int = 100, superSampled: Boolean = false) = {
+  def trainFeedforwardBoW(train: RDD[Article], validation: RDD[Article], name: String, learningRate: Double = 0.05, minibatchSize: Int = 1000, termFrequencyThreshold: Int = 100, superSample: Boolean = false) = {
     Config.resultsFileName = s"train_$name.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val tfidf = TFIDF(train, termFrequencyThreshold)
@@ -187,7 +191,7 @@ sealed trait NeuralTrainer {
       val neuralPrefs = NeuralPrefs(
         learningRate = learningRate, minibatchSize = minibatchSize, epochs = 1,
         validation = TFIDF.frequencyFilter(validation, tfidf.phrases))
-      val net: MultiLayerNetwork = binaryFFNBoWTrainer(c, neuralPrefs, if (superSampled) Cacher.supersampledBalanced(c, bowTraining) else bowTraining, tfidf)
+      val net: MultiLayerNetwork = binaryFFNBoWTrainer(c, neuralPrefs, processTraining(train, c, superSample), tfidf)
       NeuralModelLoader.save(net, c, Config.count, s"$name-$count")
       System.gc()
     }
@@ -208,7 +212,7 @@ sealed trait NeuralTrainer {
   def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], name: String, tfidf: Option[TFIDF] = None, superSample: Boolean) = {
     Config.resultsFileName = s"train_${name}.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, if (superSample) Cacher.supersampledBalanced(c, train) else train, validation, tfidf))).toMap
+    val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, c, superSample), validation, tfidf))).toMap
     MlLibUtils.testMLlibModels(validation, models, tfidf)
     val fullName = name + (if (Config.count != Int.MaxValue) s"_$count" else "")
     models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$fullName/${name}_${IPTC.trim(c)}.bin") }
