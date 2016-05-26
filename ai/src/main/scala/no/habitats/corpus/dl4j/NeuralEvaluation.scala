@@ -1,7 +1,7 @@
 package no.habitats.corpus.dl4j
 
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{Config, IPTC, Log}
+import no.habitats.corpus.common.{IPTC, Log}
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import no.habitats.corpus.mllib._
 import org.deeplearning4j.eval.Evaluation
@@ -77,13 +77,8 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
 
   def logv(label: String, i: Int) = {
     //        Log.r2(confusion)
-    if (Config.spark) {
-      if (i == 0) Log.toFileHeader(statsHeader, s"spam_$label.txt", Config.dataPath + "spam")
-      Log.toFile(stats, s"spam_$label.txt", Config.dataPath + "spam")
-    } else {
-      if (i == 0) Log.r(statsHeader, "spam.txt")
-      Log.r(stats, "spam.txt")
-    }
+    if (i == 0) Log.r(statsHeader, "spam.txt")
+    Log.r(stats, "spam.txt")
   }
 }
 
@@ -142,10 +137,10 @@ object NeuralEvaluation {
         "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f"
 
         // Label stats
-//        "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
-//        "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
-//        "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
-//        "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
+        //        "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
+        //        "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
+        //        "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
+        //        "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
       )
     }).getOrElse(Nil)
 
