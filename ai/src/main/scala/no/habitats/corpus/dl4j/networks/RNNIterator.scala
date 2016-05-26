@@ -23,7 +23,6 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
   override def next(num: Int): DataSet = {
     Log.v("6")
     val articles = allArticles.slice(cursor, cursor + num)
-    Log.v("7")
     val maxNumberOfFeatures = articles.map(_.ann.size).max
 
     // [miniBatchSize, inputSize, timeSeriesLength]
@@ -33,16 +32,13 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
     val featureMask = Nd4j.create(Array(articles.size, maxNumberOfFeatures), 'f')
     val labelsMask = Nd4j.create(Array(articles.size, maxNumberOfFeatures), 'f')
 
-    Log.v("8")
     for (i <- articles.toList.indices) {
-      Log.v("9")
       val tokens: List[(Double, String)] = articles(i).ann.values
         // We want to preserve order
         .toSeq.sortBy(ann => ann.offset)
         .map(ann => (ann.tfIdf, ann.fb))
         .toList
       for (j <- tokens.indices) {
-        Log.v("10")
         val vector: INDArray = W2VLoader.fromId(tokens(j)._2).get.mul(tokens(j)._1)
         features.put(Array(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.point(j)), vector)
         featureMask.putScalar(Array(i, j), 1.0)
