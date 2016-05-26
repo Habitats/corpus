@@ -130,6 +130,7 @@ object W2VLoader extends RddSerializer with VectorLoader {
   def squash(vectors: Iterable[INDArray]): INDArray = vectors.map(_.dup).reduce(_.addi(_)).divi(vectors.size)
 
   def cacheDocumentVectors(rdd: RDD[Article]) = {
+    W2VLoader.preload(wordVectors = true, documentVectors = false)
     val docVecs = rdd
       .filter(_.ann.nonEmpty)
       .filter(_.ann.map(_._2.fb).forall(W2VLoader.contains))
