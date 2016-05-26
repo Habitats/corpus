@@ -25,7 +25,7 @@ object NeuralModelLoader {
 
   def models(path: String): Map[String, MultiLayerNetwork] = {
     val fileNames = new File(Config.modelPath + path).listFiles().map(_.getName).sorted
-    val pairs = fileNames.filter(_.startsWith("conf")).zip(fileNames.filter(_.startsWith("coef"))).par.map { case (conf, coef) => {
+    val pairs = fileNames.filter(_.startsWith("conf")).zip(fileNames.filter(_.startsWith("coef"))).map { case (conf, coef) => {
       val label = coef.substring(coef.indexOf("_") + 1, coef.lastIndexOf("_")).split("_").head
       (label, load(s"${Config.modelPath}$path/$conf", s"${Config.modelPath}$path/$coef"))
     }
