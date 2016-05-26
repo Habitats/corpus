@@ -11,6 +11,7 @@ import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
+import org.nd4j.linalg.ops.transforms.Transforms
 
 import scala.collection.{Map, Set, mutable}
 
@@ -111,8 +112,8 @@ object W2VLoader extends RddSerializer with VectorLoader {
     val vectors: Iterable[INDArray] = ann.values.map(an => (an.tfIdf, an.fb)).flatMap { case (tfidf, id) => fromId(id).map(_.mul(tfidf)) }
     val combined = vectors.reduce(_.addi(_))
     //    val combined: INDArray = squash(vectors)
-//    val normalized = normalize(combined)
-   combined
+    val normalized = Transforms.round(normalize(combined))
+    combined
   }
 
   def normalize(combined: INDArray): INDArray = {
