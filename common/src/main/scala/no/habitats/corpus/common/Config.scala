@@ -33,6 +33,9 @@ object Config {
     case None => IPTC.topCategories
   }
 
+  lazy val start = System.currentTimeMillis()
+  def init() = start
+
   def freebaseToWord2VecIDs = dataPath + s"fb_ids_with_w2v.txt"
   def freebaseToWord2Vec(confidence: Double) = {
     dataPath + s"w2v/fb_w2v_$confidence.txt"
@@ -146,6 +149,7 @@ object Config {
       tft = props.remove("tft").map(_.toInt),
       superSample = props.remove("super").map(_.toBoolean),
       iterations = props.remove("iter").map(_.toInt),
+      epoch = props.remove("epoch").map(_.toInt),
       logResults = props.remove("logres").map(_.toBoolean)
     )
     if (props.nonEmpty) {Log.v("Illegal props: " + props.mkString(", ")); System.exit(0)}
@@ -163,6 +167,7 @@ object Config {
   lazy val category              : Option[String]  = args.category
   lazy val learningRate          : Option[Double]  = args.learningRate
   lazy val miniBatchSize         : Option[Int]     = args.miniBatchSize
+  lazy val epoch                 : Option[Int]     = args.epoch
   lazy val iterations            : Option[Int]     = args.iterations
   lazy val hidden1               : Option[Int]     = args.hidden1
   lazy val hidden2               : Option[Int]     = args.hidden2
@@ -191,6 +196,7 @@ object Config {
                         hidden3: Option[Int],
                         tft: Option[Int],
                         iterations: Option[Int],
+                        epoch: Option[Int],
                         superSample: Option[Boolean]
                       )
 }
