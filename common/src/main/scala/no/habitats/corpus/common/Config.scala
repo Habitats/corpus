@@ -105,28 +105,19 @@ object Config {
   private val corpusConfig: String    = if (local) configRoot + "corpus_local.properties" else "/corpus_cluster.properties"
 
   // static
-  val testPath            : String      = formatPath(conf.getProperty("test_path"))
-  val dataPath            : String      = formatPath(conf.getProperty("data_path"))
-  val cachePath           : String      = formatPath(conf.getProperty("cache_path"))
-  val modelPath           : String      = formatPath(conf.getProperty("model_path"))
-  val broadMatch          : Boolean     = conf.getProperty("broad_match").toBoolean
-  val wikiDataOnly        : Boolean     = conf.getProperty("wikidata_only").toBoolean
-  val wikiDataIncludeBroad: Boolean     = conf.getProperty("wikidata_include_broad").toBoolean
-  val minimumAnnotations  : Int         = conf.getProperty("minimum_annotations").toInt
-  val iptcFilter          : Set[String] = Some(conf.getProperty("iptc_filter")).map(e => if (e.length > 0) e.split(",").toSet else Set[String]()).get
-  val dbpediaSpotlightURL : String      = conf.getProperty("dbpedia_spotlight_url")
+  val testPath            : String  = formatPath(conf.getProperty("test_path"))
+  val dataPath            : String  = formatPath(conf.getProperty("data_path"))
+  val cachePath           : String  = formatPath(conf.getProperty("cache_path"))
+  val modelPath           : String  = formatPath(conf.getProperty("model_path"))
+  val broadMatch          : Boolean = conf.getProperty("broad_match").toBoolean
+  val wikiDataOnly        : Boolean = conf.getProperty("wikidata_only").toBoolean
+  val wikiDataIncludeBroad: Boolean = conf.getProperty("wikidata_include_broad").toBoolean
+  val dbpediaSpotlightURL : String  = conf.getProperty("dbpedia_spotlight_url")
 
   // Dynamic variables for file caching
   // TODO: this shouldn't be here. really.
   var resultsFileName     = "results.txt"
   var resultsCatsFileName = "results_cats.txt"
-
-  // args
-  def rdd = args.rdd.getOrElse(conf.getProperty("rdd"))
-  def partitions = args.partitions.getOrElse(conf.getProperty("partitions").toInt)
-  def count: Int = args.count.getOrElse(conf.getProperty("count").toInt) match {
-    case i => if (i == -1) Integer.MAX_VALUE else i
-  }
 
   def setArgs(arr: Array[String]) = {
     lazy val props: mutable.Map[String, String] = mutable.Map() ++ arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
@@ -161,6 +152,9 @@ object Config {
   }
 
   lazy val job                   : String          = args.job.getOrElse(conf.getProperty("job"))
+  lazy val rdd                   : String          = args.rdd.getOrElse(conf.getProperty("rdd"))
+  lazy val partitions            : Int             = args.partitions.getOrElse(conf.getProperty("partitions").toInt)
+  lazy val count                 : Int             = args.count.getOrElse(conf.getProperty("count").toInt) match {case i => if (i == -1) Integer.MAX_VALUE else i}
   lazy val cache                 : Boolean         = args.cache.getOrElse(false)
   lazy val histogram             : Boolean         = args.histogram.getOrElse(false)
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
