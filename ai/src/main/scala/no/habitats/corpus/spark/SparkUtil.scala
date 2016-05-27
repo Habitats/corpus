@@ -37,8 +37,6 @@ object SparkUtil {
         case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
         case "printArticles" => printArticles(Config.count)
         case "misc" =>
-          //        Log.v(Config.cats.mkString(", "))
-//          Cacher.split(Fetcher.annotatedRdd, 10)
           Cacher.savePhrases(Fetcher.annotatedTrainOrdered, Fetcher.annotatedValidationOrdered, Fetcher.annotatedTestOrdered)
 
         // Generate datasets
@@ -53,8 +51,6 @@ object SparkUtil {
         case "fbw2vIds" => FreebaseW2V.cacheFbIds()
         case "cacheW2V" => FreebaseW2V.cacheAll()
         case "cacheDocumentVectors" =>
-//          W2VLoader.cacheDocumentVectors(Fetcher.)
-//          W2VLoader.cacheDocumentVectors(Fetcher.miniMini25)
 
         case "cacheAnnotated" => Cacher.annotateAndCacheArticles(confidence = 0.25)
         case "cacheMiniCorpus" => Cacher.cacheMiniCorpus()
@@ -71,23 +67,13 @@ object SparkUtil {
         case "cacheTFIDF" => Cacher.cacheTfidf()
         case "cache" =>
           Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".txt"), s.toString))
-        //        Cacher.cacheAndSplitLength()
-        //        Cacher.cacheAndSplitTime()
-        //        Cacher.cacheSubSampledOrdered()
-        //        Cacher.cacheSubSampledShuffled()
 
         // Display stats
         case "iptcDistribution" => calculateIPTCDistribution()
         case "tnesDocumentVectors" => tnesDocumentVectors()
         case "tnesWordVectors" => tnesWordVectors()
         case "stats" =>
-          //        CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").termFrequencyAnalysis()
-          //        CorpusStats(Fetcher.by("time/nyt_time_train.txt"), "time").termFrequencyAnalysis()
           CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").lengthCorrelation()
-        //        Corpus.preloadAnnotations()
-        //        stats(Fetcher.rdd.map(Corpus.toDBPediaAnnotated), "original")
-        //        timeStats()
-        //        lengthStats()
 
         // Modelling
         case "trainRNNW2V" => Trainer.trainRNNW2V()
@@ -110,25 +96,6 @@ object SparkUtil {
         case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
 
         case "train" =>
-          //           Trainer.trainNaiveBayesW2VSubsampled()
-          //           Trainer.trainNaiveBayesBoWSubsampled()
-          //           Trainer.trainFFNW2VSubsampled()
-          //           Trainer.trainFFNBoWSubsampled()
-          //
-          //             Trainer.trainFFNBoWTime()
-          //             Trainer.trainFFNW2VTime()
-
-//          Try(Trainer.trainNaiveBoWBalanced())
-//          Try(Trainer.trainNaiveW2VBalanced())
-          Trainer.trainFFNW2VBalanced()
-
-        //        Trainer.trainRNNSubsampled()
-
-        //        Trainer.trainFFNConfidence()
-        //        Trainer.trainFFNOrderedTypes(true)
-        //
-        //        Trainer.trainFFNBoWOrdered()
-        //        Trainer.trainFFNOrderedTypes(false)
 
         // Testing
         case "verifyModels" => Log.v("Models are: " + Tester.verifyAll())
@@ -243,28 +210,28 @@ object SparkUtil {
     var x = ms / 1000
     val seconds = x % 60 match {
       case e if e == 0 => ""
-      case e if e == 1 => f" $e" + (if(short) "s" else " second")
-      case e if e > 0 => f" $e" + (if(short) "s" else " seconds")
+      case e if e == 1 => f" $e" + (if (short) "s" else " second")
+      case e if e > 0 => f" $e" + (if (short) "s" else " seconds")
     }
     x /= 60
     val minutes = x % 60 match {
       case e if e == 0 => ""
-      case e if e == 1 => f" $e" + (if(short) "m" else " minute")
-      case e if e > 0 => f" $e" + (if(short) "m" else " minutes")
+      case e if e == 1 => f" $e" + (if (short) "m" else " minute")
+      case e if e > 0 => f" $e" + (if (short) "m" else " minutes")
     }
     x /= 60
     val hours = x % 24 match {
       case e if e == 0 => ""
-      case e if e == 1 => f" $e" + (if(short) "h" else " hour")
-      case e if e > 0 => f" $e" + (if(short) "h" else " hours")
+      case e if e == 1 => f" $e" + (if (short) "h" else " hour")
+      case e if e > 0 => f" $e" + (if (short) "h" else " hours")
     }
     x /= 24
     val days = x match {
       case e if e == 0 => ""
-      case e if e == 1 => f" $e" + (if(short) "d" else " day")
-      case e if e > 0 => f" $e" + (if(short) "d" else " days")
+      case e if e == 1 => f" $e" + (if (short) "d" else " day")
+      case e if e > 0 => f" $e" + (if (short) "d" else " days")
     }
-    s"$days$hours$minutes$seconds" + (if(short) "" else s" ($ms ms)")
+    s"$days$hours$minutes$seconds" + (if (short) "" else s" ($ms ms)")
   }
 }
 
