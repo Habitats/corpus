@@ -87,8 +87,7 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
 
 object NeuralEvaluation {
 
-  def log(evals: Seq[NeuralEvaluation], cats: Seq[String], iteration: Int, predicted: Option[RDD[Article]] = None) = {
-    predicted.foreach(_.persist)
+  def log(evals: Seq[NeuralEvaluation], cats: Seq[String], iteration: Int, predicted: Option[Array[Article]] = None) = {
     // Macro
     val maRecall = evals.map(_.m.recall).sum / cats.size
     val maPrecision = evals.map(_.m.precision).sum / cats.size
@@ -115,11 +114,12 @@ object NeuralEvaluation {
     )
 
     val exampleStats: Seq[(String, String)] = predicted.map(predicted => {
+      val rdd = CorpusContext.sc.parallelize(predicted)
       val cats: Set[String] = IPTC.topCategories.toSet
-      val labelMetrics = LabelMetrics(predicted)
-      val exampleBased = ExampleBased(predicted, cats)
-      val microAverage = MicroAverage(predicted, cats)
-      val macroAverage = MacroAverage(predicted, cats)
+      val labelMetrics = LabelMetrics(rdd)
+      val exampleBased = ExampleBased(rdd, cats)
+      val microAverage = MicroAverage(rdd, cats)
+      val macroAverage = MacroAverage(rdd, cats)
 
       Seq[(String, String)](
         // Label-based
@@ -150,8 +150,6 @@ object NeuralEvaluation {
 
     Log.rr((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
     Log.r((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
-
-    predicted.foreach(_.unpersist())
   }
 
   def columnWidth(s: (String, String)): Int = Math.max(s._1.length, s._2.toString.length) + 2

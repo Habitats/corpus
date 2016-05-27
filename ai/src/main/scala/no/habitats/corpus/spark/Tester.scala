@@ -13,7 +13,6 @@ import no.habitats.corpus.mllib.{MlLibUtils, Prefs}
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
-import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.util.Try
 
@@ -34,7 +33,7 @@ object Tester {
     tester("all-ffn-bow").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
     tester("all-ffn-w2v").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
     tester("all-rnn-w2v").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
-    tester("all-nb-bow").test(test)
+    //    tester("all-nb-bow").test(test)
     tester("all-nb-w2v").test(test)
   }
 
@@ -163,13 +162,15 @@ sealed trait Testable {
   def verify: Boolean = Try(models(modelName)).isSuccess
 
   def test(test: RDD[Article], predict: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
-    val predictedArticles: Option[RDD[Article]] = if (predict) Some(predicted(test)) else None
+    test.persist()
+    Log.v(s"Testing ${test.count} articles ...")
+    val predictedArticles: Option[Array[Article]] = if (predict) Some(predictAll(test.collect())) else None
     NeuralEvaluation.log(labelBased(test, iteration), IPTC.topCategories, iteration, predictedArticles)
     if (shouldLogResults) predictedArticles.foreach(logResults)
     System.gc()
   }
 
-  def logResults(articles: RDD[Article]) = {
+  def logResults(articles: Array[Article]) = {
     articles.sortBy(_.id).foreach(a => {
       a.pred.foreach(p => {
         val folder: String = Config.dataPath + s"res/predictions/$modelName/" + (if (a.iptc.contains(p)) "tp" else "fp")
@@ -178,15 +179,16 @@ sealed trait Testable {
     })
   }
 
-  def predicted(test: RDD[Article]): RDD[Article] = {
+  def predictAll(test: Array[Article]): Array[Article] = {
     val modelType = if (modelName.toLowerCase.contains("bow")) Some(TFIDF.deserialize(modelName)) else None
     NeuralPredictor.predict(test, models(modelName), modelType)
   }
 
   def labelBased(test: RDD[Article], iteration: Int): Seq[NeuralEvaluation] = {
     if (iteration == 0) Log.r(s"Testing $modelName ...")
+    val localTest = test.collect()
     models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
-      val ffnTest = iter(test.collect(), models._1)
+      val ffnTest = iter(localTest, models._1)
       val rnnEval = NeuralEvaluation(models._2.network, ffnTest.asScala, i, models._1)
       rnnEval.log()
       rnnEval
@@ -220,7 +222,7 @@ case class NaiveBayesTester(modelName: String) extends Testable {
 
     Log.v("--- Predictions complete! ")
     MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()))
-    if (shouldLogResults) logResults(predicted)
+    if (shouldLogResults) logResults(predicted.collect())
     System.gc()
   }
 }
