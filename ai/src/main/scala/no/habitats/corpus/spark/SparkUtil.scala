@@ -245,32 +245,32 @@ object SparkUtil {
     }
   }
 
-  def prettyTime(ms: Long): String = {
+  def prettyTime(ms: Long, short: Boolean = false): String = {
     var x = ms / 1000
     val seconds = x % 60 match {
       case e if e == 0 => ""
-      case e if e == 1 => f" $e second"
-      case e if e > 0 => f" $e seconds"
+      case e if e == 1 => f" $e" + (if(short) "s" else " second")
+      case e if e > 0 => f" $e" + (if(short) "s" else " seconds")
     }
     x /= 60
     val minutes = x % 60 match {
       case e if e == 0 => ""
-      case e if e == 1 => f" $e minute"
-      case e if e > 0 => f" $e minutes"
+      case e if e == 1 => f" $e" + (if(short) "m" else " minute")
+      case e if e > 0 => f" $e" + (if(short) "m" else " minutes")
     }
     x /= 60
     val hours = x % 24 match {
       case e if e == 0 => ""
-      case e if e == 1 => f" $e hour"
-      case e if e > 0 => f" $e hours"
+      case e if e == 1 => f" $e" + (if(short) "h" else " hour")
+      case e if e > 0 => f" $e" + (if(short) "h" else " hours")
     }
     x /= 24
     val days = x match {
       case e if e == 0 => ""
-      case e if e == 1 => f" $e day"
-      case e if e > 0 => f" $e days"
+      case e if e == 1 => f" $e" + (if(short) "d" else " day")
+      case e if e > 0 => f" $e" + (if(short) "d" else " days")
     }
-    s"$days$hours$minutes$seconds ($ms ms)"
+    s"$days$hours$minutes$seconds" + (if(short) "" else " ($ms ms)")
   }
 }
 

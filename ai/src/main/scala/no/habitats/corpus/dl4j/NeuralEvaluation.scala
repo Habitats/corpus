@@ -4,6 +4,7 @@ import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common.{IPTC, Log}
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import no.habitats.corpus.mllib._
+import no.habitats.corpus.spark.SparkUtil
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, GravesLSTM}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
@@ -11,7 +12,7 @@ import org.nd4j.linalg.dataset.DataSet
 
 import scala.util.Try
 
-case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[DataSet], epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None) {
+case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[DataSet], epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None, timeLeft: Option[Int] = None) {
   private lazy val eval = {
     val e = new Evaluation()
     testIter.foreach(t => {
@@ -47,7 +48,8 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
     "Delta" -> f"${neuralPrefs.flatMap(i => Try(i.listener.iterationFrequency).toOption).map(a => f"$a%6d").getOrElse("N/A")}",
     "LR" -> f"${net.getLayerWiseConfigurations.getConf(0).getLayer.getLearningRate}",
     "MBS" -> f"${neuralPrefs.map(_.minibatchSize).getOrElse("N/A")}",
-    "Hidden" -> f"$numHidden"
+    "Hidden" -> f"$numHidden",
+    "ETA" -> f"${timeLeft.map(t => SparkUtil.prettyTime(t, short = true)).getOrElse("")}"
   )
 
   val numHidden = {
