@@ -9,6 +9,10 @@ import org.deeplearning4j.nn.conf.MultiLayerConfiguration
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import org.nd4j.linalg.factory.Nd4j
 
+case class NeuralModel(confg: String, coef: String) {
+  lazy val network = NeuralModelLoader.load(confg, coef)
+}
+
 object NeuralModelLoader {
 
   def coefficientsPath(name: String, label: String, count: Int): String = s"${name}/coefficients-${name}_${label}${if (count != Int.MaxValue) s"_$count" else ""}.bin"
@@ -23,11 +27,11 @@ object NeuralModelLoader {
     }
     }.toMap
 
-  def models(path: String): Map[String, MultiLayerNetwork] = {
+  def models(path: String): Map[String, NeuralModel] = {
     val fileNames = new File(Config.modelPath + path).listFiles().map(_.getName).sorted
     val pairs = fileNames.filter(_.startsWith("conf")).zip(fileNames.filter(_.startsWith("coef"))).map { case (conf, coef) => {
       val label = coef.substring(coef.indexOf("_") + 1, coef.lastIndexOf("_")).split("_").head
-      (label, load(s"${Config.modelPath}$path/$conf", s"${Config.modelPath}$path/$coef"))
+      (label, NeuralModel(s"${Config.modelPath}$path/$conf", s"${Config.modelPath}$path/$coef"))
     }
     }.seq.toMap
     pairs

@@ -5,6 +5,7 @@ import no.habitats.corpus.common.{CorpusContext, IPTC, Log}
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import no.habitats.corpus.mllib._
 import no.habitats.corpus.spark.SparkUtil
+import org.apache.spark.rdd.RDD
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, GravesLSTM}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
@@ -86,7 +87,8 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
 
 object NeuralEvaluation {
 
-  def log(evals: Seq[NeuralEvaluation], cats: Seq[String], iteration: Int, predicted: Option[Array[Article]] = None) = {
+  def log(evals: Seq[NeuralEvaluation], cats: Seq[String], iteration: Int, predicted: Option[RDD[Article]] = None) = {
+    predicted.foreach(_.persist)
     // Macro
     val maRecall = evals.map(_.m.recall).sum / cats.size
     val maPrecision = evals.map(_.m.precision).sum / cats.size
@@ -112,7 +114,7 @@ object NeuralEvaluation {
       "Mi.F-score" -> f"${mi.fscore}%.3f"
     )
 
-    val exampleStats: Seq[(String, String)] = predicted.map(p => CorpusContext.sc.parallelize(p)).map(predicted => {
+    val exampleStats: Seq[(String, String)] = predicted.map(predicted => {
       val cats: Set[String] = IPTC.topCategories.toSet
       val labelMetrics = LabelMetrics(predicted)
       val exampleBased = ExampleBased(predicted, cats)
@@ -149,6 +151,7 @@ object NeuralEvaluation {
     Log.rr((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
     Log.r((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
 
+    predicted.foreach(_.unpersist())
   }
 
   def columnWidth(s: (String, String)): Int = Math.max(s._1.length, s._2.toString.length) + 2

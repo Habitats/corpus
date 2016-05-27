@@ -4,7 +4,6 @@ import no.habitats.corpus.common.models.Article
 import org.apache.spark.rdd.RDD
 
 case class MLStats(predicted: RDD[Article], cats: Set[String]) {
-//  predicted.cache()
   lazy val totalCats       : Double = predicted.map(_.iptc.size).sum
   lazy val totalPredictions: Double = predicted.map(_.pred.size).sum
 
@@ -32,8 +31,8 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
 
   lazy val stats = Seq[(String, String)](
     // Data stats
-//    "Categories" -> f"${totalCats.toInt}",
-//    "Pred/True" -> f"${totalPredictions / totalCats}%.3f",
+    //    "Categories" -> f"${totalCats.toInt}",
+    //    "Pred/True" -> f"${totalPredictions / totalCats}%.3f",
 
     // Example-based
     //    "Ex.Recall" -> f"${exampleBased.recall}%.3f",
@@ -55,10 +54,10 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
     "Mi.F-score" -> f"${microAverage.fscore}%.3f"
 
     // Label stats
-//    "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
-//    "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
-//    "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
-//    "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
+    //    "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
+    //    "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
+    //    "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
+    //    "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
   )
 }
 
@@ -72,7 +71,7 @@ case class LabelMetrics(predicted: RDD[Article]) {
 
 // Example-based metrics
 case class ExampleBased(predicted: RDD[Article], cats: Set[String]) {
-  lazy val p         = predicted.count.toDouble
+  val p = predicted.count.toDouble
   lazy val subsetAcc = predicted.filter(p => p.pred == p.iptc).count / p
   lazy val hloss     = predicted.map(p => (p.iptc.union(p.pred) -- p.iptc.intersect(p.pred)).size.toDouble / p.iptc.union(p.pred).size).sum / p
   lazy val precision = predicted.filter(_.pred.nonEmpty).map(p => p.iptc.intersect(p.pred).size.toDouble / p.pred.size).sum / p
