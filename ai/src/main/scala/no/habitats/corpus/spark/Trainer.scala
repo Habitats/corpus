@@ -157,7 +157,7 @@ sealed trait NeuralTrainer {
     Config.resultsFileName = s"train_$name.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     val tfidf = TFIDF(train, termFrequencyThreshold)
-    Log.toFile(TFIDF.serialize(tfidf), name + "-" + count + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
+    Log.toFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
     Config.cats.zipWithIndex.foreach { case (c, i) => {
       val bowTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
       val neuralPrefs = NeuralPrefs(
