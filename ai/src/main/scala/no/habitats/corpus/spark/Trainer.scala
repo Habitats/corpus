@@ -186,7 +186,7 @@ sealed trait NeuralTrainer {
     Config.resultsCatsFileName = Config.resultsFileName
     val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, c, superSample), validation, tfidf))).toMap
     val predicted = MlLibUtils.testMLlibModels(validation, models, tfidf)
-    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()))
+    MlLibUtils.evaluate(sc.parallelize(predicted, Config.partitions), sc.broadcast(Prefs()))
     val fullName = name + (if (Config.count != Int.MaxValue) s"_$count" else "")
     models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$fullName/${name}_${IPTC.trim(c)}.bin") }
   }

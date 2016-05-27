@@ -1,7 +1,7 @@
 package no.habitats.corpus.dl4j
 
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{IPTC, Log}
+import no.habitats.corpus.common.{CorpusContext, IPTC, Log}
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import no.habitats.corpus.mllib._
 import no.habitats.corpus.spark.SparkUtil
@@ -112,7 +112,7 @@ object NeuralEvaluation {
       "Mi.F-score" -> f"${mi.fscore}%.3f"
     )
 
-    val exampleStats: Seq[(String, String)] = predicted.map(predicted => {
+    val exampleStats: Seq[(String, String)] = predicted.map(p => CorpusContext.sc.parallelize(p)).map(predicted => {
       val cats: Set[String] = IPTC.topCategories.toSet
       val labelMetrics = LabelMetrics(predicted)
       val exampleBased = ExampleBased(predicted, cats)

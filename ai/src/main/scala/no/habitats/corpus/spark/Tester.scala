@@ -219,7 +219,7 @@ case class NaiveBayesTester(modelName: String) extends Testable {
     val predicted = MlLibUtils.testMLlibModels(articles, nb, if (modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None)
 
     Log.v("--- Predictions complete! ")
-    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()))
+    MlLibUtils.evaluate(sc.parallelize(predicted, Config.partitions), sc.broadcast(Prefs()))
     if (shouldLogResults) logResults(predicted)
     System.gc()
   }

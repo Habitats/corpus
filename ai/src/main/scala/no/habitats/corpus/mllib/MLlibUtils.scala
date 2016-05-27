@@ -49,7 +49,7 @@ object MlLibUtils {
     })
   }
 
-  def evaluate(predicted: Array[Article], prefs: Broadcast[Prefs]) = {
+  def evaluate(predicted: RDD[Article], prefs: Broadcast[Prefs]) = {
     val sampleResult = predicted.map(_.toResult).reduce(_ + "\n" + _)
     Log.toFile(sampleResult, s"stats/sample_result_${Config.count}.txt")
     val labelCardinalityDistribution = predicted.map(p => f"${p.iptc.size}%2d ${p.pred.size}%2d").reduce(_ + "\n" + _)

@@ -6,6 +6,7 @@ import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext
 import no.habitats.corpus.common.models.{Annotation, Article}
 import no.habitats.corpus.mllib.{ExampleBased, MacroAverage, Measure, MicroAverage}
+import org.apache.spark.rdd.RDD
 import org.junit.runner.RunWith
 import org.scalactic.TolerantNumerics
 import org.scalatest.FunSuite
@@ -46,7 +47,7 @@ class MLTest extends FunSuite {
   // F + T = FP
 
   test("multi label") {
-    val pred = Array[Article](
+    val pred: RDD[Article] = CorpusContext.sc.parallelize(Seq(
       Article(id = "a1", iptc = abc, pred = acd),
       Article(id = "a2", iptc = acd, pred = acd),
       Article(id = "a3", iptc = bcd, pred = acd),
@@ -55,7 +56,7 @@ class MLTest extends FunSuite {
       Article(id = "a6", iptc = ac, pred = acd),
       Article(id = "a7", iptc = d, pred = acd),
       Article(id = "a8", iptc = a, pred = acd)
-    )
+    ))
 
     val mi = MicroAverage(pred, cats)
     assert(mi.tp === 15)
