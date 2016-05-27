@@ -11,6 +11,7 @@ import org.json4s.jackson.Serialization._
 
 import scala.collection.mutable
 import scala.io.Source
+import scala.util.{Failure, Success, Try}
 
 case class TFIDF(documentsWithTerm: Map[String, Int], phrases: Set[String], documentCount: Int) {
 
@@ -55,7 +56,10 @@ object TFIDF {
   }
 
   def deserialize(name: String): TFIDF = {
-    val s: String = Source.fromFile(new File(Config.modelPath + name).listFiles().filter(_.getName.contains("tfidf")).head).getLines().next()
+    val s: String = Try(Source.fromFile(new File(Config.modelPath + name).listFiles().filter(_.getName.contains("tfidf")).head).getLines().next()) match {
+      case Failure(ex) => throw new IllegalStateException(s"NO TFIDF CACHE! Failed fetching: ${Config.modelPath + name}")
+      case Success(s) => s
+    }
     read[TFIDF](s)
   }
 
