@@ -67,7 +67,7 @@ object Fetcher extends RddSerializer {
 
   def limit(rdd: RDD[Article], fraction: Double = 1): RDD[Article] = {
     val num = (Config.count * fraction).toInt
-    if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(num))
+    if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(num),(Config.partitions * fraction).toInt)
     else rdd
   }
 

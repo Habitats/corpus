@@ -119,7 +119,7 @@ object Cacher extends RddSerializer {
       i <- 0 until missing
       toCopy = labelIds(r.nextInt(labelIds.size))
     } yield toCopy.copy(id = s"${toCopy.id}_$i")
-    (sc.parallelize(fillers, Config.partitions) ++ all).sortBy(a => Math.random)
+    (sc.parallelize(fillers, Config.partitions) ++ all).repartition(Config.partitions * 2).sortBy(a => Math.random)
   }
 
   def cacheSupersampledBalanced() = for (c <- Config.cats) {
