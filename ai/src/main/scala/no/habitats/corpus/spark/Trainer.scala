@@ -109,34 +109,6 @@ object Trainer extends NeuralTrainer with Serializable {
     trainFeedforwardW2V(train, validation, "time-ffn-w2v", learningRate = 0.5)
   }
 
-  // Misc
-  def trainRNNBalanced() = {
-    val (train, validation) = Fetcher.ordered
-    trainRecurrentW2V(train, validation, "balanced-rnn-w2v")
-  }
-
-  def trainFFNW2VBalanced() = {
-    W2VLoader.preload(wordVectors = true, documentVectors = true)
-    val (train, validation) = Fetcher.ordered
-    trainFeedforwardW2V(train, validation, "balanced-ffn-w2v", superSample = true)
-  }
-
-  def trainFFNBoWBalanced() = {
-    val (train, validation) = Fetcher.ordered
-    trainFeedforwardBoW(train, validation, "balanced-ffn-bow", termFrequencyThreshold = 100, superSample = true)
-  }
-
-  def trainNaiveBoWBalanced() = {
-    val (train, validation) = Fetcher.ordered
-    trainNaiveBayesW2V(train, validation, "balanced-nb-w2v", superSample = true)
-  }
-
-  def trainNaiveW2VBalanced() = {
-    W2VLoader.preload(wordVectors = true, documentVectors = true)
-    val (train, validation) = Fetcher.ordered
-    trainNaiveBayesW2V(train, validation, "balanced-nb-w2v")
-  }
-
   // SPARK
   def trainFFNSparkOrdered() = {
     val (train, validation) = Fetcher.ordered

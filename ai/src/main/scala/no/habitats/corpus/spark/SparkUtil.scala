@@ -96,12 +96,6 @@ object SparkUtil {
         case "trainNaiveW2V" => Trainer.trainNaiveW2V()
         case "trainNaiveBoW" => Trainer.trainNaiveBoW()
 
-        case "trainRNNSuperbalanced" => Trainer.trainRNNBalanced()
-        case "trainFFNW2VSuperbalanced" => Trainer.trainFFNW2VBalanced()
-        case "trainFFNBoWSuperbalanced" => Trainer.trainFFNBoWBalanced()
-        case "trainNaiveW2VSuperbalanced" => Trainer.trainNaiveW2VBalanced()
-        case "trainNaiveBoWSuperbalanced" => Trainer.trainNaiveBoWBalanced()
-
         case "trainRNNW2VSpark" => Trainer.trainRNNW2VSpark()
         case "trainFFNConfidence" => Trainer.trainFFNConfidence()
 
@@ -270,7 +264,7 @@ object SparkUtil {
       case e if e == 1 => f" $e" + (if(short) "d" else " day")
       case e if e > 0 => f" $e" + (if(short) "d" else " days")
     }
-    s"$days$hours$minutes$seconds" + (if(short) "" else " ($ms ms)")
+    s"$days$hours$minutes$seconds" + (if(short) "" else s" ($ms ms)")
   }
 }
 
