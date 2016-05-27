@@ -38,7 +38,8 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
         .map(ann => (ann.tfIdf, ann.fb))
         .toList
       for (j <- tokens.indices) {
-        val vector: INDArray = W2VLoader.fromId(tokens(j)._2).get.mul(tokens(j)._1)
+        val (tfidf, id) = tokens(j)
+        val vector: INDArray = W2VLoader.fromId(id).get.mul(tfidf)
         features.put(Array(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.point(j)), vector)
         featureMask.putScalar(Array(i, j), 1.0)
       }

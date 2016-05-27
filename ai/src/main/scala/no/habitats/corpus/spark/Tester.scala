@@ -31,9 +31,9 @@ object Tester {
     Config.resultsCatsFileName = "test_all.txt"
     Log.h("Testing models")
     val test = Fetcher.annotatedTestOrdered.map(_.toMinimal).collect()
-//    tester("all-ffn-w2v").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
-    tester("all-ffn-bow").test(test, predict = false, shouldLogResults = Config.logResults.getOrElse(false))
-    tester("all-rnn-w2v").test(test, predict = false, shouldLogResults = Config.logResults.getOrElse(false))
+    tester("all-ffn-w2v").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
+    tester("all-ffn-bow").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
+    tester("all-rnn-w2v").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
     tester("all-nb-w2v").test(test)
     tester("all-nb-bow").test(test)
   }
