@@ -137,8 +137,8 @@ sealed trait ModelTrainer {
 sealed trait NeuralTrainer {
 
   def trainNetwork(validation: RDD[Article], training: (String) => RDD[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, Array[Article]) => MultiLayerNetwork) = {
-    if(Config.spark) sequential(validation,training ,name, minibatchSize, learningRate, trainer)
-    else parallel(validation, training("") ,name, minibatchSize, learningRate, trainer)
+    if (Config.spark) parallel(validation, training(""), name, minibatchSize, learningRate, trainer)
+    else sequential(validation, training, name, minibatchSize, learningRate, trainer)
   }
 
   def sequential(validation: RDD[Article], training: (String) => RDD[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, Array[Article]) => MultiLayerNetwork): Seq[Unit] = {
@@ -160,7 +160,7 @@ sealed trait NeuralTrainer {
       validation.foreach(_.toDocumentVector)
       val sparkTrain = sc.broadcast(train.collect())
       val prefs = NeuralPrefs(learningRate = lr, validation = validation.collect(), minibatchSize = minibatchSize, epochs = 1)
-      sc.parallelize(Config.cats).foreach(c => {
+      sc.parallelize(Config.cats, numSlices = Config.cats.size).foreach(c => {
         val net: MultiLayerNetwork = trainer(c, prefs, sparkTrain.value)
         NeuralModelLoader.save(net, c, Config.count, name)
         System.gc()
