@@ -163,7 +163,6 @@ sealed trait NeuralTrainer {
       Config.cats.foreach(c => {
         val net: MultiLayerNetwork = trainer(c, prefs, training(c), validation)
         NeuralModelLoader.save(net, c, Config.count, name)
-        System.gc()
       })
     }
   }
