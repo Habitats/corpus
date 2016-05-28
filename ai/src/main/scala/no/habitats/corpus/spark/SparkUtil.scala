@@ -47,10 +47,16 @@ object SparkUtil {
         case "wdToFbFromDump" => WikiData.extractFreebaseFromWikiDump()
         case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
         case "combineIds" => Spotlight.combineAndCacheIds()
-        case "fbw2v" => FreebaseW2V.cacheWordVectors(Fetcher.miniMini25, 0.25)
         case "fbw2vIds" => FreebaseW2V.cacheFbIds()
         case "cacheW2V" => FreebaseW2V.cacheAll()
-        case "cacheDocumentVectors" =>
+        case "cacheWordVectors" => for {
+          c <- Seq(0.25, 0.75, 1.0)
+          t <- Seq(true, false)
+        } yield Fetcher.ordered(confidence = c, types = t)._1
+        case "cacheDocumentVectors" => for {
+          c <- Seq(0.25, 0.75, 1.0)
+          t <- Seq(true, false)
+        } yield W2VLoader.cacheDocumentVectors(Fetcher.ordered(confidence = c, types = t)._1, confidence = c, types = t)
 
         case "cacheAnnotated" => Cacher.annotateAndCacheArticles(confidence = 0.25)
         case "cacheMiniCorpus" => Cacher.cacheMiniCorpus()

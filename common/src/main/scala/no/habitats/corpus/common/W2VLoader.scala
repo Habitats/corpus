@@ -55,10 +55,10 @@ private class BinaryVectorLoader extends VectorLoader {
 
 private class TextVectorLoader extends VectorLoader {
   lazy val ids            : Set[String]                                    = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
-  lazy val vectors        : Map[String, INDArray]                          = loadVectors(Config.freebaseToWord2Vec(W2VLoader.confidence))
+  lazy val vectors        : Map[String, INDArray]                          = loadVectors(Config.freebaseToWord2Vec())
   lazy val documentVectors: scala.collection.mutable.Map[String, INDArray] = {
     if (!Config.cache) Log.v("Illegal cache access. Cache is disabled!")
-    mutable.Map[String, INDArray]() ++ loadVectors(Config.documentVectors(W2VLoader.confidence))
+    mutable.Map[String, INDArray]() ++ loadVectors(Config.documentVectors())
   }
 
   override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
@@ -78,8 +78,8 @@ private class TextVectorLoader extends VectorLoader {
 sealed class SparkVectorLoader extends VectorLoader {
 
   // Spark broadcasting (it's not pretty but maybe it works?)
-  lazy val bVectors        : Broadcast[Map[String, INDArray]] = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.freebaseToWord2Vec(W2VLoader.confidence)))
-  lazy val bDocumentVectors: Broadcast[Map[String, INDArray]] = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.documentVectors(W2VLoader.confidence)))
+  lazy val bVectors        : Broadcast[Map[String, INDArray]] = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.freebaseToWord2Vec()))
+  lazy val bDocumentVectors: Broadcast[Map[String, INDArray]] = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.documentVectors()))
 
   override def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = {
     bVectors
@@ -97,7 +97,6 @@ object W2VLoader extends RddSerializer with VectorLoader {
   lazy     val loader: VectorLoader = if (false) new SparkVectorLoader() else new TextVectorLoader()
 
   // TODO: NOT GOOD
-  var confidence  = 0.5
   val featureSize = 1000
 
   def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = loader.preload(wordVectors, documentVectors)
@@ -129,13 +128,13 @@ object W2VLoader extends RddSerializer with VectorLoader {
 
   def squash(vectors: Iterable[INDArray]): INDArray = vectors.map(_.dup).reduce(_.addi(_)).divi(vectors.size)
 
-  def cacheDocumentVectors(rdd: RDD[Article]) = {
+  def cacheDocumentVectors(rdd: RDD[Article], confidence: Double, types: Boolean) = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     val docVecs = rdd
       .filter(_.ann.nonEmpty)
       .filter(_.ann.map(_._2.fb).forall(W2VLoader.contains))
       .map(a => s"${a.id},${W2VLoader.toString(calculateDocumentVector(a.ann))}")
-    saveAsText(docVecs, s"document_vectors_${confidence}")
+    saveAsText(docVecs, s"document_vectors_${confidence}${(if (types) "_types" else "")}")
   }
 
   def toString(w2v: INDArray): String = w2v.data().asFloat().mkString(",")

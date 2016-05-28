@@ -32,11 +32,11 @@ object Config {
   def init() = start
 
   def freebaseToWord2VecIDs = dataPath + s"fb_ids_with_w2v.txt"
-  def freebaseToWord2Vec(confidence: Double) = {
+  def freebaseToWord2Vec(confidence: Double = Config.confidence.getOrElse(0.5)) = {
     dataPath + s"w2v/fb_w2v_$confidence.txt"
     //    s"r:/fb_w2v_$confidence.txt"
   }
-  def documentVectors(confidence: Double) = {
+  def documentVectors(confidence: Double = Config.confidence.getOrElse(0.5)) = {
     dataPath + s"w2v/document_vectors_$confidence.txt"
     //    s"r:/document_vectors_$confidence.json"
   }
@@ -116,6 +116,7 @@ object Config {
 
   def setArgs(arr: Array[String]) = {
     lazy val props: mutable.Map[String, String] = mutable.Map() ++ arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
+    Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
     args = Arguments(
       partitions = props.remove("partitions").map(_.toInt),
       rdd = props.remove("rdd"),
@@ -141,8 +142,6 @@ object Config {
       logResults = props.remove("logres").map(_.toBoolean)
     )
     if (props.nonEmpty) {Log.v("Illegal props: " + props.mkString(", ")); System.exit(0)}
-
-    Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
     Log.v("Categories: " + cats.mkString(", "))
     Log.v("CORPUS CONFIG: " + corpusConfig + "\n\t" + conf.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
     if (local) Log.v("SPARK CONFIG: " + sparkConfig + "\n\t" + sparkProps.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))

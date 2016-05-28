@@ -79,7 +79,10 @@ object Trainer extends NeuralTrainer with Serializable {
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
     Seq(25, 50, 75, 100).foreach(confidence => {
       Log.r(s"Training with confidence ${confidence} ...")
-      trainFeedforwardW2V(train = train(confidence), validation = validation(confidence), name = "ffa-confidence-" + confidence)
+      trainFeedforwardW2V(train = train(confidence), validation = validation(confidence), name = "ffa-w2v-confidence-" + confidence)
+      trainFeedforwardBoW(train = train(confidence), validation = validation(confidence), name = "ffa-bow-confidence-" + confidence, termFrequencyThreshold = 10)
+      trainNaiveBayesW2V(train = train(confidence), validation = validation(confidence), name = "nb-w2v-confidence-" + confidence)
+      trainNaiveBayesBoW(train = train(confidence), validation = validation(confidence), name = "nb-bow-confidence-" + confidence, termFrequencyThreshold = 10)
     })
   }
 
