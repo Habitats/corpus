@@ -155,7 +155,7 @@ sealed trait Testable {
 
   val modelName: String
 
-  def iter(test: Array[Article], label: String): DataSetIterator = ???
+  def iter(test: CorpusDataset, label: String): DataSetIterator = ???
 
   def models(modelName: String): Map[String, NeuralModel] = ???
 
@@ -164,13 +164,13 @@ sealed trait Testable {
   def test(test: RDD[Article], predict: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
     test.persist()
     Log.v(s"Testing ${test.count} articles ...")
-    val predictedArticles: Option[Array[Article]] = if (predict) Some(predictAll(test.collect())) else None
+    val predictedArticles: Option[RDD[Article]] = if (predict) Some(predictAll(test)) else None
     NeuralEvaluation.log(labelBased(test, iteration), IPTC.topCategories, iteration, predictedArticles)
     if (shouldLogResults) predictedArticles.foreach(logResults)
     System.gc()
   }
 
-  def logResults(articles: Array[Article]) = {
+  def logResults(articles: RDD[Article]) = {
     articles.sortBy(_.id).foreach(a => {
       a.pred.foreach(p => {
         val folder: String = Config.dataPath + s"res/predictions/$modelName/" + (if (a.iptc.contains(p)) "tp" else "fp")
@@ -179,16 +179,18 @@ sealed trait Testable {
     })
   }
 
-  def predictAll(test: Array[Article]): Array[Article] = {
+  def dataset(test: RDD[Article]): CorpusDataset = if(modelName.contains("bow")) CorpusDataset.genBoWDataset(test, TFIDF.deserialize(modelName)) else CorpusDataset.genW2VDataset(test)
+
+  def predictAll(test: RDD[Article]): RDD[Article] = {
     val modelType = if (modelName.toLowerCase.contains("bow")) Some(TFIDF.deserialize(modelName)) else None
     NeuralPredictor.predict(test, models(modelName), modelType)
   }
 
   def labelBased(test: RDD[Article], iteration: Int): Seq[NeuralEvaluation] = {
     if (iteration == 0) Log.r(s"Testing $modelName ...")
-    val localTest = test.collect()
+    val testDataset: CorpusDataset = dataset(test)
     models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
-      val ffnTest = iter(localTest, models._1)
+      val ffnTest = iter(testDataset, models._1)
       val rnnEval = NeuralEvaluation(models._2.network, ffnTest.asScala, i, models._1)
       rnnEval.log()
       rnnEval
@@ -200,14 +202,14 @@ sealed trait Testable {
 case class FeedforwardTester(modelName: String) extends Testable {
   lazy val ffa: Map[String, NeuralModel] = NeuralModelLoader.models(modelName)
 
-  override def iter(test: Array[Article], label: String): DataSetIterator = new FeedForwardIterator(test, label, 500, if (modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator =  new FeedForwardIterator(test, IPTC.topCategories.indexOf(label), 500)
   override def models(modelName: String): Map[String, NeuralModel] = ffa
 }
 
 case class RecurrentTester(modelName: String) extends Testable {
   lazy val rnn: Map[String, NeuralModel] = NeuralModelLoader.models(modelName)
 
-  override def iter(test: Array[Article], label: String): DataSetIterator = new RNNIterator(test, Some(label), 50)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test.articles, Some(label), 50)
   override def models(modelName: String): Map[String, NeuralModel] = rnn
 }
 
@@ -222,7 +224,7 @@ case class NaiveBayesTester(modelName: String) extends Testable {
 
     Log.v("--- Predictions complete! ")
     MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()))
-    if (shouldLogResults) logResults(predicted.collect())
+    if (shouldLogResults) logResults(predicted)
     System.gc()
   }
 }

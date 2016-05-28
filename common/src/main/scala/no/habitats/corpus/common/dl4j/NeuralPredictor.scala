@@ -78,8 +78,8 @@ object NeuralPredictor {
   val loadedModes: mutable.Map[String, Map[String, NeuralModel]] = mutable.Map()
 
   /** For every partition, split partition into minibatches, predict minibatches, then combine */
-  def predict(articles: Array[Article], models: Map[String, NeuralModel], modelType: Option[TFIDF]): Array[Article] = {
-    predictPartition(models, articles, modelType)
+  def predict(articles: RDD[Article], models: Map[String, NeuralModel], modelType: Option[TFIDF]): RDD[Article] = {
+    articles.mapPartitions(partition => predictPartition(models, partition.toArray, modelType).iterator)
   }
 
   def predictPartition(models: Map[String, NeuralModel], partition: Array[Article], modelType: Option[TFIDF]): Array[Article] = {
