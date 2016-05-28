@@ -137,7 +137,7 @@ sealed trait ModelTrainer {
 sealed trait NeuralTrainer {
 
   def trainNetwork(validation: RDD[Article], training: (String) => RDD[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, Array[Article]) => MultiLayerNetwork) = {
-    if(Config.parallelism > 1) parallel(validation, training(""), name, minibatchSize, learningRate, trainer, Config.parallelism)
+    if (Config.parallelism > 1) parallel(validation, training(""), name, minibatchSize, learningRate, trainer, Config.parallelism)
     else sequential(validation, training, name, minibatchSize, learningRate, trainer)
   }
 
@@ -154,18 +154,15 @@ sealed trait NeuralTrainer {
   }
 
   def parallel(validation: RDD[Article], train: RDD[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, Array[Article]) => MultiLayerNetwork, parallelism: Int) = {
+    // Force pre-generation of document vectors before entering Spark to avoid passing W2V references between executors
     train.foreach(_.toDocumentVector)
     validation.foreach(_.toDocumentVector)
+    Log.v("Broadcasting dataset ...")
     val sparkTrain = sc.broadcast(train.collect())
-    val sparkValidation = sc.broadcast(validation.collect())
+    Log.v("Starting distributed training ...")
     for {lr <- learningRate} yield {
-      // Force pre-generation of document vectors before entering Spark to avoid passing W2V references between executors
-      sc.parallelize(Config.cats, numSlices = Config.parallelism).foreach(c => {
-        val prefs = NeuralPrefs(learningRate = lr, validation = sparkValidation.value, minibatchSize = minibatchSize, epochs = 1)
-        val net: MultiLayerNetwork = trainer(c, prefs, sparkTrain.value)
-        NeuralModelLoader.save(net, c, Config.count, name)
-        System.gc()
-      })
+      val prefs = sc.broadcast(NeuralPrefs(learningRate = lr, validation = validation.collect(), minibatchSize = minibatchSize, epochs = 1))
+      sc.parallelize(Config.cats, numSlices = Config.parallelism).map(c => (c, trainer(c, prefs.value, sparkTrain.value))).foreach { case (c, net) => NeuralModelLoader.save(net, c, Config.count, name) }
     }
   }
 }
