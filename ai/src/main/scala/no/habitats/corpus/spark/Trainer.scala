@@ -160,7 +160,7 @@ sealed trait NeuralTrainer {
       validation.foreach(_.toDocumentVector)
       val sparkTrain = sc.broadcast(train.collect())
       val prefs = NeuralPrefs(learningRate = lr, validation = validation.collect(), minibatchSize = minibatchSize, epochs = 1)
-      sc.parallelize(Config.cats, numSlices = Config.cats.size).foreach(c => {
+      sc.parallelize(Config.cats, numSlices = Config.parallelism).foreach(c => {
         val net: MultiLayerNetwork = trainer(c, prefs, sparkTrain.value)
         NeuralModelLoader.save(net, c, Config.count, name)
         System.gc()
