@@ -129,44 +129,39 @@ sealed trait ModelTrainer {
 
   def trainW2V(train: RDD[Article], validation: RDD[Article])
 
-  def processTraining(train: RDD[Article], label: String, superSample: Boolean): RDD[Article] = if (Config.superSample.getOrElse(superSample)) Cacher.supersampledBalanced(label, train) else train
+  def processTraining(train: RDD[Article], superSample: Boolean): (String => RDD[Article]) = {
+    label => if (superSample) Cacher.supersampledBalanced(label, train) else train
+  }
 }
 
 sealed trait NeuralTrainer {
 
-  def trainNetwork(trainRdd: RDD[Article], validationRdd: RDD[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], superSample: Boolean, trainer: (String, NeuralPrefs, Array[Article]) => MultiLayerNetwork): Seq[Unit] = {
-    def training(label: String): Array[Article] = if (superSample) trainRdd.collect else Cacher.supersampledBalanced(label, trainRdd).collect()
-
-    val validation: Array[Article] = validationRdd.collect
-
-    neuralTrain(validation, training, name, minibatchSize, learningRate, trainer)
-  }
-
-  def neuralTrain(validation: Array[Article], training: (String) => Array[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, Array[Article]) => MultiLayerNetwork): Seq[Unit] = {
+  def trainNetwork(validation: RDD[Article], training: (String) => RDD[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, RDD[Article]) => MultiLayerNetwork) = {
     for {lr <- learningRate} yield {
-      val prefs = NeuralPrefs(learningRate = lr, validation = validation, minibatchSize = minibatchSize, epochs = 1)
+      val prefs = NeuralPrefs(learningRate = lr, validation = validation.collect(), minibatchSize = minibatchSize, epochs = 1)
       Config.cats.foreach(c => {
-        val processedTraining: Array[Article] = training(c)
+        val processedTraining: RDD[Article] = training(c)
         val net: MultiLayerNetwork = trainer(c, prefs, processedTraining)
         NeuralModelLoader.save(net, c, Config.count, name)
         System.gc()
       })
     }
   }
+
 }
 
-case class FeedforwardTrainer(
-                               learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
-                               minibatchSize: Int = Config.miniBatchSize.getOrElse(1000),
-                               superSample: Boolean = Config.superSample.getOrElse(false),
-                               tag: Option[String] = None
-                             ) extends ModelTrainer with NeuralTrainer {
+sealed case class FeedforwardTrainer(
+                                      learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
+                                      minibatchSize: Int = Config.miniBatchSize.getOrElse(1000),
+                                      superSample: Boolean = Config.superSample.getOrElse(false),
+                                      tag: Option[String] = None
+                                    ) extends ModelTrainer with NeuralTrainer {
 
   override val prefix = "nb"
 
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     W2VLoader.preload(wordVectors = true, documentVectors = true)
-    trainNetwork(train, validation, name, minibatchSize, learningRate, superSample, binaryFFNW2VTrainer)
+    trainNetwork(validation, processTraining(train, superSample), name, minibatchSize, learningRate, binaryFFNW2VTrainer)
   }
 
   override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int = 100) = {
@@ -174,30 +169,30 @@ case class FeedforwardTrainer(
     Log.toFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
     val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
-    trainNetwork(processedTraining, processedValidation, name, minibatchSize, learningRate, superSample, binaryFFNW2VTrainer)
+    trainNetwork(processedValidation, processTraining(processedTraining, superSample), name, minibatchSize, learningRate, (label, neuralPrefs, train) => binaryFFNBoWTrainer(label, neuralPrefs, train, tfidf))
   }
 
-  def binaryFFNW2VTrainer(label: String, neuralPrefs: NeuralPrefs, train: Array[Article]): MultiLayerNetwork = {
+  private def binaryFFNW2VTrainer(label: String, neuralPrefs: NeuralPrefs, train: RDD[Article]): MultiLayerNetwork = {
     val net = FeedForward.create(neuralPrefs)
-    val trainIter = new FeedForwardIterator(train, label, batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new FeedForwardIterator(train.collect(), label, batchSize = neuralPrefs.minibatchSize)
     val testIter = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
 
-  def binaryFFNBoWTrainer(label: String, neuralPrefs: NeuralPrefs, train: Array[Article], tfidf: TFIDF): MultiLayerNetwork = {
+  private def binaryFFNBoWTrainer(label: String, neuralPrefs: NeuralPrefs, train: RDD[Article], tfidf: TFIDF): MultiLayerNetwork = {
     val net = FeedForward.createBoW(neuralPrefs, tfidf.phrases.size)
-    val trainIter = new FeedForwardIterator(train, label, batchSize = neuralPrefs.minibatchSize, Some(tfidf))
+    val trainIter = new FeedForwardIterator(train.collect(), label, batchSize = neuralPrefs.minibatchSize, Some(tfidf))
     val testIter = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize, Some(tfidf))
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
 }
 
-case class RecurrentTrainer(
-                             learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
-                             minibatchSize: Int = Config.miniBatchSize.getOrElse(1000),
-                             superSample: Boolean = Config.superSample.getOrElse(false),
-                             hiddenNodes: Int = Config.hidden1.getOrElse(10),
-                             tag: Option[String] = None) extends ModelTrainer with NeuralTrainer {
+sealed case class RecurrentTrainer(
+                                    learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
+                                    minibatchSize: Int = Config.miniBatchSize.getOrElse(1000),
+                                    superSample: Boolean = Config.superSample.getOrElse(false),
+                                    hiddenNodes: Int = Config.hidden1.getOrElse(10),
+                                    tag: Option[String] = None) extends ModelTrainer with NeuralTrainer {
 
   override val prefix = "nb"
 
@@ -205,19 +200,19 @@ case class RecurrentTrainer(
 
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
-    trainNetwork(trainRdd = train, validationRdd = validation, name = name, minibatchSize = minibatchSize, learningRate = learningRate, trainer = binaryRNNTrainer, superSample = superSample)
+    trainNetwork(validation, processTraining(train, superSample), name, minibatchSize, learningRate, binaryRNNTrainer)
   }
 
   // Binary trainers
-  def binaryRNNTrainer(label: String, neuralPrefs: NeuralPrefs, train: Array[Article]): MultiLayerNetwork = {
+  private def binaryRNNTrainer(label: String, neuralPrefs: NeuralPrefs, train: RDD[Article]): MultiLayerNetwork = {
     val net = RNN.createBinary(neuralPrefs.copy(hiddenNodes = hiddenNodes))
-    val trainIter = new RNNIterator(train, Some(label), batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new RNNIterator(train.collect(), Some(label), batchSize = neuralPrefs.minibatchSize)
     val testIter = new RNNIterator(neuralPrefs.validation, Some(label), batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
 }
 
-case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[String] = None) extends ModelTrainer {
+sealed case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[String] = None) extends ModelTrainer {
 
   override val prefix = "nb"
 
@@ -232,10 +227,10 @@ case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[String] =
     trainNaiveBayes(train, validation, None, superSample)
   }
 
-  def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], tfidf: Option[TFIDF] = None, superSample: Boolean) = {
+  private def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], tfidf: Option[TFIDF] = None, superSample: Boolean) = {
     Config.resultsFileName = s"train_$name.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, c, superSample), validation, tfidf))).toMap
+    val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, superSample)(c), validation, tfidf))).toMap
     val predicted = MlLibUtils.testMLlibModels(validation, models, tfidf)
     MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()))
     val fullName = name + (if (Config.count != Int.MaxValue) s"_$count" else "")
