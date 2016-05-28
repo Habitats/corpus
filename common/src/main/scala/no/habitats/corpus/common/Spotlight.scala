@@ -4,25 +4,49 @@ import dispatch._
 import no.habitats.corpus.common.CorpusContext.sc
 import no.habitats.corpus.common.CorpusExecutionContext.executionContext
 import no.habitats.corpus.common.models.{Annotation, Article, DBPediaAnnotation, Entity}
-import org.apache.spark.SparkContext
 import org.apache.spark.rdd.RDD
-import org.json4s.JsonAST.JValue
 import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 
+import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration._
+
+object DBpediaFetcher {
+  val annotations = mutable.Map[String, Map[String, Seq[Annotation]]]()
+
+  def dbpedia(confidence: Double, json: Boolean = false): RDD[DBPediaAnnotation] = {
+    val name = Config.dataPath + s"dbpedia/dbpedia_all_$confidence.${if (json) "json" else "txt"}"
+    val rdd = sc.textFile("file:///" + name)
+      .map(s => if (json) DBPediaAnnotation.fromSingleJson(s) else DBPediaAnnotation.deserialize(s))
+    if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(Config.count)) else rdd
+  }
+
+  private def fetchDbpediaAnnotations(confidence: Double, json: Boolean, types: Boolean): Map[String, Seq[Annotation]] = {
+    dbpedia(confidence, json)
+      .flatMap(ann => if (types) Seq(AnnotationUtils.fromDbpedia(ann)) else Nil ++ AnnotationUtils.fromDBpediaType(ann))
+      //      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
+      .groupBy(_.articleId)
+      .filter(_._2.nonEmpty)
+      .map { case (k, v) => (k, v.toSeq.filter(ann => W2VLoader.contains(ann.fb))) }
+      .collect.toMap
+  }
+
+  def dbpediaAnnotations(confidence: Double, types: Boolean = false, json: Boolean = false): Map[String, Seq[Annotation]] = {
+    annotations.getOrElseUpdate(confidence + "_" + types, fetchDbpediaAnnotations(confidence, json, types))
+  }
+}
 
 object Spotlight extends RddSerializer {
 
   implicit val formats = Serialization.formats(NoTypeHints)
 
   /** Combine and store annotations with DBpedia, Wikidata and Freebase ID's */
-  def combineAndCacheIds() = {
+  def combineAndCacheIds(confidence: Double = 0.5) = {
     val dbp = WikiData.dbToWd
     val dbf = WikiData.wdToFb
-    val rdd = dbpedia(sc)
+    val rdd = DBpediaFetcher.dbpedia(confidence)
       .map(_.entity.id)
       .map(a => (a, 1))
       .reduceByKey(_ + _)
@@ -33,33 +57,7 @@ object Spotlight extends RddSerializer {
         f"$count%-8s ${wd.getOrElse("")}%-10s ${fb.getOrElse("")}%-12s $db"
       }
 
-    saveAsText(rdd, Config.dbpedia)
-  }
-
-  lazy val dbpediaAnnotations       : Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpedia)
-  lazy val dbpediaAnnotationsMini25 : Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpediaMini25)
-  lazy val dbpediaAnnotationsMini50 : Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpediaMini50)
-  lazy val dbpediaAnnotationsMini75 : Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpediaMini75)
-  lazy val dbpediaAnnotationsMini100: Map[String, Seq[Annotation]] = fetchDbpediaAnnotations(Config.dbpediaMini100)
-
-  def fetchDbpediaAnnotationsJson(dbpedia: String): Map[String, Seq[Annotation]] = {
-    CorpusContext.sc.textFile("file:///" + dbpedia)
-      .map(DBPediaAnnotation.fromSingleJson)
-      .map(AnnotationUtils.fromDbpedia)
-      //      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
-      .groupBy(_.articleId)
-      .map { case (k, v) => (k, v.toSeq) }
-      .collect.toMap
-  }
-
-  def fetchDbpediaAnnotations(dbpedia: String): Map[String, Seq[Annotation]] = {
-    CorpusContext.sc.textFile("file:///" + dbpedia)
-      .map(DBPediaAnnotation.deserialize)
-      .map(AnnotationUtils.fromDbpedia)
-      //      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
-      .groupBy(_.articleId)
-      .map { case (k, v) => (k, v.toSeq) }
-      .collect.toMap
+    saveAsText(rdd, Config.cachePath + "combined_ids.txt")
   }
 
   def fetchEntities(file: String): Map[String, Entity] = CorpusContext.sc.textFile("file:///" + file).map(Entity.fromSingleJson).map(e => (e.id, e)).collect.toMap
@@ -73,33 +71,11 @@ object Spotlight extends RddSerializer {
     }).groupBy(_._1).map { case (k, v) => (k, v.map(_._2).toSet) }.collect.toMap
   }
 
-  lazy val dbpediaAnnotationsWithTypes: Map[String, Seq[Annotation]] = {
-    CorpusContext.sc.textFile("file:///" + Config.dbpedia)
-      .map(DBPediaAnnotation.fromSingleJson)
-      .flatMap(ann => Seq(AnnotationUtils.fromDbpedia(ann)) ++ AnnotationUtils.fromDBpediaType(ann))
-      .groupBy(_.articleId)
-      .filter(_._2.nonEmpty)
-      .map { case (k, v) => (k, v.toSeq.filter(ann => W2VLoader.contains(ann.fb))) }
-      .collect.toMap
-  }
-
-  def toDBPediaAnnotated(a: Article, dbpediaAnnotations: Map[String, Seq[Annotation]]): Article = {
-    dbpediaAnnotations.get(a.id) match {
+  def toDBPediaAnnotated(a: Article, db: Map[String, Seq[Annotation]]): Article = {
+    db.get(a.id) match {
       case Some(ann) => a.copy(ann = a.ann ++ ann.map(a => (a.id, a)).toMap)
-      case None => Log.v("NO DBPEDIA: " + a.id); a
+      case None => /** Log.v("NO DBPEDIA: " + a.id);*/ a
     }
-  }
-
-  def toDBPediaAnnotatedWithTypes(a: Article, dbpediaAnnotations: Map[String, Seq[Annotation]]): Article = {
-    dbpediaAnnotationsWithTypes.get(a.id) match {
-      case Some(ann) => a.copy(ann = a.ann ++ ann.map(a => (a.id, a)).filter(a => a._2.fb != Config.NONE && W2VLoader.contains(a._1)).toMap)
-      case None => Log.v("NO DBPEDIA: " + a.id); a
-    }
-  }
-
-  def dbpedia(sc: SparkContext, name: String = Config.dbpedia): RDD[DBPediaAnnotation] = {
-    val rdd = sc.textFile("file:///" + name).map(DBPediaAnnotation.fromSingleJson)
-    if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(Config.count)) else rdd
   }
 
   /** Entity extraction using DBPedia Spotlight REST API */

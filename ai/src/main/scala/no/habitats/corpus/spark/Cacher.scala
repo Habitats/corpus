@@ -3,7 +3,7 @@ package no.habitats.corpus.spark
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
-import no.habitats.corpus.common.models.{Annotation, Article}
+import no.habitats.corpus.common.models.{Annotation, Article, DBPediaAnnotation}
 import org.apache.spark.rdd.RDD
 
 import scala.util.Random
@@ -11,7 +11,7 @@ import scala.util.Random
 object Cacher extends RddSerializer {
 
   def annotateAndCacheArticles(confidence: Double) = {
-    val allAnnotations: Map[String, Seq[Annotation]] = Spotlight.fetchDbpediaAnnotations(Config.dataPath + s"dbpedia/dbpedia_string_${confidence}_all.txt")
+    val allAnnotations: Map[String, Seq[Annotation]] = DBpediaFetcher.dbpediaAnnotations(confidence)
     val rdd = Fetcher.rddMinimal.map(a => allAnnotations.get(a.id) match {
       case Some(annotations) => a.copy(ann = annotations.map(annotation => (annotation.id, annotation)).toMap)
       case None => a.copy(ann = Map())
@@ -20,19 +20,12 @@ object Cacher extends RddSerializer {
   }
 
   /** Fetch json RDD and compute IPTC and annotations */
-  def annotateAndCacheArticlesConfidence() = {
-    val db25 = Spotlight.dbpediaAnnotationsMini25
-    var rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db25)).map(_.toMinimal).filter(_.ann.nonEmpty)
-    saveAsText(rdd.map(Article.serialize), "nyt_mini_train_annotated_25")
-    val db50 = Spotlight.dbpediaAnnotationsMini50
-    rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db50)).map(_.toMinimal).filter(_.ann.nonEmpty)
-    saveAsText(rdd.map(Article.serialize), "nyt_mini_train_annotated_50")
-    val db75 = Spotlight.dbpediaAnnotationsMini75
-    rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db75)).map(_.toMinimal).filter(_.ann.nonEmpty)
-    saveAsText(rdd.map(Article.serialize), "nyt_mini_train_annotated_75")
-    val db100 = Spotlight.dbpediaAnnotationsMini100
-    rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db100)).map(_.toMinimal).filter(_.ann.nonEmpty)
-    saveAsText(rdd.map(Article.serialize), "nyt_mini_train_annotated_100")
+  def annotateAndCacheArticles() = {
+    Seq(0.25, 0.50, 0.75, 1.0).foreach(confidence => {
+      val db = DBpediaFetcher.dbpediaAnnotations(confidence)
+      val rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db)).map(_.toMinimal).filter(_.ann.nonEmpty)
+      saveAsText(rdd.map(Article.serialize), s"nyt_mini_train_annotated_$confidence")
+    })
   }
 
   def split(rdd: RDD[Article], i: Int) = {
@@ -44,7 +37,7 @@ object Cacher extends RddSerializer {
   def cacheTfidf() = {
     val train = Fetcher.annotatedTrainOrdered
     val tfidf = TFIDF(train, Config.termFrequencyThreshold.getOrElse(100))
-//    train.map(a => a.copy(ann = a.ann.values.map(an => (an.id, an.copy(tfidf = tfidf.tfidf(a, an))))))
+    //    train.map(a => a.copy(ann = a.ann.values.map(an => (an.id, an.copy(tfidf = tfidf.tfidf(a, an))))))
   }
 
   def scrambler() = {
@@ -57,6 +50,11 @@ object Cacher extends RddSerializer {
     }
   }
 
+  def asd = {
+    val rdd: Seq[Array[DBPediaAnnotation]] = Seq(0.25, 0.5, 0.75, 1.0).map(confidence => DBpediaFetcher.dbpedia(confidence).take(10))
+    rdd.foreach(_.map(DBPediaAnnotation.serialize).foreach(println))
+  }
+
   def computeAndCacheDBPediaAnnotationsToJson(rdd: RDD[Article], partition: Option[Int] = None) = {
     //    Spotlight.cacheDbpedia(rdd, 0.25, w2vFilter = true, partition)
     //    Spotlight.cacheDbpedia(rdd, 0.5, w2vFilter = true)
@@ -64,11 +62,11 @@ object Cacher extends RddSerializer {
     Spotlight.cacheDbpedia(rdd, 1, w2vFilter = true, partition)
   }
 
-  def annotateAndCacheArticlesWithTypes() = {
-    val annotations = Spotlight.dbpediaAnnotationsWithTypes
-    val rdd = Fetcher.annotatedTrainOrdered.map(a => Spotlight.toDBPediaAnnotatedWithTypes(a, annotations))
+  def annotateAndCacheArticlesWithTypes(confidence: Double = 0.5) = {
+    val db = DBpediaFetcher.dbpediaAnnotations(confidence, types = true)
+    val rdd = Fetcher.annotatedTrainOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db))
     saveAsText(rdd.map(Article.serialize), "nyt_train_ordered_types")
-    val rdd2 = Fetcher.subTrainOrdered.map(a => Spotlight.toDBPediaAnnotatedWithTypes(a, annotations))
+    val rdd2 = Fetcher.subTrainOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db))
     saveAsText(rdd2.map(Article.serialize), "subsampled_train_ordered_types")
   }
 

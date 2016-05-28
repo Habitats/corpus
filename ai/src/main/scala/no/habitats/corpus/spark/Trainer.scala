@@ -49,27 +49,27 @@ object Trainer extends NeuralTrainer with Serializable {
 
   // Chosen baseline
   def trainRNNW2V() = {
-    val (train, validation) = Fetcher.ordered
+    val (train, validation) = Fetcher.ordered()
     trainRecurrentW2V(train, validation, "all-rnn-w2v")
   }
 
   def trainFFNW2V() = {
-    val (train, validation) = Fetcher.ordered
+    val (train, validation) = Fetcher.ordered()
     trainFeedforwardW2V(train, validation, "all-ffn-w2v")
   }
 
   def trainFFNBoW() = {
-    val (train, validation) = Fetcher.ordered
+    val (train, validation) = Fetcher.ordered()
     trainFeedforwardBoW(train, validation, "all-ffn-bow", termFrequencyThreshold = 100)
   }
 
   def trainNaiveW2V() = {
-    val (train, validation) = Fetcher.ordered
+    val (train, validation) = Fetcher.ordered()
     trainNaiveBayesW2V(train, validation, "all-nb-w2v")
   }
 
   def trainNaiveBoW() = {
-    val (train, validation) = Fetcher.ordered
+    val (train, validation) = Fetcher.ordered()
     trainNaiveBayesBoW(train, validation, "all-nb-bow", termFrequencyThreshold = 100)
   }
 
@@ -85,12 +85,12 @@ object Trainer extends NeuralTrainer with Serializable {
 
   // Ex3 - Types
   def trainFFNW2VTypes() = {
-    val (train, validation) = Fetcher.types
+    val (train, validation) = Fetcher.ordered(types = true)
     trainFeedforwardW2V(train, validation, "types-ffa-w2v")
   }
 
   def trainRNNW2VTypes() = {
-    val (train, validation) = Fetcher.types
+    val (train, validation) = Fetcher.ordered(types = true)
     trainRecurrentW2V(train, validation, "types-rrn-w2v")
   }
 
@@ -111,12 +111,12 @@ object Trainer extends NeuralTrainer with Serializable {
 
   // SPARK
   def trainFFNSparkOrdered() = {
-    val (train, validation) = Fetcher.ordered
+    val (train, validation) = Fetcher.ordered()
     trainSpark(train, validation, "ffn-w2v-spark", sparkFFNTrainer)
   }
 
   def trainRNNW2VSpark() = {
-    val (train, validation) = Fetcher.ordered
+    val (train, validation) = Fetcher.ordered()
     trainSpark(train, validation, "rnn-w2v-spark", sparkRNNTrainer)
   }
 }

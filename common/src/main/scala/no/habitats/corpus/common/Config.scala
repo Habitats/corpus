@@ -13,11 +13,6 @@ object Config {
   val seed = 123
   val NONE = "NONE"
 
-  lazy val dbpedia            = dataPath + "dbpedia/dbpedia-all-0.5.json"
-  lazy val dbpediaMini25      = dataPath + "dbpedia/dbpedia_mini_json_0.25.json"
-  lazy val dbpediaMini50      = dataPath + "dbpedia/dbpedia_mini_json_0.50.json"
-  lazy val dbpediaMini75      = dataPath + "dbpedia/dbpedia_mini_json_0.75.json"
-  lazy val dbpediaMini100     = dataPath + "dbpedia/dbpedia_mini_json_1.00.json"
   lazy val combinedIds        = dataPath + "dbpedia/combined_ids_0.5.txt"
   lazy val freebaseToWikidata = dataPath + "dbpedia/fb_to_wd_all.txt"
   lazy val wikidataToFreebase = dataPath + "dbpedia/wd_to_fb.txt"
@@ -127,9 +122,11 @@ object Config {
       job = props.remove("job"),
       iptcFilter = props.remove("iptcFilter").map(_.split(",").toSet),
       category = props.remove("category"),
+      types = props.remove("types").map(_.toBoolean),
       count = props.remove("count").map(_.toInt),
       useApi = props.remove("useApi").map(_.toBoolean),
       learningRate = props.remove("lr").map(_.toDouble),
+      confidence = props.remove("confidence").map(_.toDouble),
       l2 = props.remove("l2").map(_.toDouble),
       miniBatchSize = props.remove("mbs").map(_.toInt),
       cache = props.remove("cache").map(_.toBoolean),
@@ -160,6 +157,7 @@ object Config {
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
   lazy val category              : Option[String]  = args.category
   lazy val learningRate          : Option[Double]  = args.learningRate
+  lazy val confidence            : Option[Double]  = args.confidence
   lazy val miniBatchSize         : Option[Int]     = args.miniBatchSize
   lazy val epoch                 : Option[Int]     = args.epoch
   lazy val iterations            : Option[Int]     = args.iterations
@@ -167,6 +165,7 @@ object Config {
   lazy val hidden2               : Option[Int]     = args.hidden2
   lazy val hidden3               : Option[Int]     = args.hidden3
   lazy val superSample           : Option[Boolean] = args.superSample
+  lazy val types                 : Option[Boolean] = args.types
   lazy val l2                    : Option[Double]  = args.l2
   lazy val termFrequencyThreshold: Option[Int]     = args.tft
   lazy val logResults            : Option[Boolean] = args.logResults
@@ -180,11 +179,13 @@ object Config {
                         iptcFilter: Option[Set[String]],
                         useApi: Option[Boolean],
                         learningRate: Option[Double],
+                        confidence: Option[Double],
                         l2: Option[Double],
                         miniBatchSize: Option[Int],
                         cache: Option[Boolean],
                         histogram: Option[Boolean],
                         logResults: Option[Boolean],
+                        types: Option[Boolean],
                         hidden1: Option[Int],
                         hidden2: Option[Int],
                         hidden3: Option[Int],

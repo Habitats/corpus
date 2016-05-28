@@ -56,10 +56,26 @@ object Fetcher extends RddSerializer {
   lazy val subTrainShuffled     : RDD[Article] = fetch("nyt/subsampled_train_shuffled.txt", 0.6)
   lazy val subValidationShuffled: RDD[Article] = fetch("nyt/subsampled_validation_shuffled.txt", 0.2)
 
-  def ordered: (RDD[Article], RDD[Article]) = (annotatedTrainOrdered, annotatedValidationOrdered)
+  def ordered(types: Boolean = Config.types.getOrElse(false), confidence: Double = Config.confidence.getOrElse(0.5)): (RDD[Article], RDD[Article]) = {
+    if (!types && confidence == 0.5) {
+      // If possible, use cached
+      Log.v("Using cached training ...")
+      (annotatedTrainOrdered, annotatedValidationOrdered)
+    } else if (types && confidence == 0.5) {
+      // This is cached too ...
+      Log.v("Using cached training with types ...")
+      (annotatedTrainOrderedTypes, annotatedValidationOrdered)
+    } else {
+      // Otherwise compute dataset
+      Log.v("Dataset not cached. Generating ...")
+      val db = DBpediaFetcher.dbpediaAnnotations(confidence, types)
+      (annotatedTrainOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db)), annotatedValidationOrdered)
+    }
+  }
+
   def subsampled: (RDD[Article], RDD[Article]) = (subTrainOrdered, subValidationOrdered)
+
   def shuffled: (RDD[Article], RDD[Article]) = (annotatedTrainShuffled, annotatedValidationShuffled)
-  def types: (RDD[Article], RDD[Article]) = (annotatedTrainOrderedTypes, annotatedValidationOrdered)
 
   def by(name: String): RDD[Article] = fetch("nyt/" + name)
 
@@ -67,7 +83,7 @@ object Fetcher extends RddSerializer {
 
   def limit(rdd: RDD[Article], fraction: Double = 1): RDD[Article] = {
     val num = (Config.count * fraction).toInt
-    if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(num),(Config.partitions * fraction).toInt)
+    if (Config.count < Integer.MAX_VALUE) sc.parallelize(rdd.take(num), (Config.partitions * fraction).toInt)
     else rdd
   }
 

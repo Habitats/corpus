@@ -1,5 +1,5 @@
 import no.habitats.corpus.Corpus
-import no.habitats.corpus.common.{Config, Spotlight}
+import no.habitats.corpus.common.{Config, DBpediaFetcher, Spotlight}
 import no.habitats.corpus.spark.Fetcher
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
@@ -22,9 +22,10 @@ class SparkTest extends FunSuite with Spark {
   }
 
   test("load some articles the new way") {
-    val db = Spotlight.dbpediaAnnotations
     val limit = 1000
     //    sc.parallelize(IO.walk(Config.dataPath + "/nyt/", count = limit, filter = ".xml"))
+    val confidence: Double = 0.5
+    val db = DBpediaFetcher.dbpediaAnnotations(confidence)
     sc.parallelize(
       Fetcher.rdd.take(limit)
     )

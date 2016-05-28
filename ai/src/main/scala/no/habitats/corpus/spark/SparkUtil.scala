@@ -37,12 +37,12 @@ object SparkUtil {
         case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
         case "printArticles" => printArticles(Config.count)
         case "misc" =>
-          Cacher.savePhrases(Fetcher.annotatedTrainOrdered, Fetcher.annotatedValidationOrdered, Fetcher.annotatedTestOrdered)
+          Cacher.asd
 
         // Generate datasets
         case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()
         case "computeDbAnnotations" => Cacher.computeAndCacheDBPediaAnnotationsToJson(Fetcher.rdd.sortBy(_.id.toInt))
-        case "computeDbAnnotationsConfidence" => Cacher.annotateAndCacheArticlesConfidence()
+        case "computeDbAnnotationsConfidence" => Cacher.annotateAndCacheArticles()
 
         case "wdToFbFromDump" => WikiData.extractFreebaseFromWikiDump()
         case "dbpediaToWdFromDump" => WikiData.extractWikiIDFromDbpediaDump()
@@ -93,6 +93,7 @@ object SparkUtil {
         case "trainFFNW2VTime" => Trainer.trainFFNW2VTime()
 
         case "trainRNNTypes" => Trainer.trainRNNW2VTypes()
+        case "trainNaiveBoWTypes" => Trainer.trainRNNW2VTypes()
         case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
 
         case "train" =>
