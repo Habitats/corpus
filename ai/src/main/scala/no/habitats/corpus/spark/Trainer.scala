@@ -176,7 +176,7 @@ sealed case class FeedforwardTrainer(
                                       tag: Option[String] = None
                                     ) extends ModelTrainer with NeuralTrainer {
 
-  override val prefix = "nb"
+  override val prefix = "ffn"
 
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     W2VLoader.preload(wordVectors = true, documentVectors = true)
@@ -213,7 +213,7 @@ sealed case class RecurrentTrainer(
                                     hiddenNodes: Int = Config.hidden1.getOrElse(10),
                                     tag: Option[String] = None) extends ModelTrainer with NeuralTrainer {
 
-  override val prefix = "nb"
+  override val prefix = "rnn"
 
   override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int) = ???
 
