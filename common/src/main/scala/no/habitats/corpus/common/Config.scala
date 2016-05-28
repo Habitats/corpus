@@ -139,7 +139,8 @@ object Config {
       superSample = props.remove("super").map(_.toBoolean),
       iterations = props.remove("iter").map(_.toInt),
       epoch = props.remove("epoch").map(_.toInt),
-      logResults = props.remove("logres").map(_.toBoolean)
+      logResults = props.remove("logres").map(_.toBoolean),
+      spark = props.remove("spark").map(_.toBoolean)
     )
     if (props.nonEmpty) {Log.v("Illegal props: " + props.mkString(", ")); System.exit(0)}
     Log.v("Categories: " + cats.mkString(", "))
@@ -154,6 +155,7 @@ object Config {
   lazy val cache                 : Boolean         = args.cache.getOrElse(false)
   lazy val histogram             : Boolean         = args.histogram.getOrElse(false)
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
+  lazy val spark                 : Boolean         = args.spark.getOrElse(false)
   lazy val category              : Option[String]  = args.category
   lazy val learningRate          : Option[Double]  = args.learningRate
   lazy val confidence            : Option[Double]  = args.confidence
@@ -184,6 +186,7 @@ object Config {
                         cache: Option[Boolean],
                         histogram: Option[Boolean],
                         logResults: Option[Boolean],
+                        spark: Option[Boolean],
                         types: Option[Boolean],
                         hidden1: Option[Int],
                         hidden2: Option[Int],

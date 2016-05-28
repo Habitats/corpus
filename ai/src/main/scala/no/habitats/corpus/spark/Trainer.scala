@@ -136,11 +136,16 @@ sealed trait ModelTrainer {
 
 sealed trait NeuralTrainer {
 
-  def trainNetwork(validation: RDD[Article], training: (String) => RDD[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, RDD[Article]) => MultiLayerNetwork) = {
+  def trainNetwork(validation: RDD[Article], training: (String) => RDD[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, Array[Article]) => MultiLayerNetwork) = {
+    if(Config.spark) sequential(validation,training ,name, minibatchSize, learningRate, trainer)
+    else parallel(validation, training("") ,name, minibatchSize, learningRate, trainer)
+  }
+
+  def sequential(validation: RDD[Article], training: (String) => RDD[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, Array[Article]) => MultiLayerNetwork): Seq[Unit] = {
     for {lr <- learningRate} yield {
       val prefs = NeuralPrefs(learningRate = lr, validation = validation.collect(), minibatchSize = minibatchSize, epochs = 1)
       Config.cats.foreach(c => {
-        val processedTraining: RDD[Article] = training(c)
+        val processedTraining = training(c).collect()
         val net: MultiLayerNetwork = trainer(c, prefs, processedTraining)
         NeuralModelLoader.save(net, c, Config.count, name)
         System.gc()
@@ -148,6 +153,20 @@ sealed trait NeuralTrainer {
     }
   }
 
+  def parallel(validation: RDD[Article], train: RDD[Article], name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, Array[Article]) => MultiLayerNetwork) = {
+    for {lr <- learningRate} yield {
+      // Force pre-generation of document vectors before entering Spark to avoid passing W2V references between executors
+      train.foreach(_.toDocumentVector)
+      validation.foreach(_.toDocumentVector)
+      val sparkTrain = sc.broadcast(train.collect())
+      val prefs = NeuralPrefs(learningRate = lr, validation = validation.collect(), minibatchSize = minibatchSize, epochs = 1)
+      sc.parallelize(Config.cats).foreach(c => {
+        val net: MultiLayerNetwork = trainer(c, prefs, sparkTrain.value)
+        NeuralModelLoader.save(net, c, Config.count, name)
+        System.gc()
+      })
+    }
+  }
 }
 
 sealed case class FeedforwardTrainer(
@@ -161,7 +180,7 @@ sealed case class FeedforwardTrainer(
 
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     W2VLoader.preload(wordVectors = true, documentVectors = true)
-    trainNetwork(validation, processTraining(train, superSample), name, minibatchSize, learningRate, binaryFFNW2VTrainer)
+    trainNetwork(validation, processTraining(train, superSample), name, minibatchSize, learningRate, (label, neuralPrefs, train) => binaryFFNW2VTrainer(label, neuralPrefs, train))
   }
 
   override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int = 100) = {
@@ -172,16 +191,16 @@ sealed case class FeedforwardTrainer(
     trainNetwork(processedValidation, processTraining(processedTraining, superSample), name, minibatchSize, learningRate, (label, neuralPrefs, train) => binaryFFNBoWTrainer(label, neuralPrefs, train, tfidf))
   }
 
-  private def binaryFFNW2VTrainer(label: String, neuralPrefs: NeuralPrefs, train: RDD[Article]): MultiLayerNetwork = {
+  private def binaryFFNW2VTrainer(label: String, neuralPrefs: NeuralPrefs, train: Array[Article]): MultiLayerNetwork = {
     val net = FeedForward.create(neuralPrefs)
-    val trainIter = new FeedForwardIterator(train.collect(), label, batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new FeedForwardIterator(train, label, batchSize = neuralPrefs.minibatchSize)
     val testIter = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
 
-  private def binaryFFNBoWTrainer(label: String, neuralPrefs: NeuralPrefs, train: RDD[Article], tfidf: TFIDF): MultiLayerNetwork = {
+  private def binaryFFNBoWTrainer(label: String, neuralPrefs: NeuralPrefs, train: Array[Article], tfidf: TFIDF): MultiLayerNetwork = {
     val net = FeedForward.createBoW(neuralPrefs, tfidf.phrases.size)
-    val trainIter = new FeedForwardIterator(train.collect(), label, batchSize = neuralPrefs.minibatchSize, Some(tfidf))
+    val trainIter = new FeedForwardIterator(train, label, batchSize = neuralPrefs.minibatchSize, Some(tfidf))
     val testIter = new FeedForwardIterator(neuralPrefs.validation, label, batchSize = neuralPrefs.minibatchSize, Some(tfidf))
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
@@ -204,9 +223,9 @@ sealed case class RecurrentTrainer(
   }
 
   // Binary trainers
-  private def binaryRNNTrainer(label: String, neuralPrefs: NeuralPrefs, train: RDD[Article]): MultiLayerNetwork = {
+  private def binaryRNNTrainer(label: String, neuralPrefs: NeuralPrefs, train: Array[Article]): MultiLayerNetwork = {
     val net = RNN.createBinary(neuralPrefs.copy(hiddenNodes = hiddenNodes))
-    val trainIter = new RNNIterator(train.collect(), Some(label), batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new RNNIterator(train, Some(label), batchSize = neuralPrefs.minibatchSize)
     val testIter = new RNNIterator(neuralPrefs.validation, Some(label), batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
   }
