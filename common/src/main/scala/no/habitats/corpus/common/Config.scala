@@ -140,8 +140,7 @@ object Config {
       superSample = props.remove("super").map(_.toBoolean),
       iterations = props.remove("iter").map(_.toInt),
       epoch = props.remove("epoch").map(_.toInt),
-      logResults = props.remove("logres").map(_.toBoolean),
-      spark = props.remove("spark").map(_.toBoolean)
+      logResults = props.remove("logres").map(_.toBoolean)
     )
     if (props.nonEmpty) {Log.v("Illegal props: " + props.mkString(", ")); System.exit(0)}
     Log.v("Categories: " + cats.mkString(", "))
@@ -152,12 +151,11 @@ object Config {
   lazy val job        : String  = args.job.getOrElse(conf.getProperty("job"))
   lazy val rdd        : String  = args.rdd.getOrElse(conf.getProperty("rdd"))
   lazy val partitions : Int     = args.partitions.getOrElse(conf.getProperty("partitions").toInt)
-  lazy val parallelism: Int     = args.parallelism.getOrElse(4)
+  lazy val parallelism: Int     = args.parallelism.getOrElse(1)
   lazy val count      : Int     = args.count.getOrElse(conf.getProperty("count").toInt) match {case i => if (i == -1) Integer.MAX_VALUE else i}
   lazy val cache      : Boolean = args.cache.getOrElse(false)
   lazy val histogram  : Boolean = args.histogram.getOrElse(false)
   lazy val useApi     : Boolean = args.useApi.getOrElse(false)
-  lazy val spark      : Boolean = args.spark.getOrElse(false)
   lazy val category              : Option[String]  = args.category
   lazy val learningRate          : Option[Double]  = args.learningRate
   lazy val confidence            : Option[Double]  = args.confidence
@@ -189,7 +187,6 @@ object Config {
                         cache: Option[Boolean],
                         histogram: Option[Boolean],
                         logResults: Option[Boolean],
-                        spark: Option[Boolean],
                         types: Option[Boolean],
                         hidden1: Option[Int],
                         hidden2: Option[Int],
