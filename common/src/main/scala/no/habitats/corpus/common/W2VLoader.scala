@@ -74,26 +74,10 @@ private class TextVectorLoader extends VectorLoader {
   }
 }
 
-sealed class SparkVectorLoader extends VectorLoader {
-
-  // Spark broadcasting (it's not pretty but maybe it works?)
-  lazy val bVectors        : Broadcast[Map[String, INDArray]] = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.freebaseToWord2Vec()))
-  lazy val bDocumentVectors: Broadcast[Map[String, INDArray]] = CorpusContext.sc.broadcast[Map[String, INDArray]](loadVectors(Config.documentVectors()))
-
-  override def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = {
-    bVectors
-    bDocumentVectors
-  }
-
-  override def contains(fb: String): Boolean = bVectors.value.contains(fb)
-  override def fromId(fb: String): Option[INDArray] = bVectors.value.get(fb)
-  override def documentVector(a: Article): INDArray = bDocumentVectors.value.getOrElse(a.id, W2VLoader.calculateDocumentVector(a.ann))
-}
-
 object W2VLoader extends RddSerializer with VectorLoader {
 
   implicit val formats              = Serialization.formats(NoTypeHints)
-  lazy     val loader: VectorLoader = if (false) new SparkVectorLoader() else new TextVectorLoader()
+  lazy     val loader: VectorLoader = new TextVectorLoader()
 
   def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = loader.preload(wordVectors, documentVectors)
 
