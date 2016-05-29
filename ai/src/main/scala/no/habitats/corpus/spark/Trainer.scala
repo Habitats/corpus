@@ -16,6 +16,36 @@ import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 import scala.language.implicitConversions
 
 object Trainer extends Serializable {
+  def st1() = {
+    val (train, validation) = Fetcher.ordered()
+    FeedforwardTrainer(superSample = true).trainW2V(train, validation)
+    FeedforwardTrainer(superSample = false).trainW2V(train, validation)
+    FeedforwardTrainer(superSample = true).trainBoW(train, validation)
+    FeedforwardTrainer(superSample = false).trainBoW(train, validation)
+  }
+
+  def st2() = {
+    val train = Fetcher.by("time/nyt_time_train.txt")
+    val validation = Fetcher.by("time/nyt_time_0_validation.txt")
+    val learningRates = Seq(1.0, 0.75, 0.5, 0.25, 0.1, 0.075, 0.05)
+    NaiveBayesTrainer(tag = Some("time")).trainBoW(train, validation, termFrequencyThreshold = 5)
+    NaiveBayesTrainer(tag = Some("time")).trainW2V(train, validation)
+    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 5)
+    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
+    RecurrentTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
+  }
+
+  def virt() = {
+    val train = Fetcher.by("time/nyt_time_train.txt")
+    val validation = Fetcher.by("time/nyt_time_0_validation.txt")
+    val learningRates = Seq(1.0, 0.75, 0.5, 0.25, 0.1, 0.075, 0.05)
+    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 5)
+    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
+    RecurrentTrainer(tag = Some("time"), learningRate = learningRates, hiddenNodes = 10).trainW2V(train, validation)
+    RecurrentTrainer(tag = Some("time"), learningRate = learningRates, hiddenNodes = 20).trainW2V(train, validation)
+    RecurrentTrainer(tag = Some("time"), learningRate = learningRates, hiddenNodes = 100).trainW2V(train, validation)
+  }
+
   implicit def seqthis(a: Double): Seq[Double] = Seq(a)
 
   // ### Best models
