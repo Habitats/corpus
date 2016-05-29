@@ -41,9 +41,9 @@ object Trainer extends Serializable {
     val learningRates = Seq(1.0, 0.75, 0.5, 0.25, 0.1, 0.075, 0.05)
     FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 5)
     FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
-    RecurrentTrainer(tag = Some("time"), learningRate = learningRates, hiddenNodes = 10).trainW2V(train, validation)
-    RecurrentTrainer(tag = Some("time"), learningRate = learningRates, hiddenNodes = 20).trainW2V(train, validation)
-    RecurrentTrainer(tag = Some("time"), learningRate = learningRates, hiddenNodes = 100).trainW2V(train, validation)
+    RecurrentTrainer(tag = Some("time-h10"), learningRate = learningRates, hiddenNodes = 10).trainW2V(train, validation)
+    RecurrentTrainer(tag = Some("time-h20"), learningRate = learningRates, hiddenNodes = 20).trainW2V(train, validation)
+    RecurrentTrainer(tag = Some("time-h100"), learningRate = learningRates, hiddenNodes = 100).trainW2V(train, validation)
   }
 
   implicit def seqthis(a: Double): Seq[Double] = Seq(a)
