@@ -209,7 +209,7 @@ case class FeedforwardTester(modelName: String) extends Testable {
 case class RecurrentTester(modelName: String) extends Testable {
   lazy val rnn: Map[String, NeuralModel] = NeuralModelLoader.models(modelName)
 
-  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test.asInstanceOf[CorpusMatrix], Some(label), 50)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test.asInstanceOf[CorpusMatrix], label, 50)
   override def models(modelName: String): Map[String, NeuralModel] = rnn
 }
 

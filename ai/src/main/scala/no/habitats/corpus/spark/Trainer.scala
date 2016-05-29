@@ -185,10 +185,10 @@ sealed trait NeuralTrainer {
     Log.result("")
     Log.result(name)
     for (i <- 0 until iterations) {
-      val labelEvals: Seq[NeuralEvaluation] = allRes.map(_(i)).sortBy(_.label)
+      val labelEvals: Seq[NeuralEvaluation] = allRes.map(_ (i)).sortBy(_.label)
       Log.result("")
       Log.result(s"Category stats epoch $i ...\n")
-      labelEvals.sortBy(_.label).zipWithIndex.foreach{case (e, i) => e.log("valid", name, header = i == 0)}
+      labelEvals.sortBy(_.label).zipWithIndex.foreach { case (e, i) => e.log("valid", name, header = i == 0) }
       Log.result("")
       NeuralEvaluation.log(labelEvals, Config.cats, i)
     }
@@ -254,8 +254,8 @@ sealed case class RecurrentTrainer(
   private def binaryRNNTrainer(neuralPrefs: NeuralPrefs, tw: IteratorPrefs): NeuralResult = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     val net = RNN.createBinary(neuralPrefs.copy(hiddenNodes = hiddenNodes))
-    val trainIter = new RNNIterator(tw.training.asInstanceOf[CorpusMatrix], Some(tw.label), batchSize = neuralPrefs.minibatchSize)
-    val testIter = new RNNIterator(tw.validation.asInstanceOf[CorpusMatrix], Some(tw.label), batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new RNNIterator(tw.training.asInstanceOf[CorpusMatrix], tw.label, batchSize = neuralPrefs.minibatchSize)
+    val testIter = new RNNIterator(tw.validation.asInstanceOf[CorpusMatrix], tw.label, batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(name, tw.label, neuralPrefs, net, trainIter, testIter)
   }
 }
