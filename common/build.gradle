@@ -33,6 +33,7 @@ dependencies {
     compile 'org.deeplearning4j:deeplearning4j-nlp:' + project.dl4jVersion
     compile 'org.deeplearning4j:deeplearning4j-ui:' + project.dl4jVersion
     compile 'org.deeplearning4j:dl4j-spark_' + project.scalaBinary + ':' + project.dl4jVersion
+//    compile 'org.deeplearning4j:nd4j-kryo_' + project.scalaBinary + ':' + project.dl4jVersion
     compile 'org.nd4j:canova-spark_' + project.scalaBinary + ':0.0.0.16-SNAPSHOT'
     compile 'org.nd4j:nd4j-native:' + project.dl4jVersion
     compile 'org.nd4j:nd4j-native:' + project.dl4jVersion + ':' + project.os  // Native crash otherwise

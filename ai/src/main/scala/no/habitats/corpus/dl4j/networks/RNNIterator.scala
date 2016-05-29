@@ -38,11 +38,11 @@ class RNNIterator(allArticles: CorpusMatrix, label: String, batchSize: Int) exte
         featureMask.putScalar(Array(i, j), 1.0)
       }
       // binary
-      val labelIndex: Int = annotations.length - 1
+      val labelPosition: Int = annotations.length - 1
       val label: Int = articles(i)._2(labelIndex)
-      labels.putScalar(Array(i, label, labelIndex), 1.0)
+      labels.putScalar(Array(i, label, labelPosition), 1.0)
       // Specify that an output exists at the final time step for this example
-      labelsMask.putScalar(Array(i, labelIndex), 1.0)
+      labelsMask.putScalar(Array(i, labelPosition), 1.0)
     }
 
     counter += articles.length
