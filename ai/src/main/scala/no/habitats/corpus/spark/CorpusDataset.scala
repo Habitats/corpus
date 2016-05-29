@@ -14,7 +14,7 @@ case class CorpusVectors(data: Array[(INDArray, Array[Int])]) extends CorpusData
   override def label(articleIndex: Int, labelIndex: Int): Int = data(articleIndex)._2(labelIndex)
 }
 
-case class CorpusMatrix(data: Array[(Array[INDArray], Array[Int])]) extends CorpusDataset {
+case class CorpusMatrix(data: Array[(Array[(String, Float)], Array[Int])]) extends CorpusDataset {
   override def label(articleIndex: Int, labelIndex: Int): Int = data(articleIndex)._2(labelIndex)
 }
 
@@ -28,7 +28,7 @@ object CorpusDataset {
 
   def genW2VMatrix(articles: RDD[Article]): CorpusMatrix = {
     CorpusMatrix(articles.map(a => {
-      val annotationVectors: Array[INDArray] = a.ann.values.toArray.sortBy(_.offset).map(an => W2VLoader.fromId(an.id).map(_.mul(an.tfIdf))).filter(_.isDefined).map(_.get)
+      val annotationVectors = a.ann.values.toArray.sortBy(_.offset).map(an => (an.id, an.tfIdf.toFloat))
       (annotationVectors, labelArray(a))
     }).collect)
   }

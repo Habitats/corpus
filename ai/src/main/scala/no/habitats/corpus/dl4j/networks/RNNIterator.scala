@@ -32,7 +32,7 @@ class RNNIterator(allArticles: CorpusMatrix, label: String, batchSize: Int) exte
     val labelsMask = Nd4j.create(Array(articles.length, maxNumberOfFeatures), 'f')
 
     for (i <- articles.indices) {
-      val annotations: Array[INDArray] = articles(i)._1
+      val annotations: Array[INDArray] = articles(i)._1.map{case (id, tfidf) => W2VLoader.fromId(id).get.mul(tfidf)}
       for (j <- annotations.indices) {
         features.put(Array(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.point(j)), annotations(j))
         featureMask.putScalar(Array(i, j), 1.0)
