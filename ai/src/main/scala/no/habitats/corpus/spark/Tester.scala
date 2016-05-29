@@ -191,9 +191,9 @@ sealed trait Testable {
     val testDataset: CorpusDataset = dataset(test)
     models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
       val ffnTest = iter(testDataset, models._1)
-      val rnnEval = NeuralEvaluation(models._2.network, ffnTest.asScala, i, models._1)
-      rnnEval.log()
-      rnnEval
+      val eval = NeuralEvaluation(models._2.network, ffnTest.asScala, i, models._1)
+      eval.log(path = "test", tag = modelName)
+      eval
     }
     }
   }

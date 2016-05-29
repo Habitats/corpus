@@ -1,5 +1,8 @@
 package no.habitats.corpus.spark
 
+import java.util.concurrent.atomic.AtomicInteger
+
+import com.fasterxml.jackson.databind.ser.std.StdJdkSerializers.AtomicIntegerSerializer
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common.dl4j.NeuralModelLoader
 import no.habitats.corpus.common.mllib.MLlibModelLoader
@@ -119,7 +122,12 @@ sealed trait ModelTrainer {
   val superSample: Boolean
   var feat: String = "UNINITIALIZED"
 
-  lazy val name: String = s"${tag.map(_ + "_").getOrElse("")}${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
+  lazy val name: String = {
+    val name = s"${tag.map(_ + "_").getOrElse("")}${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
+    Config.resultsFileName = s"train_$name.txt"
+    Config.resultsCatsFileName = s"train_${name}_cats.txt"
+    name
+  }
 
   def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int = 100)
 
@@ -132,22 +140,25 @@ sealed trait ModelTrainer {
 
 sealed trait NeuralTrainer {
 
-  def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, CorpusDataset, CorpusDataset) => MultiLayerNetwork) = {
-    if (Config.parallelism > 1) parallel(validation, training(""), name, minibatchSize, learningRate, trainer, Config.parallelism)
-    else sequential(validation, training, name, minibatchSize, learningRate, trainer)
+  case class IteratorPrefs(label: String, training: CorpusDataset, validation: CorpusDataset)
+
+  def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], tp: (NeuralPrefs, IteratorPrefs) => MultiLayerNetwork) = {
+    if (Config.parallelism > 1) parallel(validation, training(""), name, minibatchSize, learningRate, tp, Config.parallelism)
+    else sequential(validation, training, name, minibatchSize, learningRate, tp)
   }
 
-  def sequential(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, CorpusDataset, CorpusDataset) => MultiLayerNetwork) = {
+  def sequential(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => MultiLayerNetwork) = {
     for {lr <- learningRate} yield {
-      val prefs = NeuralPrefs(learningRate = lr, minibatchSize = minibatchSize, epochs = 1)
+      val prefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
       Config.cats.foreach(c => {
-        val net: MultiLayerNetwork = trainer(c, prefs, training(c), validation)
+        val trainingPrefs: IteratorPrefs = IteratorPrefs(c, training(c), validation)
+        val net: MultiLayerNetwork = trainer(prefs, trainingPrefs)
         NeuralModelLoader.save(net, c, Config.count, name)
       })
     }
   }
 
-  def parallel(validation: CorpusDataset, train: CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (String, NeuralPrefs, CorpusDataset, CorpusDataset) => MultiLayerNetwork, parallelism: Int) = {
+  def parallel(validation: CorpusDataset, train: CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => MultiLayerNetwork, parallelism: Int) = {
     // Force pre-generation of document vectors before entering Spark to avoid passing W2V references between executors
     Log.v("Broadcasting dataset ...")
     val sparkTrain = sc.broadcast(train)
@@ -155,8 +166,9 @@ sealed trait NeuralTrainer {
     Log.v("Starting distributed training ...")
     for {lr <- learningRate} yield {
       sc.parallelize(Config.cats, numSlices = Math.min(Config.parallelism, Config.cats.size)).map(c => {
-        val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, minibatchSize = minibatchSize, epochs = 1)
-        (c, trainer(c, prefs, sparkTrain.value, sparkValidation.value))
+        val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
+        val trainingPrefs: IteratorPrefs = IteratorPrefs(c, sparkTrain.value, sparkValidation.value)
+        (c, trainer(prefs, trainingPrefs))
       }).foreach { case (c, net) => NeuralModelLoader.save(net, c, Config.count, name) }
     }
   }
@@ -176,7 +188,7 @@ sealed case class FeedforwardTrainer(
     W2VLoader.preload(wordVectors = true, documentVectors = true)
     trainNetwork(
       CorpusDataset.genW2VDataset(validation), label => CorpusDataset.genW2VDataset(processTraining(train, superSample)(label)), name, minibatchSize, learningRate,
-      (label, neuralPrefs, validation, train) => binaryTrainer(FeedForward.create(neuralPrefs), label, neuralPrefs, train, validation)
+      (neuralPrefs, iteratorPrefs) => binaryTrainer(FeedForward.create(neuralPrefs), neuralPrefs, iteratorPrefs)
     )
   }
 
@@ -189,14 +201,14 @@ sealed case class FeedforwardTrainer(
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
     trainNetwork(
       CorpusDataset.genW2VDataset(processedValidation), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf), name, minibatchSize, learningRate,
-      (label, neuralPrefs, validation, train) => binaryTrainer(FeedForward.createBoW(neuralPrefs, tfidf.phrases.size), label, neuralPrefs, train, validation)
+      (neuralPrefs, iteratorPrefs) => binaryTrainer(FeedForward.createBoW(neuralPrefs, tfidf.phrases.size), neuralPrefs, iteratorPrefs)
     )
   }
 
-  private def binaryTrainer(net: MultiLayerNetwork, label: String, neuralPrefs: NeuralPrefs, train: CorpusDataset, validation: CorpusDataset): MultiLayerNetwork = {
-    val trainIter = new FeedForwardIterator(train, IPTC.topCategories.indexOf(label), batchSize = neuralPrefs.minibatchSize)
-    val testIter = new FeedForwardIterator(validation, IPTC.topCategories.indexOf(label), batchSize = neuralPrefs.minibatchSize)
-    NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
+  private def binaryTrainer(net: MultiLayerNetwork, neuralPrefs: NeuralPrefs, tw: IteratorPrefs): MultiLayerNetwork = {
+    val trainIter = new FeedForwardIterator(tw.training, IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
+    val testIter = new FeedForwardIterator(tw.validation, IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
+    NeuralTrainer.train(name, tw.label, neuralPrefs, net, trainIter, testIter)
   }
 }
 
@@ -205,7 +217,6 @@ sealed case class RecurrentTrainer(
                                     minibatchSize: Int = Config.miniBatchSize.getOrElse(1000),
                                     superSample: Boolean = Config.superSample.getOrElse(false),
                                     hiddenNodes: Int = Config.hidden1.getOrElse(10),
-
                                     tag: Option[String] = None) extends ModelTrainer with NeuralTrainer {
 
   override val prefix = "rnn"
@@ -218,13 +229,12 @@ sealed case class RecurrentTrainer(
   }
 
   // Binary trainers
-  private def binaryRNNTrainer(label: String, neuralPrefs: NeuralPrefs, train: CorpusDataset, validation: CorpusDataset): MultiLayerNetwork = {
+  private def binaryRNNTrainer(neuralPrefs: NeuralPrefs, tw: IteratorPrefs): MultiLayerNetwork = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     val net = RNN.createBinary(neuralPrefs.copy(hiddenNodes = hiddenNodes))
-    val trainIter = new RNNIterator(train.articles, Some(label), batchSize = neuralPrefs.minibatchSize)
-    val testIter = new RNNIterator(validation.articles, Some(label), batchSize = neuralPrefs.minibatchSize)
-    NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
-
+    val trainIter = new RNNIterator(tw.training.articles, Some(tw.label), batchSize = neuralPrefs.minibatchSize)
+    val testIter = new RNNIterator(tw.validation.articles, Some(tw.label), batchSize = neuralPrefs.minibatchSize)
+    NeuralTrainer.train(name, tw.label, neuralPrefs, net, trainIter, testIter)
   }
 }
 

@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
   * Created by mail on 06.05.2016.
   */
 object NeuralTrainer extends Serializable {
-  def train(label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): MultiLayerNetwork = {
+  def train(name: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): MultiLayerNetwork = {
     //    Log.r(s"Training $label ...")
     //    Log.r2(s"Training $label ...")
     Config.init()
@@ -19,20 +19,20 @@ object NeuralTrainer extends Serializable {
     val total = trainIter.totalExamples()
     val batch: Int = trainIter.batch
     val totalEpochs: Int = Config.epoch.getOrElse(neuralPrefs.epochs)
-    for (i <- 0 until totalEpochs) {
+    for (epoch <- 0 until totalEpochs) {
       var c = 1
       while (trainIter.hasNext) {
         net.fit(trainIter.next())
-        if (c % 10 == 0) {
-          val left = timeLeft(total = total, iteration = c, batch = batch, label = label, epoch = i, totalEpoch = totalEpochs)
-          val evaluation: NeuralEvaluation = NeuralEvaluation(net, testIter.asScala.take(2), i, label, Some(neuralPrefs), Some(left))
-          evaluation.logv(label, c)
+        if ((c % 10) - 1 == 0) {
+          val left = timeLeft(total = total, iteration = c, batch = batch, label = label, epoch = epoch, totalEpoch = totalEpochs)
+          val evaluation: NeuralEvaluation = NeuralEvaluation(net, testIter.asScala.take(2), epoch, label, Some(neuralPrefs), Some(left))
+          evaluation.logIntermediate(c)
           testIter.reset()
         }
         c += 1
       }
       trainIter.reset()
-      NeuralEvaluation(net, testIter.asScala, i, label, Some(neuralPrefs)).log()
+      NeuralEvaluation(net, testIter.asScala, epoch, label, Some(neuralPrefs)).log(path = "train", tag = name)
       neuralPrefs.listener.reset
       testIter.reset()
     }
@@ -42,10 +42,10 @@ object NeuralTrainer extends Serializable {
   def timeLeft(total: Int, iteration: Int, batch: Int, label: String, epoch: Int, totalEpoch: Int): Int = {
     val labelIndex = Config.cats.toArray.sorted.indexOf(label)
     val duration = System.currentTimeMillis() - Config.start
-    val articlesDone = ((iteration) * batch) + (total * epoch) + (labelIndex * total * totalEpoch)
+    val articlesDone = (iteration * batch) + (total * epoch) + (labelIndex * total * totalEpoch)
     val articlesPerSecond = articlesDone / duration.toDouble
 
-    val remainingBatch = total - ((iteration) * batch)
+    val remainingBatch = total - (iteration * batch)
     val remainingLabels = Config.cats.size - labelIndex - 1
     val remainingEpochs = (totalEpoch - epoch - 1) + remainingLabels * totalEpoch
     val remainingArticles = remainingBatch + (remainingEpochs * total)

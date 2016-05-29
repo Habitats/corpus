@@ -24,30 +24,32 @@ object Log extends Logging {
     resultsFile
   }
 
-  private def writeLine(m: String, file: File) = {
+  private def writeLine(m: String, file: File) = synchronized {
     val writer = new PrintWriter(new FileOutputStream(file, true))
     writer.println(m)
     writer.close()
   }
 
-  private def writeLines(m: Seq[String], file: File) = {
+  private def writeLines(m: Seq[String], file: File) = synchronized {
     val writer = new PrintWriter(new FileOutputStream(file, true))
     m.foreach(writer.println)
     writer.close()
   }
 
-  def toFileHeader(m: String, fileName: String, path: String = Config.dataPath, overwrite: Boolean = false) = {
-    if (!headers.contains(fileName + m)) toFile(m, fileName, path, overwrite)
+  def toFileHeader(m: String, fileName: String, rootDir: String = Config.dataPath, overwrite: Boolean = false) = {
+    if (!headers.contains(fileName + m)) toFile(m, fileName, rootDir, overwrite)
     headers.add(fileName + m)
   }
-  def toFile(m: String, fileName: String, path: String = Config.dataPath, overwrite: Boolean = false) = {
-    val resultsFile = new File(path + f"/$fileName")
+  def toFile(m: String, fileName: String, rootDir: String = Config.dataPath, overwrite: Boolean = false) = {
+    val resultsFile = new File(rootDir + f"/$fileName")
     if (overwrite) {
       Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
       FileUtils.deleteQuietly(resultsFile)
     }
-    resultsFile.getParentFile.mkdirs()
-    resultsFile.createNewFile()
+    if(!resultsFile.exists) {
+      resultsFile.getParentFile.mkdirs()
+      resultsFile.createNewFile()
+    }
     writeLine(m, resultsFile)
   }
 

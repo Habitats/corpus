@@ -72,16 +72,18 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
   lazy val fn: Int     = eval.falseNegatives.getOrDefault(1, 0)
   lazy val m : Measure = Measure(tp = tp, fp = fp, fn = fn, tn = tn)
 
-  def log() = {
+  def log(path: String, tag: String) = {
     //    Log.r2(confusion)
-    Log.rr(statsHeader)
-    Log.r2(stats)
+    val resultFile = s"res/${path}_$tag.txt"
+    if (epoch == 0) Log.toFile(statsHeader, resultFile)
+    Log.toFile(stats, resultFile)
   }
 
-  def logv(label: String, i: Int) = {
+  def logIntermediate(i: Int) = {
     //        Log.r2(confusion)
-    if (i == 0) Log.r(statsHeader, "spam.txt")
-    Log.r(stats, "spam.txt")
+    val s = s"spam/$label.txt"
+    if (i == 1) Log.r(statsHeader, s)
+    Log.r(stats, s)
   }
 }
 
