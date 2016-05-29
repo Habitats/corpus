@@ -18,10 +18,11 @@ import scala.language.implicitConversions
 object Trainer extends Serializable {
   def st1() = {
     val (train, validation) = Fetcher.ordered()
-    FeedforwardTrainer(superSample = true).trainW2V(train, validation)
     FeedforwardTrainer(superSample = false).trainW2V(train, validation)
-    FeedforwardTrainer(superSample = true).trainBoW(train, validation)
+    FeedforwardTrainer(superSample = true).trainW2V(train, validation)
     FeedforwardTrainer(superSample = false).trainBoW(train, validation)
+    FeedforwardTrainer(superSample = true).trainBoW(train, validation)
+    RecurrentTrainer(superSample = false).trainBoW(train, validation)
   }
 
   def st2() = {
@@ -303,7 +304,7 @@ sealed case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[St
     feat = "bow"
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     val tfidf = TFIDF(train, termFrequencyThreshold)
-    Log.toFile(TFIDF.serialize(tfidf), name + "-" + count + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
+    Log.toFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
     trainNaiveBayes(TFIDF.frequencyFilter(train, tfidf.phrases), TFIDF.frequencyFilter(validation, tfidf.phrases), Some(tfidf), superSample)
   }
 
@@ -317,7 +318,6 @@ sealed case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[St
     val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, superSample)(c), validation, tfidf))).toMap
     val predicted = MlLibUtils.testMLlibModels(validation, models, tfidf)
     MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()))
-    val fullName = name + (if (Config.count != Int.MaxValue) s"_$count" else "")
-    models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$fullName/${name}_${IPTC.trim(c)}.bin") }
+    models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$name/${name}_${IPTC.trim(c)}.bin") }
   }
 }
