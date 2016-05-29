@@ -182,6 +182,7 @@ sealed case class FeedforwardTrainer(
 
   override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int = 100) = {
     feat = "bow"
+    W2VLoader.preload(wordVectors = true, documentVectors = false)
     val tfidf = TFIDF(train, termFrequencyThreshold)
     Log.toFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
     val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
@@ -218,6 +219,7 @@ sealed case class RecurrentTrainer(
 
   // Binary trainers
   private def binaryRNNTrainer(label: String, neuralPrefs: NeuralPrefs, train: CorpusDataset, validation: CorpusDataset): MultiLayerNetwork = {
+    W2VLoader.preload(wordVectors = true, documentVectors = false)
     val net = RNN.createBinary(neuralPrefs.copy(hiddenNodes = hiddenNodes))
     val trainIter = new RNNIterator(train.articles, Some(label), batchSize = neuralPrefs.minibatchSize)
     val testIter = new RNNIterator(validation.articles, Some(label), batchSize = neuralPrefs.minibatchSize)
@@ -232,6 +234,7 @@ sealed case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[St
 
   override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int) = {
     feat = "bow"
+    W2VLoader.preload(wordVectors = true, documentVectors = false)
     val tfidf = TFIDF(train, termFrequencyThreshold)
     Log.toFile(TFIDF.serialize(tfidf), name + "-" + count + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
     trainNaiveBayes(TFIDF.frequencyFilter(train, tfidf.phrases), TFIDF.frequencyFilter(validation, tfidf.phrases), Some(tfidf), superSample)

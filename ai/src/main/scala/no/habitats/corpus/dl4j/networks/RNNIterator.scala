@@ -25,7 +25,7 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
     val maxNumberOfFeatures = articles.map(_.ann.size).max
 
     // [miniBatchSize, inputSize, timeSeriesLength]
-    val features = Nd4j.create(Array(articles.size, W2VLoader.featureSize, maxNumberOfFeatures), 'f')
+    val features = Nd4j.create(Array(articles.size, inputColumns, maxNumberOfFeatures), 'f')
     val labels = Nd4j.create(Array(articles.size, totalOutcomes, maxNumberOfFeatures), 'f')
     // [miniBatchSize, timeSeriesLength]
     val featureMask = Nd4j.create(Array(articles.size, maxNumberOfFeatures), 'f')
@@ -64,7 +64,7 @@ class RNNIterator(allArticles: Array[Article], label: Option[String], batchSize:
   override def batch(): Int = Math.min(Config.miniBatchSize.getOrElse(batchSize), Math.max(allArticles.size - counter, 0))
   override def cursor(): Int = counter
   override def totalExamples(): Int = allArticles.size
-  override def inputColumns(): Int = W2VLoader.featureSize
+  override def inputColumns(): Int = 1000
   override def setPreProcessor(preProcessor: DataSetPreProcessor): Unit = throw new UnsupportedOperationException
   override def getLabels: util.List[String] = categories
   override def totalOutcomes(): Int = if (label.isDefined) 2 else getLabels.size
