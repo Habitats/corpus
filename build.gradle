@@ -15,7 +15,7 @@ project.ext {
     } else {
         os = 'linux-x86_64'
     }
-    println('Scala Binary: '  + scalaBinary + ' - Scala Version: ' + scalaVersion + ' - Java: ' + javaVersion + ' - DL4J: ' + dl4jVersion)
+    println('Scala Binary: ' + scalaBinary + ' - Scala Version: ' + scalaVersion + ' - Java: ' + javaVersion + ' - DL4J: ' + dl4jVersion)
 }
 
 subprojects {
@@ -40,8 +40,8 @@ subprojects {
     dependencies {
         testCompile group: 'junit', name: 'junit', version: '4.11'
         testCompile 'org.scalatest:scalatest_' + project.scalaBinary + ':3.0.0-M7'
-        compile (group: 'org.scala-lang', name: 'scala-library', version: project.scalaVersion) {force = true}
-        compile (group: 'org.scala-lang', name: 'scala-compiler', version: project.scalaVersion) {force = true}
-        compile ( group: 'org.scala-lang', name: 'scala-reflect', version: project.scalaVersion) {force = true}
+        compile(group: 'org.scala-lang', name: 'scala-library', version: project.scalaVersion) { force = true }
+        compile(group: 'org.scala-lang', name: 'scala-compiler', version: project.scalaVersion) { force = true }
+        compile(group: 'org.scala-lang', name: 'scala-reflect', version: project.scalaVersion) { force = true }
     }
 }

@@ -2,12 +2,9 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
-import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{Config, TFIDF, W2VLoader}
-import no.habitats.corpus.spark.{CorpusDataset, CorpusDataset$}
+import no.habitats.corpus.common.Config
+import no.habitats.corpus.spark.CorpusDataset
 import org.deeplearning4j.datasets.iterator.DataSetIterator
-import org.deeplearning4j.spark.util.MLLibUtil
-import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j

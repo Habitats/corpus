@@ -1,7 +1,6 @@
 package no.habitats.corpus.dl4j
 
 import no.habitats.corpus.common.{Config, Log}
-import no.habitats.corpus.spark.SparkUtil
 import org.bytedeco.javacpp.Pointer
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork

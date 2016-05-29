@@ -4,14 +4,13 @@
 
 import no.habitats.corpus._
 import no.habitats.corpus.common.models.{Annotation, Article, DBPediaAnnotation, Entity}
-import no.habitats.corpus.common.{AnnotationUtils, Config, Log, Spotlight}
+import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.spark.Fetcher
 import org.junit.runner.RunWith
 import org.scalatest.FunSuite
 import org.scalatest.junit.JUnitRunner
 import util.Samples
 
-import scala.collection.Map
 import scala.util.Random
 
 @RunWith(classOf[JUnitRunner])
@@ -54,11 +53,11 @@ class CorpusTest extends FunSuite with Samples {
       id = r.nextInt.toString
       mc = r.nextInt()
       name = r.nextInt.toString
-      eid =r.nextInt.toString
+      eid = r.nextInt.toString
       offset = r.nextInt()
       similarityScore = r.nextFloat()
       support = r.nextInt()
-      types = if (r.nextDouble() > 0.5) Set(r.nextInt.toString)  else Set[String]()
+      types = if (r.nextDouble() > 0.5) Set(r.nextInt.toString) else Set[String]()
     } yield DBPediaAnnotation(id, mc, Entity(eid, name, offset, similarityScore, support, types))
 
     val start2 = System.currentTimeMillis()
@@ -70,7 +69,7 @@ class CorpusTest extends FunSuite with Samples {
     Log.v("String serialization: " + (System.currentTimeMillis() - start))
   }
 
-  test("article serialization bench"){
+  test("article serialization bench") {
     val start2 = System.currentTimeMillis()
     val articles = Fetcher.rdd.take(100000)
     val annotations = articles.flatMap(_.ann.values)

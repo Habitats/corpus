@@ -74,7 +74,10 @@ object Spotlight extends RddSerializer {
   def toDBPediaAnnotated(a: Article, db: Map[String, Seq[Annotation]]): Article = {
     db.get(a.id) match {
       case Some(ann) => a.copy(ann = a.ann ++ ann.map(a => (a.id, a)).toMap)
-      case None => /** Log.v("NO DBPEDIA: " + a.id);*/ a
+      case None =>
+
+        /** Log.v("NO DBPEDIA: " + a.id); */
+        a
     }
   }
 

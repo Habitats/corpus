@@ -148,14 +148,14 @@ object Config {
     if (local) Log.v("SPARK CONFIG: " + sparkConfig + "\n\t" + sparkProps.asScala.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t"))
   }
 
-  lazy val job        : String  = args.job.getOrElse(conf.getProperty("job"))
-  lazy val rdd        : String  = args.rdd.getOrElse(conf.getProperty("rdd"))
-  lazy val partitions : Int     = args.partitions.getOrElse(conf.getProperty("partitions").toInt)
-  lazy val parallelism: Int     = args.parallelism.getOrElse(1)
-  lazy val count      : Int     = args.count.getOrElse(conf.getProperty("count").toInt) match {case i => if (i == -1) Integer.MAX_VALUE else i}
-  lazy val cache      : Boolean = args.cache.getOrElse(false)
-  lazy val histogram  : Boolean = args.histogram.getOrElse(false)
-  lazy val useApi     : Boolean = args.useApi.getOrElse(false)
+  lazy val job                   : String          = args.job.getOrElse(conf.getProperty("job"))
+  lazy val rdd                   : String          = args.rdd.getOrElse(conf.getProperty("rdd"))
+  lazy val partitions            : Int             = args.partitions.getOrElse(conf.getProperty("partitions").toInt)
+  lazy val parallelism           : Int             = args.parallelism.getOrElse(1)
+  lazy val count                 : Int             = args.count.getOrElse(conf.getProperty("count").toInt) match {case i => if (i == -1) Integer.MAX_VALUE else i}
+  lazy val cache                 : Boolean         = args.cache.getOrElse(false)
+  lazy val histogram             : Boolean         = args.histogram.getOrElse(false)
+  lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
   lazy val category              : Option[String]  = args.category
   lazy val learningRate          : Option[Double]  = args.learningRate
   lazy val confidence            : Option[Double]  = args.confidence

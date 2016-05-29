@@ -11,7 +11,6 @@ import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
-import org.nd4j.linalg.ops.transforms.Transforms
 
 import scala.collection.{Map, Set, mutable}
 

@@ -1,18 +1,8 @@
 package no.habitats.corpus
 
-import java.io.File
-
 import no.habitats.corpus.common.models.{Annotation, Article}
-import no.habitats.corpus.common.{Config, Log}
-import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import org.apache.spark.rdd.RDD
-import org.json4s.NoTypeHints
-import org.json4s.jackson.Serialization
-import org.json4s.jackson.Serialization._
 
-import scala.collection.immutable.LongMap
-import scala.collection.mutable
-import scala.io.Source
 import scala.util.Try
 
 /**

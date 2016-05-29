@@ -42,7 +42,7 @@ object Log extends Logging {
   }
   def toFile(m: String, fileName: String, path: String = Config.dataPath, overwrite: Boolean = false) = {
     val resultsFile = new File(path + f"/$fileName")
-    if(overwrite) {
+    if (overwrite) {
       Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
       FileUtils.deleteQuietly(resultsFile)
     }

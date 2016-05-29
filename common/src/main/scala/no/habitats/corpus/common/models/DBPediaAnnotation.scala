@@ -21,7 +21,7 @@ object DBPediaAnnotation {
     val dbSplitIndex: Int = dbFields.indexOf("\t")
     val articleId: String = dbFields.substring(0, dbSplitIndex)
     val mc: Int = dbFields.substring(dbSplitIndex + 1, dbFields.length).toInt
-    val entity: Entity = Entity.deserialize(string.substring(entityStart +2 , string.length))
+    val entity: Entity = Entity.deserialize(string.substring(entityStart + 2, string.length))
     DBPediaAnnotation(articleId, mc, entity)
   }
 

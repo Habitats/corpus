@@ -8,8 +8,6 @@ import no.habitats.corpus.common.models.Article
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.models.embeddings.loader.WordVectorSerializer
 import org.deeplearning4j.models.embeddings.wordvectors.WordVectors
-import org.joda.time.DateTime
-import org.nd4j.linalg.api.ndarray.INDArray
 
 import scala.collection.JavaConverters._
 

@@ -5,19 +5,14 @@ import no.habitats.corpus.common.dl4j.NeuralModelLoader
 import no.habitats.corpus.common.mllib.MLlibModelLoader
 import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common.{Config, _}
-import no.habitats.corpus.dl4j.ex.W2V
 import no.habitats.corpus.dl4j.networks.{FeedForward, FeedForwardIterator, RNN, RNNIterator}
 import no.habitats.corpus.dl4j.{NeuralPrefs, NeuralTrainer}
 import no.habitats.corpus.mllib.{MlLibUtils, Prefs}
-import opennlp.maxent.ModelTrainer
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
-import org.deeplearning4j.spark.util.MLLibUtil
-import org.nd4j.linalg.api.ndarray.INDArray
 
 import scala.language.implicitConversions
-
 
 object Trainer extends Serializable {
   implicit def seqthis(a: Double): Seq[Double] = Seq(a)
@@ -31,17 +26,17 @@ object Trainer extends Serializable {
 
   def trainFFNW2VSubsampled() = {
     val (train, validation) = Fetcher.subsampled
-    FeedforwardTrainer( tag = Some("sub"), learningRate = 0.5).trainW2V(train, validation)
+    FeedforwardTrainer(tag = Some("sub"), learningRate = 0.5).trainW2V(train, validation)
   }
 
   def trainFFNBoWSubsampled() = {
     val (train, validation) = Fetcher.subsampled
-    FeedforwardTrainer( tag = Some("sub"), learningRate = 0.5).trainBoW(train, validation, termFrequencyThreshold = 5)
+    FeedforwardTrainer(tag = Some("sub"), learningRate = 0.5).trainBoW(train, validation, termFrequencyThreshold = 5)
   }
 
   def trainNaiveW2VSubsampled() = {
     val (train, validation) = Fetcher.subsampled
-    NaiveBayesTrainer( tag = Some("sub")).trainW2V(train, validation)
+    NaiveBayesTrainer(tag = Some("sub")).trainW2V(train, validation)
   }
 
   def trainNaiveBoWSubsampled() = {
@@ -124,7 +119,6 @@ sealed trait ModelTrainer {
   val superSample: Boolean
   var feat: String = "UNINITIALIZED"
 
-
   lazy val name: String = s"${tag.map(_ + "_").getOrElse("")}${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
 
   def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int = 100)
@@ -133,20 +127,6 @@ sealed trait ModelTrainer {
 
   def processTraining(train: RDD[Article], superSample: Boolean): (String => RDD[Article]) = {
     label => if (superSample) Cacher.supersampledBalanced(label, train) else train
-  }
-}
-
-case class CorpusDataset(data: Array[(INDArray, Array[Int])], rdd: RDD[Article]) {
-  lazy val articles = rdd.collect()
-}
-
-object CorpusDataset {
-  def genW2VDataset(articles: RDD[Article]): CorpusDataset = {
-    CorpusDataset(articles.map(a => (a.toDocumentVector, IPTC.topCategories.map(i => if (a.iptc.contains(i)) 1 else 0).toArray)).collect(), articles)
-  }
-
-  def genBoWDataset(articles: RDD[Article], tfidf: TFIDF): CorpusDataset = {
-    CorpusDataset(articles.map(a => (MLLibUtil.toVector(MlLibUtils.toVector(Some(tfidf), a)), IPTC.topCategories.map(i => if (a.iptc.contains(i)) 1 else 0).toArray)).collect(), articles)
   }
 }
 
@@ -194,7 +174,9 @@ sealed case class FeedforwardTrainer(
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     feat = "w2v"
     W2VLoader.preload(wordVectors = true, documentVectors = true)
-    trainNetwork(CorpusDataset.genW2VDataset(validation), label => CorpusDataset.genW2VDataset(processTraining(train, superSample)(label)), name, minibatchSize, learningRate, (label, neuralPrefs, validation, train) => binaryTrainer(FeedForward.create(neuralPrefs), label, neuralPrefs, train, validation)
+    trainNetwork(
+      CorpusDataset.genW2VDataset(validation), label => CorpusDataset.genW2VDataset(processTraining(train, superSample)(label)), name, minibatchSize, learningRate,
+      (label, neuralPrefs, validation, train) => binaryTrainer(FeedForward.create(neuralPrefs), label, neuralPrefs, train, validation)
     )
   }
 
@@ -204,7 +186,10 @@ sealed case class FeedforwardTrainer(
     Log.toFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
     val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
-    trainNetwork(CorpusDataset.genW2VDataset(processedValidation), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf), name, minibatchSize, learningRate, (label, neuralPrefs, validation, train) => binaryTrainer(FeedForward.createBoW(neuralPrefs, tfidf.phrases.size), label, neuralPrefs, train, validation))
+    trainNetwork(
+      CorpusDataset.genW2VDataset(processedValidation), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf), name, minibatchSize, learningRate,
+      (label, neuralPrefs, validation, train) => binaryTrainer(FeedForward.createBoW(neuralPrefs, tfidf.phrases.size), label, neuralPrefs, train, validation)
+    )
   }
 
   private def binaryTrainer(net: MultiLayerNetwork, label: String, neuralPrefs: NeuralPrefs, train: CorpusDataset, validation: CorpusDataset): MultiLayerNetwork = {
@@ -219,6 +204,7 @@ sealed case class RecurrentTrainer(
                                     minibatchSize: Int = Config.miniBatchSize.getOrElse(1000),
                                     superSample: Boolean = Config.superSample.getOrElse(false),
                                     hiddenNodes: Int = Config.hidden1.getOrElse(10),
+
                                     tag: Option[String] = None) extends ModelTrainer with NeuralTrainer {
 
   override val prefix = "rnn"
@@ -236,6 +222,7 @@ sealed case class RecurrentTrainer(
     val trainIter = new RNNIterator(train.articles, Some(label), batchSize = neuralPrefs.minibatchSize)
     val testIter = new RNNIterator(validation.articles, Some(label), batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(label, neuralPrefs, net, trainIter, testIter)
+
   }
 }
 

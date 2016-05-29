@@ -179,7 +179,7 @@ sealed trait Testable {
     })
   }
 
-  def dataset(test: RDD[Article]): CorpusDataset = if(modelName.contains("bow")) CorpusDataset.genBoWDataset(test, TFIDF.deserialize(modelName)) else CorpusDataset.genW2VDataset(test)
+  def dataset(test: RDD[Article]): CorpusDataset = if (modelName.contains("bow")) CorpusDataset.genBoWDataset(test, TFIDF.deserialize(modelName)) else CorpusDataset.genW2VDataset(test)
 
   def predictAll(test: RDD[Article]): RDD[Article] = {
     val modelType = if (modelName.toLowerCase.contains("bow")) Some(TFIDF.deserialize(modelName)) else None
@@ -202,7 +202,7 @@ sealed trait Testable {
 case class FeedforwardTester(modelName: String) extends Testable {
   lazy val ffa: Map[String, NeuralModel] = NeuralModelLoader.models(modelName)
 
-  override def iter(test: CorpusDataset, label: String): DataSetIterator =  new FeedForwardIterator(test, IPTC.topCategories.indexOf(label), 500)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator = new FeedForwardIterator(test, IPTC.topCategories.indexOf(label), 500)
   override def models(modelName: String): Map[String, NeuralModel] = ffa
 }
 

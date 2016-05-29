@@ -1,12 +1,10 @@
 package no.habitats.corpus.dl4j
 
-import no.habitats.corpus.common.models.Article
-
 case class NeuralPrefs(
-                        learningRate: Double ,
+                        learningRate: Double,
                         hiddenNodes: Int = 10,
                         minibatchSize: Int,
-                        epochs: Int ,
+                        epochs: Int,
                         phrases: Option[Array[String]] = None
                       ) {
 

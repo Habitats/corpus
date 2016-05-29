@@ -48,8 +48,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import no.habitats.corpus.common.models.NYTCorpusDocument;
 
 /**
- * NYTCorpusDocumentParser <BR> Created: Jun 17, 2008 <BR> Author: Evan Sandhaus (sandhes@nytimes.com)<BR> <P> Class for parsing New York
- * Times articles from NITF files. <P>
+ * NYTCorpusDocumentParser <BR> Created: Jun 17, 2008 <BR> Author: Evan Sandhaus (sandhes@nytimes.com)<BR> <P> Class for parsing New York Times articles from NITF files. <P>
  *
  * @author Evan Sandhaus
  */
@@ -769,8 +768,8 @@ public class NYTCorpusDocumentParser {
   }
 
   /**
-   * Load a document without validating it. Since instructing the java.xml libraries to do this does not actually disable validation, this
-   * method disables validation by removing the doctype declaration from the XML document before it is parsed.
+   * Load a document without validating it. Since instructing the java.xml libraries to do this does not actually disable validation, this method disables validation by removing the doctype
+   * declaration from the XML document before it is parsed.
    *
    * @param file The file to parse.
    * @return The parsed document or null if an error occurs.
@@ -785,8 +784,7 @@ public class NYTCorpusDocumentParser {
         sb.append(line + "\n");
       }
       String xmlData = sb.toString();
-      xmlData =
-          xmlData.replace("<!DOCTYPE nitf " + "SYSTEM \"http://www.nitf.org/" + "IPTC/NITF/3.3/specification/dtd/nitf-3-3.dtd\">", "");
+      xmlData = xmlData.replace("<!DOCTYPE nitf " + "SYSTEM \"http://www.nitf.org/" + "IPTC/NITF/3.3/specification/dtd/nitf-3-3.dtd\">", "");
       document = parseStringToDOM(xmlData, "UTF-8", file);
       return document;
     } catch (UnsupportedEncodingException e) {

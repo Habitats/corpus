@@ -62,7 +62,7 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
 }
 
 case class LabelMetrics(predicted: RDD[Article]) {
-  val p                    = predicted.count.toDouble
+  val p = predicted.count.toDouble
   lazy val labelCardinality     = predicted.map(_.iptc.size).sum / p
   lazy val labelDiversity       = predicted.map(_.iptc).count / p
   lazy val labelCardinalityPred = predicted.map(_.pred.size).sum / p

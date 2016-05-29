@@ -1,7 +1,7 @@
 package no.habitats.corpus.dl4j
 
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{CorpusContext, IPTC, Log}
+import no.habitats.corpus.common.{IPTC, Log}
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import no.habitats.corpus.mllib._
 import no.habitats.corpus.spark.SparkUtil

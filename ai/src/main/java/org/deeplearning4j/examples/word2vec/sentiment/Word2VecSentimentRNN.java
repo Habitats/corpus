@@ -34,18 +34,15 @@ import java.io.IOException;
 import java.net.URL;
 
 /**
- * Example: Given a movie review (raw text), classify that movie review as either positive or negative based on the words it contains. This
- * is done by combining Word2Vec vectors and a recurrent neural network model. Each word in a review is vectorized (using the Word2Vec
- * model) and fed into a recurrent neural network. Training data is the "Large Movie Review Dataset" from
+ * Example: Given a movie review (raw text), classify that movie review as either positive or negative based on the words it contains. This is done by combining Word2Vec vectors and a recurrent neural
+ * network model. Each word in a review is vectorized (using the Word2Vec model) and fed into a recurrent neural network. Training data is the "Large Movie Review Dataset" from
  * http://ai.stanford.edu/~amaas/data/sentiment/
  *
- * Process: 1. Download data (movie reviews) + extract. Download + extraction is done automatically. 2. Load existing Word2Vec model (for
- * example: Google News word vectors. You will have to download this MANUALLY) 3. Load each each review. Convert words to vectors + reviews
- * to sequences of vectors 4. Train network for multiple epochs. At each epoch: evaluate performance on the test set.
+ * Process: 1. Download data (movie reviews) + extract. Download + extraction is done automatically. 2. Load existing Word2Vec model (for example: Google News word vectors. You will have to download
+ * this MANUALLY) 3. Load each each review. Convert words to vectors + reviews to sequences of vectors 4. Train network for multiple epochs. At each epoch: evaluate performance on the test set.
  *
- * NOTE / INSTRUCTIONS: You will have to download the Google News word vector model manually. ~1.5GB before extraction. The Google News
- * vector model available here: https://code.google.com/p/word2vec/ Download the GoogleNews-vectors-negative300.bin.gz file, and extract to
- * a suitable location Then: set the WORD_VECTORS_PATH field to point to this location.
+ * NOTE / INSTRUCTIONS: You will have to download the Google News word vector model manually. ~1.5GB before extraction. The Google News vector model available here: https://code.google.com/p/word2vec/
+ * Download the GoogleNews-vectors-negative300.bin.gz file, and extract to a suitable location Then: set the WORD_VECTORS_PATH field to point to this location.
  *
  * @author Alex Black
  */
@@ -77,12 +74,10 @@ public class Word2VecSentimentRNN {
     //Set up network configuration
     MultiLayerConfiguration
         conf =
-        new NeuralNetConfiguration.Builder().optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1)
-            .updater(Updater.RMSPROP).regularization(true).l2(1e-5).weightInit(WeightInit.XAVIER)
-            .gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue).gradientNormalizationThreshold(1.0)
-            .learningRate(0.0018).list().layer(0, new GravesLSTM.Builder().nIn(vectorSize).nOut(200).activation("softsign").build())
-            .layer(1, new RnnOutputLayer.Builder().activation("softmax").lossFunction(LossFunctions.LossFunction.MCXENT).nIn(200).nOut(2)
-                .build()).pretrain(false).backprop(true).build();
+        new NeuralNetConfiguration.Builder().optimizationAlgo(OptimizationAlgorithm.STOCHASTIC_GRADIENT_DESCENT).iterations(1).updater(Updater.RMSPROP).regularization(true).l2(1e-5)
+            .weightInit(WeightInit.XAVIER).gradientNormalization(GradientNormalization.ClipElementWiseAbsoluteValue).gradientNormalizationThreshold(1.0).learningRate(0.0018).list()
+            .layer(0, new GravesLSTM.Builder().nIn(vectorSize).nOut(200).activation("softsign").build())
+            .layer(1, new RnnOutputLayer.Builder().activation("softmax").lossFunction(LossFunctions.LossFunction.MCXENT).nIn(200).nOut(2).build()).pretrain(false).backprop(true).build();
 
     MultiLayerNetwork net = new MultiLayerNetwork(conf);
     net.init();
@@ -92,12 +87,8 @@ public class Word2VecSentimentRNN {
     //DataSetIterators for training and testing respectively
     //Using AsyncDataSetIterator to do data loading in a separate thread; this may improve performance vs. waiting for data to load
     WordVectors wordVectors = WordVectorSerializer.loadGoogleModel(new File(WORD_VECTORS_PATH), true, false);
-    DataSetIterator
-        train =
-        new AsyncDataSetIterator(new SentimentExampleIterator(DATA_PATH, wordVectors, batchSize, truncateReviewsToLength, true), 1);
-    DataSetIterator
-        test =
-        new AsyncDataSetIterator(new SentimentExampleIterator(DATA_PATH, wordVectors, 100, truncateReviewsToLength, false), 1);
+    DataSetIterator train = new AsyncDataSetIterator(new SentimentExampleIterator(DATA_PATH, wordVectors, batchSize, truncateReviewsToLength, true), 1);
+    DataSetIterator test = new AsyncDataSetIterator(new SentimentExampleIterator(DATA_PATH, wordVectors, 100, truncateReviewsToLength, false), 1);
 
     System.out.println("Starting training");
     for (int i = 0; i < nEpochs; i++) {
@@ -154,8 +145,7 @@ public class Word2VecSentimentRNN {
     int fileCount = 0;
     int dirCount  = 0;
     System.out.print("Extracting files");
-    try (TarArchiveInputStream tais = new TarArchiveInputStream(
-        new GzipCompressorInputStream(new BufferedInputStream(new FileInputStream(filePath))))) {
+    try (TarArchiveInputStream tais = new TarArchiveInputStream(new GzipCompressorInputStream(new BufferedInputStream(new FileInputStream(filePath))))) {
       TarArchiveEntry entry;
 
       /** Read the tar entries using the getNextEntry method **/

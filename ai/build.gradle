@@ -16,9 +16,9 @@ dependencies {
     compile 'javax.mail:javax.mail-api:1.5.5'
 
     // DL4J histogram
-    compile ('org.glassfish.jersey.core:jersey-server:2.22.2') {force = true}
-    compile ('org.glassfish.jersey.containers:jersey-container-servlet-core:2.22.2') {force = true}
-    compile ('org.glassfish.jersey.containers:jersey-container-servlet:2.22.2') {force = true}
+    compile('org.glassfish.jersey.core:jersey-server:2.22.2') { force = true }
+    compile('org.glassfish.jersey.containers:jersey-container-servlet-core:2.22.2') { force = true }
+    compile('org.glassfish.jersey.containers:jersey-container-servlet:2.22.2') { force = true }
 }
 
 task pathingJar(type: Jar) {

@@ -1,10 +1,9 @@
 package no.habitats.corpus.common.models
 
-import no.habitats.corpus.common.{IPTC, Log, W2VLoader}
-import org.apache.spark.mllib.linalg.{Vector, Vectors}
+import no.habitats.corpus.common.{IPTC, W2VLoader}
+import org.apache.spark.mllib.linalg.Vector
 import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.api.ndarray.INDArray
-import org.nd4j.linalg.ops.transforms.Transforms
 
 case class Article(id: String,
                    hl: String = "",
@@ -43,7 +42,7 @@ case class Article(id: String,
 
   lazy val documentVectorMlLib: Vector = {
     val normalize: INDArray = W2VLoader.normalize(toDocumentVector)
-//    val binary: INDArray = Transforms.round(normalize, false)
+    //    val binary: INDArray = Transforms.round(normalize, false)
     MLLibUtil.toVector(normalize)
   }
 
@@ -67,8 +66,8 @@ object Article {
   def deserialize(string: String): Article = {
     val annSplit = string.split("\t\t")
     val s = annSplit(0).split("\t ")
-    val a = if(annSplit.length > 1) annSplit(1) else ""
-    if(s.length != 9) throw new IllegalStateException("Article parse error: \n" + string)
+    val a = if (annSplit.length > 1) annSplit(1) else ""
+    if (s.length != 9) throw new IllegalStateException("Article parse error: \n" + string)
     Article(
       id = s(0),
       hl = s(1),

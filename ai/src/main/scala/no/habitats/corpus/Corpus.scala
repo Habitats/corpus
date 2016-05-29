@@ -42,6 +42,7 @@ object Corpus {
 }
 
 object ArticleUtils {
+
   import scala.collection.JavaConverters._
 
   implicit def stringToOption(s: String): Option[String] = Option(s)
