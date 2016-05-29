@@ -125,7 +125,7 @@ object Cacher extends RddSerializer {
     saveAsText(balanced.map(Article.serialize), s"nyt_${c}_superbalanced")
   }
 
-  def cacheAndSplitTime() = RelativeSplitter.split(Fetcher.annotatedRddMinimal, 20, a => a.id.toInt, "time")
+  def cacheAndSplitTime() = RelativeSplitter.split(Fetcher.annotatedRddMinimal, 10, a => a.id.toInt, "time")
 
   def cacheAndSplitLength() = StaticSplitter.split(Fetcher.annotatedRddMinimal, 10, a => a.wc, "length")
 
@@ -244,12 +244,12 @@ object RelativeSplitter extends Splitter {
     // Thus; s = train% * s + #buckets * 2 * test% * s
     rdd.cache()
     val numAll = rdd.count
-    val ids: Array[Int] = rdd.map(ordering).collect.sorted
+    val ids = rdd.map(ordering).collect.sorted
     val s = numAll / (testValFraction * buckets + trainFraction)
     val numTrain = (trainFraction * s).round.toInt
     val numTest, numVal = ((testValFraction * s) / 2).round.toInt
     val trainIds = ids.slice(0, numTrain).toSet
-    saveAsText(rdd.map(Article.serialize), s"$name/nyt_${name}_${buckets}_train")
+    saveAsText(rdd.filter(a => trainIds.contains(a.id.toInt)).map(Article.serialize), s"$name/nyt_${name}_${buckets}_train")
     for (i <- 0 until buckets) yield {
       val from = numTrain + i * (numTest + numVal)
       val until = numTrain + (i + 1) * (numTest + numVal)

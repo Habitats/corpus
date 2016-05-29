@@ -25,8 +25,8 @@ object Trainer extends Serializable {
   }
 
   def st2() = {
-    val train = Fetcher.by("time/nyt_time_train.txt")
-    val validation = Fetcher.by("time/nyt_time_0_validation.txt")
+    val train = Fetcher.by("time/nyt_time_10_train.txt")
+    val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
     val learningRates = Seq(1.0, 0.75, 0.5, 0.25, 0.1, 0.075, 0.05)
     NaiveBayesTrainer(tag = Some("time")).trainBoW(train, validation, termFrequencyThreshold = 5)
     NaiveBayesTrainer(tag = Some("time")).trainW2V(train, validation)
@@ -36,8 +36,8 @@ object Trainer extends Serializable {
   }
 
   def virt() = {
-    val train = Fetcher.by("time/nyt_time_train.txt")
-    val validation = Fetcher.by("time/nyt_time_0_validation.txt")
+    val train = Fetcher.by("time/nyt_time_10_train.txt")
+    val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
     val learningRates = Seq(1.0, 0.75, 0.5, 0.25, 0.1, 0.075, 0.05)
     FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 5)
     FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
