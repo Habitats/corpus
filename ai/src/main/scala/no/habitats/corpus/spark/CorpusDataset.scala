@@ -28,7 +28,7 @@ object CorpusDataset {
 
   def genW2VMatrix(articles: RDD[Article]): CorpusMatrix = {
     CorpusMatrix(articles.map(a => {
-      val annotationVectors: Array[INDArray] = a.ann.values.toArray.filter(an => W2VLoader.contains(an.id)).sortBy(_.offset).map(_.id).map(W2VLoader.fromId).map(_.get)
+      val annotationVectors: Array[INDArray] = a.ann.values.toArray.sortBy(_.offset).map(_.id).map(W2VLoader.fromId).filter(_.isDefined).map(_.get)
       (annotationVectors, labelArray(a))
     }).collect)
   }
