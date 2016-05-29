@@ -247,16 +247,21 @@ sealed case class RecurrentTrainer(
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     feat = "w2v"
     W2VLoader.preload(wordVectors = true, documentVectors = false)
-    trainNetwork(CorpusDataset.genW2VMatrix(validation), label => CorpusDataset.genW2VMatrix(processTraining(train, superSample)(label)), name, minibatchSize, learningRate, binaryRNNTrainer)
+    trainNetwork(
+      CorpusDataset.genW2VMatrix(validation),
+      label => CorpusDataset.genW2VMatrix(processTraining(train, superSample)(label)),
+      name, minibatchSize, learningRate, binaryRNNTrainer
+    )
   }
 
   // Binary trainers
   private def binaryRNNTrainer(neuralPrefs: NeuralPrefs, tw: IteratorPrefs): NeuralResult = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
-    val net = RNN.createBinary(neuralPrefs.copy(hiddenNodes = hiddenNodes))
+    val realPrefs: NeuralPrefs = neuralPrefs.copy(hiddenNodes = hiddenNodes)
+    val net = RNN.createBinary(realPrefs)
     val trainIter = new RNNIterator(tw.training.asInstanceOf[CorpusMatrix], tw.label, batchSize = neuralPrefs.minibatchSize)
     val testIter = new RNNIterator(tw.validation.asInstanceOf[CorpusMatrix], tw.label, batchSize = neuralPrefs.minibatchSize)
-    NeuralTrainer.train(name, tw.label, neuralPrefs, net, trainIter, testIter)
+    NeuralTrainer.train(name, tw.label, realPrefs, net, trainIter, testIter)
   }
 }
 
