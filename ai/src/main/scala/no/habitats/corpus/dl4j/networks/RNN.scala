@@ -27,7 +27,7 @@ object RNN {
     val hiddenNodes = Config.hidden1.getOrElse(neuralPrefs.hiddenNodes) // should not be less than a quarter of the input size
     val learningRate = Config.learningRate.getOrElse(neuralPrefs.learningRate)
 
-    Log.rr(f"Count: ${Config.count} - $neuralPrefs")
+    Log.resultHeader(f"Count: ${Config.count} - $neuralPrefs")
 
     val i = new AtomicInteger(0)
     val conf = new NeuralNetConfiguration.Builder()

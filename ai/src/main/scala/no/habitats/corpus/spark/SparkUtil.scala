@@ -27,14 +27,14 @@ object SparkUtil {
     Try {
       Config.setArgs(args)
       Log.init()
-      Log.r(s"Starting Corpus job: ${args.mkString(", ")}")
+      Log.result(s"Starting Corpus job: ${args.mkString(", ")}")
       val s = System.currentTimeMillis
 
       Log.i(f"Loading articles ...")
 
       Config.job match {
         // Misc
-        case "testSpark" => Log.r(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
+        case "testSpark" => Log.result(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
         case "printArticles" => printArticles(Config.count)
         case "misc" =>
           Cacher.asd
@@ -126,9 +126,9 @@ object SparkUtil {
           Tester.testTimeDecay()
         // Ex 5
         //        Tester.testConfidence()
-        case _ => Log.r("No job ... Exiting!")
+        case _ => Log.result("No job ... Exiting!")
       }
-      Log.r(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
+      Log.result(s"Job completed in${prettyTime(System.currentTimeMillis - s)}")
     }.failed.map(f => {Log.e("Crash: " + f); f.printStackTrace()})
     // If on cluster, pause to avoid termination of the screen/terminal
     if (!Config.local)

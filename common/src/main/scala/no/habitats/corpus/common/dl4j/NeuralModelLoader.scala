@@ -57,7 +57,7 @@ object NeuralModelLoader {
     // write config
     FileUtils.write(new File(Config.cachePath + confPath(name, label, count)), model.getLayerWiseConfigurations.toJson)
     dos.close()
-    Log.v(s"Successfully saved model $name ...")
+    Log.v(s"Successfully saved model $name - $label ...")
   }
 
   def load(config: String, coefficients: String): MultiLayerNetwork = {

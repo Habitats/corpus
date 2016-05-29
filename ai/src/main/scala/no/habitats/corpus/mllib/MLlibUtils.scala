@@ -60,13 +60,13 @@ object MlLibUtils {
     val stats = MLStats(predicted, cats)
     if (stats.catStats.nonEmpty) {
       val catHeader = stats.catStats.head.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 3}s").format(s._1)).mkString(f"${prefs.value.iteration}%3d# Category stats:\n", "", "\n")
-      Log.r2(stats.catStats.map(c => c.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 3}s").format(s._2)).mkString("")).mkString(catHeader, "\n", "\n"))
+      Log.resultCats(stats.catStats.map(c => c.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 3}s").format(s._2)).mkString("")).mkString(catHeader, "\n", "\n"))
     }
 
     if (prefs.value.iteration == 0) {
-      Log.r(stats.stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString(""))
+      Log.result(stats.stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString(""))
     }
-    Log.r(stats.stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString(""))
+    Log.result(stats.stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString(""))
     predicted.unpersist()
   }
 }

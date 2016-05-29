@@ -20,8 +20,6 @@ object FeedForward {
     val firstLayer = Config.hidden1.getOrElse(700)
     val secondLayer = Config.hidden2.getOrElse(500)
 
-    Log.rr(f"W2V - Count: ${Config.count} - $neuralPrefs")
-
     val i = new AtomicInteger(0)
     val conf = new NeuralNetConfiguration.Builder()
       .seed(Config.seed)
@@ -68,8 +66,6 @@ object FeedForward {
     val firstLayer = Config.hidden1.getOrElse(1000)
     val secondLayer = Config.hidden2.getOrElse(300)
     val thirdLayer = Config.hidden3.getOrElse(200)
-
-    Log.rr(f"BoW - Count: ${Config.count} - $neuralPrefs")
 
     val i = new AtomicInteger(0)
     val conf = new NeuralNetConfiguration.Builder()

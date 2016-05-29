@@ -11,7 +11,9 @@ import scala.collection.JavaConverters._
   * Created by mail on 06.05.2016.
   */
 object NeuralTrainer extends Serializable {
-  def train(tag: Option[String], name: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): MultiLayerNetwork = {
+  case class NeuralResult(evaluations: Seq[NeuralEvaluation], net: MultiLayerNetwork)
+
+  def train(name: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): NeuralResult = {
     //    Log.r(s"Training $label ...")
     //    Log.r2(s"Training $label ...")
     Config.init()
@@ -19,7 +21,7 @@ object NeuralTrainer extends Serializable {
     val total = trainIter.totalExamples()
     val batch: Int = trainIter.batch
     val totalEpochs: Int = Config.epoch.getOrElse(neuralPrefs.epochs)
-    for (epoch <- 0 until totalEpochs) {
+    val eval: Seq[NeuralEvaluation] = for (epoch <- 0 until totalEpochs) yield {
       var c = 1
       while (trainIter.hasNext) {
         net.fit(trainIter.next())
@@ -31,12 +33,14 @@ object NeuralTrainer extends Serializable {
         }
         c += 1
       }
+      val evaluation: NeuralEvaluation = NeuralEvaluation(net, testIter.asScala, epoch, label, Some(neuralPrefs))
+      evaluation.log(folder = s"train", name = name)
       trainIter.reset()
-      NeuralEvaluation(net, testIter.asScala, epoch, label, Some(neuralPrefs)).log(folder = s"train/${tag.map(_ + "/" + name).getOrElse(name)}", tag = name)
       neuralPrefs.listener.reset
       testIter.reset()
+      evaluation
     }
-    net
+    NeuralResult(eval, net)
   }
 
   def timeLeft(total: Int, iteration: Int, batch: Int, label: String, epoch: Int, totalEpoch: Int): Int = {

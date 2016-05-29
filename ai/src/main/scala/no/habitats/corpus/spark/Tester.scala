@@ -26,8 +26,8 @@ object Tester {
   }
 
   def testModels() = {
-    Config.resultsFileName = "test_all.txt"
-    Config.resultsCatsFileName = "test_all.txt"
+    Config.resultsFileName = "test/all.txt"
+    Config.resultsCatsFileName = "test/all.txt"
     Log.h("Testing models")
     val test = Fetcher.annotatedTestOrdered.map(_.toMinimal)
     tester("all-ffn-bow").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
@@ -40,8 +40,8 @@ object Tester {
   def verifyAll(): Boolean = new File(Config.modelPath).listFiles().map(_.getName).map(tester).forall(_.verify)
 
   def testSub() = {
-    Config.resultsFileName = "test_sub.txt"
-    Config.resultsCatsFileName = "test_sub.txt"
+    Config.resultsFileName = "test/sub.txt"
+    Config.resultsCatsFileName = "test/sub.txt"
     Log.h("Testing sub models")
     val test = Fetcher.subTestOrdered.map(_.toMinimal)
     val includeExampleBased = true
@@ -53,8 +53,8 @@ object Tester {
   }
 
   def testEmbeddedVsBoW() = {
-    Config.resultsFileName = "test_embedded_vs_bow.txt"
-    Config.resultsCatsFileName = "test_embedded_vs_bow_cats.txt"
+    Config.resultsFileName = "test/embedded_vs_bow.txt"
+    Config.resultsCatsFileName = "test/embedded_vs_bow_cats.txt"
     Log.h("Testing embedded vs. BoW")
     val test = Fetcher.annotatedTestOrdered.map(_.toMinimal)
 
@@ -66,8 +66,8 @@ object Tester {
   }
 
   def testFFNBow() = {
-    Config.resultsFileName = "test_embedded_vs_bow.txt"
-    Config.resultsCatsFileName = "test_embedded_vs_bow.txt"
+    Config.resultsFileName = "test/embedded_vs_bow.txt"
+    Config.resultsCatsFileName = "test/embedded_vs_bow.txt"
     Log.h("Testing embedded vs. BoW")
     val test = Fetcher.annotatedTestOrdered
 
@@ -76,12 +76,12 @@ object Tester {
   }
 
   def testTypesInclusion() = {
-    Config.resultsFileName = "test_type_inclusion.txt"
-    Config.resultsCatsFileName = "test_type_inclusion.txt"
+    Config.resultsFileName = "test/type_inclusion.txt"
+    Config.resultsCatsFileName = "test/type_inclusion.txt"
     Log.h("Testing type inclusion")
     val rddOrdered = Fetcher.subTestOrdered.map(_.toMinimal)
 
-    Log.r("Annotations with types ...")
+    Log.result("Annotations with types ...")
     tester("types-ffn-w2v").test(rddOrdered)
     tester("ffn-w2v").test(rddOrdered)
 
@@ -91,12 +91,12 @@ object Tester {
 
   def testShuffledVsOrdered() = {
 
-    Config.resultsFileName = "test_shuffled_vs_ordered.txt"
-    Config.resultsCatsFileName = "test_shuffled_vs_ordered.txt"
+    Config.resultsFileName = "test/shuffled_vs_ordered.txt"
+    Config.resultsCatsFileName = "test/shuffled_vs_ordered.txt"
     Log.h("Testing shuffled vs. ordered")
 
     // Shuffled
-    Log.r("Shuffled ...")
+    Log.result("Shuffled ...")
     val rddShuffled = Fetcher.annotatedTestShuffled.map(_.toMinimal)
     FeedforwardTester("ffn-w2v-shuffled").test(rddShuffled)
 
@@ -108,8 +108,8 @@ object Tester {
   }
 
   def testLengths() = {
-    Config.resultsFileName = "test_lengths.txt"
-    Config.resultsCatsFileName = "test_lengths_cats.txt"
+    Config.resultsFileName = "test/lengths.txt"
+    Config.resultsCatsFileName = "test/lengths_cats.txt"
     Log.h("Testing Lengths")
     testBuckets("length", tester("ffn-w2v-ordered"), _.wc)
     testBuckets("length", tester("nb-bow"), _.id.toInt)
@@ -117,8 +117,8 @@ object Tester {
   }
 
   def testTimeDecay() = {
-    Config.resultsFileName = "test_time_decay.txt"
-    Config.resultsCatsFileName = "test_time_decay_cats.txt"
+    Config.resultsFileName = "test/time_decay.txt"
+    Config.resultsCatsFileName = "test/time_decay_cats.txt"
     Log.h("Testing Time Decay")
     //    testBuckets("time", FeedforwardTester("ffn-w2v-time-all"), _.id.toInt)
     testBuckets("time", tester("ffn-bow-time-all"), _.id.toInt)
@@ -127,8 +127,8 @@ object Tester {
   }
 
   def testConfidence() = {
-    Config.resultsFileName = "test_confidence.txt"
-    Config.resultsCatsFileName = "test_confidence_cats.txt"
+    Config.resultsFileName = "test/confidence.txt"
+    Config.resultsCatsFileName = "test/confidence_cats.txt"
     Log.h("Testing Confidence Levels")
     for {confidence <- Seq(25, 50, 75, 100)}
       yield FeedforwardTester(s"ffn-w2v-ordered-confidence-${confidence}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
@@ -142,7 +142,7 @@ object Tester {
       .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$name/$n")) }
       .sortBy(_._1)
     rdds.foreach { case (index, n) => {
-      Log.r2(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}")
+      Log.resultCats(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}")
       tester.test(n, iteration = index)
     }
     }
@@ -187,12 +187,12 @@ sealed trait Testable {
   }
 
   def labelBased(test: RDD[Article], iteration: Int): Seq[NeuralEvaluation] = {
-    if (iteration == 0) Log.r(s"Testing $modelName ...")
+    if (iteration == 0) Log.result(s"Testing $modelName ...")
     val testDataset: CorpusDataset = dataset(test)
     models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
       val ffnTest = iter(testDataset, models._1)
       val eval = NeuralEvaluation(models._2.network, ffnTest.asScala, i, models._1)
-      eval.log(folder = "test", tag = modelName)
+      eval.log(folder = "test", name = modelName)
       eval
     }
     }
@@ -219,7 +219,7 @@ case class NaiveBayesTester(modelName: String) extends Testable {
   override def verify: Boolean = Try(nb).isSuccess
 
   override def test(articles: RDD[Article], includeExampleBased: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
-    Log.r(s"Testing Naive Bayes [$modelName] ...")
+    Log.result(s"Testing Naive Bayes [$modelName] ...")
     val predicted = MlLibUtils.testMLlibModels(articles, nb, if (modelName.contains("bow")) Some(TFIDF.deserialize(modelName)) else None)
 
     Log.v("--- Predictions complete! ")

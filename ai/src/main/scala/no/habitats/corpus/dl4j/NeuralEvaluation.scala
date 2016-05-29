@@ -72,18 +72,18 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
   lazy val fn: Int     = eval.falseNegatives.getOrDefault(1, 0)
   lazy val m : Measure = Measure(tp = tp, fp = fp, fn = fn, tn = tn)
 
-  def log(folder: String, tag: String) = {
+  def log(folder: String, name: String, header: Boolean = false) = {
     //    Log.r2(confusion)
-    val resultFile = s"res/${folder}/$tag.txt"
-    if (epoch == 0) Log.toFile(statsHeader, resultFile)
+    val resultFile = s"res/$folder/$name.txt"
+    if (header) Log.toFile(statsHeader, resultFile)
     Log.toFile(stats, resultFile)
   }
 
   def logIntermediate(i: Int) = {
     //        Log.r2(confusion)
     val s = s"spam/$label.txt"
-    if (i == 1) Log.r(statsHeader, s)
-    Log.r(stats, s)
+    //    if (i == 1) Log.r(statsHeader, s)
+    Log.result(stats, s)
   }
 }
 
@@ -149,8 +149,8 @@ object NeuralEvaluation {
       )
     }).getOrElse(Nil)
 
-    Log.rr((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
-    Log.r((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
+    Log.resultHeader((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
+    Log.result((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
   }
 
   def columnWidth(s: (String, String)): Int = Math.max(s._1.length, s._2.toString.length) + 2
