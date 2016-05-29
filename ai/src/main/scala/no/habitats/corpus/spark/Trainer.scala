@@ -154,7 +154,7 @@ sealed trait NeuralTrainer {
     val sparkValidation = sc.broadcast(train)
     Log.v("Starting distributed training ...")
     for {lr <- learningRate} yield {
-      sc.parallelize(Config.cats, numSlices = Config.parallelism).map(c => {
+      sc.parallelize(Config.cats, numSlices = Math.min(Config.parallelism, Config.cats.size)).map(c => {
         val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, minibatchSize = minibatchSize, epochs = 1)
         (c, trainer(c, prefs, sparkTrain.value, sparkValidation.value))
       }).foreach { case (c, net) => NeuralModelLoader.save(net, c, Config.count, name) }
