@@ -114,9 +114,12 @@ object Config {
   var resultsFileName     = "results.txt"
   var resultsCatsFileName = "results_cats.txt"
 
+  def argString: String = args.toString
+
   def setArgs(arr: Array[String]) = {
     lazy val props: mutable.Map[String, String] = mutable.Map() ++ arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
-    Log.v("ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", ""))
+    val m: String = "ARGUMENTS: " + props.toSeq.sortBy(_._1).map { case (k, v) => k + " -> " + v }.mkString("\n\t", "\n\t", "")
+    Log.v(m)
     args = Arguments(
       partitions = props.remove("partitions").map(_.toInt),
       parallelism = props.remove("parallelism").map(_.toInt),

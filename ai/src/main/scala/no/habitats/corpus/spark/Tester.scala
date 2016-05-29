@@ -190,8 +190,8 @@ sealed trait Testable {
     if (iteration == 0) Log.result(s"Testing $modelName ...")
     val testDataset: CorpusDataset = dataset(test)
     models(modelName).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
-      val ffnTest = iter(testDataset, models._1)
-      val eval = NeuralEvaluation(models._2.network, ffnTest.asScala, i, models._1)
+      val test = iter(testDataset, models._1).asScala.toTraversable
+      val eval = NeuralEvaluation(test, models._2.network, i, models._1)
       eval.log(folder = "test", name = modelName)
       eval
     }

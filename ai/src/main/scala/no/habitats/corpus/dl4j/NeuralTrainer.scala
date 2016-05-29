@@ -3,6 +3,7 @@ package no.habitats.corpus.dl4j
 import no.habitats.corpus.common.{Config, Log}
 import org.bytedeco.javacpp.Pointer
 import org.deeplearning4j.datasets.iterator.DataSetIterator
+import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.collection.JavaConverters._
@@ -27,13 +28,12 @@ object NeuralTrainer extends Serializable {
         net.fit(trainIter.next())
         if ((c % 10) - 1 == 0) {
           val left = timeLeft(total = total, iteration = c, batch = batch, label = label, epoch = epoch, totalEpoch = totalEpochs)
-          val evaluation: NeuralEvaluation = NeuralEvaluation(net, testIter.asScala.take(2), epoch, label, Some(neuralPrefs), Some(left))
-          evaluation.logIntermediate(c)
+          NeuralEvaluation(testIter.asScala.take(2).toTraversable, net, epoch, label, Some(neuralPrefs), Some(left)).logIntermediate(c)
           testIter.reset()
         }
         c += 1
       }
-      val evaluation: NeuralEvaluation = NeuralEvaluation(net, testIter.asScala, epoch, label, Some(neuralPrefs))
+      val evaluation: NeuralEvaluation = NeuralEvaluation(testIter.asScala.toTraversable, net, epoch, label, Some(neuralPrefs))
       evaluation.log(folder = s"train", name = name)
       trainIter.reset()
       neuralPrefs.listener.reset

@@ -13,26 +13,7 @@ import org.nd4j.linalg.dataset.DataSet
 
 import scala.util.Try
 
-case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[DataSet], epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None, timeLeft: Option[Int] = None) {
-  private lazy val eval = {
-    val e = new Evaluation()
-    testIter.foreach(t => {
-      val features = t.getFeatureMatrix
-      val labels = t.getLabels
-      if (t.getFeaturesMaskArray != null) {
-        // timeseries eval
-        val inMask = t.getFeaturesMaskArray
-        val outMask = t.getLabelsMaskArray
-        val predicted = net.output(features, false, inMask, outMask)
-        e.evalTimeSeries(labels, predicted, outMask)
-      } else {
-        // matrix eval
-        val predicted = net.output(features, false)
-        e.eval(labels, predicted)
-      }
-    })
-    e
-  }
+case class NeuralEvaluation(eval: Evaluation, epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs], learningRate: Double, numHidden: String, timeLeft: Option[Int]) {
 
   private lazy val fullStats = Seq[(String, String)](
     "Category" -> f"$label%41s",
@@ -47,16 +28,11 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
     "F-score" -> f"${m.fscore}%.3f",
     "Error" -> f"${neuralPrefs.map(_.listener.average).map(a => f"$a%.4f").getOrElse("N/A")}",
     "Delta" -> f"${neuralPrefs.flatMap(i => Try(i.listener.iterationFrequency).toOption).map(a => f"$a%6d").getOrElse("N/A")}",
-    "LR" -> f"${net.getLayerWiseConfigurations.getConf(0).getLayer.getLearningRate}",
+    "LR" -> f"$learningRate",
     "MBS" -> f"${neuralPrefs.map(_.minibatchSize).getOrElse("N/A")}",
     "Hidden" -> f"$numHidden",
     "ETA" -> f"${timeLeft.map(t => SparkUtil.prettyTime(t, short = true)).getOrElse("")}"
   )
-
-  val numHidden = {
-    val numLayers = net.getLayerWiseConfigurations.getConfs.size
-    (0 until numLayers - 1).map(net.getLayerWiseConfigurations.getConf).map(_.getLayer).map(l => Try(l.asInstanceOf[DenseLayer].getNOut).getOrElse(l.asInstanceOf[GravesLSTM].getNOut)).mkString(", ")
-  }
 
   lazy val statsHeader = fullStats.map(s => s"%${columnWidth(s)}s".format(s._1)).mkString("")
   lazy val stats       = fullStats.map(s => s"%${columnWidth(s)}s".format(s._2)).mkString("")
@@ -88,6 +64,30 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
 }
 
 object NeuralEvaluation {
+
+  def apply(iter: Traversable[DataSet], net: MultiLayerNetwork, epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None, timeLeft: Option[Int] = None): NeuralEvaluation = {
+    new NeuralEvaluation(eval(iter, net), epoch, label, neuralPrefs, learningRate(net), numHidden(net), timeLeft)
+  }
+
+  def eval(testIter: Traversable[DataSet], net: MultiLayerNetwork): Evaluation = {
+    val e = new Evaluation()
+    testIter.foreach(t => {
+      val features = t.getFeatureMatrix
+      val labels = t.getLabels
+      if (t.getFeaturesMaskArray != null) {
+        // timeseries eval
+        val inMask = t.getFeaturesMaskArray
+        val outMask = t.getLabelsMaskArray
+        val predicted = net.output(features, false, inMask, outMask)
+        e.evalTimeSeries(labels, predicted, outMask)
+      } else {
+        // matrix eval
+        val predicted = net.output(features, false)
+        e.eval(labels, predicted)
+      }
+    })
+    e
+  }
 
   def log(evals: Seq[NeuralEvaluation], cats: Seq[String], iteration: Int, predicted: Option[RDD[Article]] = None) = {
     // Macro
@@ -152,6 +152,13 @@ object NeuralEvaluation {
     Log.resultHeader((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
     Log.result((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
   }
+
+  def numHidden(net: MultiLayerNetwork): String = {
+    val numLayers = net.getLayerWiseConfigurations.getConfs.size
+    (0 until numLayers - 1).map(net.getLayerWiseConfigurations.getConf).map(_.getLayer).map(l => Try(l.asInstanceOf[DenseLayer].getNOut).getOrElse(l.asInstanceOf[GravesLSTM].getNOut)).mkString(", ")
+  }
+
+  def learningRate(net: MultiLayerNetwork): Double = net.getLayerWiseConfigurations.getConf(0).getLayer.getLearningRate
 
   def columnWidth(s: (String, String)): Int = Math.max(s._1.length, s._2.toString.length) + 2
 }

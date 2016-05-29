@@ -46,7 +46,7 @@ object Log extends Logging {
       Log.i(s"Creating custom file at ${resultsFile.getAbsolutePath} ...")
       FileUtils.deleteQuietly(resultsFile)
     }
-    if(!resultsFile.exists) {
+    if (!resultsFile.exists) {
       resultsFile.getParentFile.mkdirs()
       resultsFile.createNewFile()
     }
@@ -59,6 +59,8 @@ object Log extends Logging {
 
   def init() = {
     writeLine("", resultsFile(Config.resultsFileName))
+    Config.cats.foreach(c => writeLine("\n", resultsFile(s"spam/$c.txt")))
+    Config.cats.foreach(c => writeLine(Config.argString, resultsFile(s"spam/$c.txt")))
   }
 
   def f(m: Any): String = LocalDateTime.now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + " > " + m

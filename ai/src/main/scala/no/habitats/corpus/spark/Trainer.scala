@@ -148,11 +148,11 @@ sealed trait NeuralTrainer {
   def sequential(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
     for {lr <- learningRate} {
       val prefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
-      val allRes: Seq[NeuralResult] = Config.cats.map(c => {
+      val allRes: Seq[Seq[NeuralEvaluation]] = Config.cats.map(c => {
         val trainingPrefs: IteratorPrefs = IteratorPrefs(c, training(c), validation)
         val res: NeuralResult = trainer(prefs, trainingPrefs)
         NeuralModelLoader.save(res.net, c, Config.count, name)
-        res
+        res.evaluations
       })
       printResults(allRes, name)
     }
@@ -165,11 +165,11 @@ sealed trait NeuralTrainer {
     val sparkValidation = sc.broadcast(train)
     Log.v("Starting distributed training ...")
     val eval = for {lr <- learningRate} yield {
-      val allRes: Seq[NeuralResult] = sc.parallelize(Config.cats, numSlices = Math.min(Config.parallelism, Config.cats.size)).map(c => {
+      val allRes: Seq[Seq[NeuralEvaluation]] = sc.parallelize(Config.cats, numSlices = Math.min(Config.parallelism, Config.cats.size)).map(c => {
         val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
         val trainingPrefs: IteratorPrefs = IteratorPrefs(c, sparkTrain.value, sparkValidation.value)
         (c, trainer(prefs, trainingPrefs))
-      }).map { case (c, res) => NeuralModelLoader.save(res.net, c, Config.count, name); res }.collect().toSeq
+      }).map { case (c, res) => NeuralModelLoader.save(res.net, c, Config.count, name); res.evaluations }.collect().toSeq
       printResults(allRes, name)
     }
     sparkTrain.destroy()
@@ -177,15 +177,15 @@ sealed trait NeuralTrainer {
     eval
   }
 
-  def printResults(allRes: Seq[NeuralResult], name: String) = {
-    val iterations = allRes.head.evaluations.size
+  def printResults(allRes: Seq[Seq[NeuralEvaluation]], name: String) = {
+    val iterations = allRes.head.size
     Log.v("Accumulating results ...")
     Config.resultsFileName = s"valid/$name.txt"
     Config.resultsCatsFileName = Config.resultsFileName
     Log.result("")
     Log.result(name)
     for (i <- 0 until iterations) {
-      val labelEvals: Seq[NeuralEvaluation] = allRes.map(_.evaluations(i)).sortBy(_.label)
+      val labelEvals: Seq[NeuralEvaluation] = allRes.map(_(i)).sortBy(_.label)
       Log.result("")
       Log.result(s"Category stats epoch $i ...\n")
       labelEvals.sortBy(_.label).zipWithIndex.foreach{case (e, i) => e.log("valid", name, header = i == 0)}
