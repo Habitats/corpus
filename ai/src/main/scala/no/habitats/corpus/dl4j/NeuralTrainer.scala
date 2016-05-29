@@ -11,7 +11,7 @@ import scala.collection.JavaConverters._
   * Created by mail on 06.05.2016.
   */
 object NeuralTrainer extends Serializable {
-  def train(name: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): MultiLayerNetwork = {
+  def train(tag: Option[String], name: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): MultiLayerNetwork = {
     //    Log.r(s"Training $label ...")
     //    Log.r2(s"Training $label ...")
     Config.init()
@@ -32,7 +32,7 @@ object NeuralTrainer extends Serializable {
         c += 1
       }
       trainIter.reset()
-      NeuralEvaluation(net, testIter.asScala, epoch, label, Some(neuralPrefs)).log(path = "train", tag = name)
+      NeuralEvaluation(net, testIter.asScala, epoch, label, Some(neuralPrefs)).log(folder = s"train/${tag.map(_ + "/" + name).getOrElse(name)}", tag = name)
       neuralPrefs.listener.reset
       testIter.reset()
     }

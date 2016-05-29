@@ -77,13 +77,13 @@ object Trainer extends Serializable {
   def trainFFNConfidence() = {
     def train(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt")
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
-    Seq(25, 50, 75, 100).foreach(confidence => {
+    Seq(75).foreach(confidence => {
       Log.r(s"Training with confidence ${confidence} ...")
       val tag: Some[String] = Some(s"confidence-$confidence")
       FeedforwardTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
-      FeedforwardTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 100)
-      NaiveBayesTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
-      NaiveBayesTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 100)
+      FeedforwardTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+//      NaiveBayesTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
+//      NaiveBayesTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     })
   }
 
@@ -122,12 +122,7 @@ sealed trait ModelTrainer {
   val superSample: Boolean
   var feat: String = "UNINITIALIZED"
 
-  lazy val name: String = {
-    val name = s"${tag.map(_ + "_").getOrElse("")}${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
-    Config.resultsFileName = s"train_$name.txt"
-    Config.resultsCatsFileName = s"train_${name}_cats.txt"
-    name
-  }
+  lazy val name: String = s"${tag.map(_ + "_").getOrElse("")}${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
 
   def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int = 100)
 
@@ -161,13 +156,14 @@ sealed trait NeuralTrainer {
   def parallel(validation: CorpusDataset, train: CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => MultiLayerNetwork, parallelism: Int) = {
     // Force pre-generation of document vectors before entering Spark to avoid passing W2V references between executors
     Log.v("Broadcasting dataset ...")
-    val sparkTrain = sc.broadcast(train)
-    val sparkValidation = sc.broadcast(train)
+//    val sparkTrain = sc.broadcast(train)
+//    val sparkValidation = sc.broadcast(train)
     Log.v("Starting distributed training ...")
     for {lr <- learningRate} yield {
-      sc.parallelize(Config.cats, numSlices = Math.min(Config.parallelism, Config.cats.size)).map(c => {
+//      sc.parallelize(Config.cats, numSlices = Math.min(Config.parallelism, Config.cats.size))
+      Config.cats.par.map(c => {
         val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
-        val trainingPrefs: IteratorPrefs = IteratorPrefs(c, sparkTrain.value, sparkValidation.value)
+        val trainingPrefs: IteratorPrefs = IteratorPrefs(c, train, validation)
         (c, trainer(prefs, trainingPrefs))
       }).foreach { case (c, net) => NeuralModelLoader.save(net, c, Config.count, name) }
     }
@@ -200,7 +196,7 @@ sealed case class FeedforwardTrainer(
     val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
     trainNetwork(
-      CorpusDataset.genW2VDataset(processedValidation), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf), name, minibatchSize, learningRate,
+      CorpusDataset.genBoWDataset(processedValidation, tfidf), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf), name, minibatchSize, learningRate,
       (neuralPrefs, iteratorPrefs) => binaryTrainer(FeedForward.createBoW(neuralPrefs, tfidf.phrases.size), neuralPrefs, iteratorPrefs)
     )
   }
@@ -208,7 +204,7 @@ sealed case class FeedforwardTrainer(
   private def binaryTrainer(net: MultiLayerNetwork, neuralPrefs: NeuralPrefs, tw: IteratorPrefs): MultiLayerNetwork = {
     val trainIter = new FeedForwardIterator(tw.training, IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
     val testIter = new FeedForwardIterator(tw.validation, IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
-    NeuralTrainer.train(name, tw.label, neuralPrefs, net, trainIter, testIter)
+    NeuralTrainer.train(tag, name, tw.label, neuralPrefs, net, trainIter, testIter)
   }
 }
 
@@ -234,7 +230,7 @@ sealed case class RecurrentTrainer(
     val net = RNN.createBinary(neuralPrefs.copy(hiddenNodes = hiddenNodes))
     val trainIter = new RNNIterator(tw.training.articles, Some(tw.label), batchSize = neuralPrefs.minibatchSize)
     val testIter = new RNNIterator(tw.validation.articles, Some(tw.label), batchSize = neuralPrefs.minibatchSize)
-    NeuralTrainer.train(name, tw.label, neuralPrefs, net, trainIter, testIter)
+    NeuralTrainer.train(tag, name, tw.label, neuralPrefs, net, trainIter, testIter)
   }
 }
 

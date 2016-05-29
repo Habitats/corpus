@@ -88,7 +88,7 @@ object SparkUtil {
         case "trainNaiveW2V" => Trainer.trainNaiveW2V()
         case "trainNaiveBoW" => Trainer.trainNaiveBoW()
 
-        case "trainFFNConfidence" => Trainer.trainFFNConfidence()
+        case "trainConfidence" => Trainer.trainFFNConfidence()
 
         case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
         case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()

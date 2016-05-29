@@ -72,9 +72,9 @@ case class NeuralEvaluation(net: MultiLayerNetwork, testIter: TraversableOnce[Da
   lazy val fn: Int     = eval.falseNegatives.getOrDefault(1, 0)
   lazy val m : Measure = Measure(tp = tp, fp = fp, fn = fn, tn = tn)
 
-  def log(path: String, tag: String) = {
+  def log(folder: String, tag: String) = {
     //    Log.r2(confusion)
-    val resultFile = s"res/${path}_$tag.txt"
+    val resultFile = s"res/${folder}/$tag.txt"
     if (epoch == 0) Log.toFile(statsHeader, resultFile)
     Log.toFile(stats, resultFile)
   }
