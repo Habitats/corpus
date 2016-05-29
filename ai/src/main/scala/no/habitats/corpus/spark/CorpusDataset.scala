@@ -1,12 +1,12 @@
 package no.habitats.corpus.spark
 
+import no.habitats.corpus.common.{IPTC, TFIDF}
 import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.mllib.MlLibUtils
 import org.apache.spark.rdd.RDD
+import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.api.ndarray.INDArray
 
-/**
-  * Created by mail on 29.05.2016.
-  */
 case class CorpusDataset(data: Array[(INDArray, Array[Int])], rdd: RDD[Article]) {
   lazy val articles = rdd.collect()
 }
