@@ -27,7 +27,7 @@ case class NeuralPredictor(net: MultiLayerNetwork, articles: Array[Article], lab
   def feedforwardPrediction: Array[(Double, Double)] = {
     val features = Nd4j.create(articles.size, featureDimensions)
     val vector = modelType match {
-      case None => articles.map(_.toDocumentVector)
+      case None => articles.map(W2VLoader.documentVector)
       case Some(v) => articles.map(a => MLLibUtil.toVector(v.toVector(a)))
     }
     vector.zipWithIndex.foreach { case (v, i) => features.putRow(i, v) }
