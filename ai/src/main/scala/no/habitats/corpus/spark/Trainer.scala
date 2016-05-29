@@ -169,7 +169,7 @@ sealed trait NeuralTrainer {
         val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
         val trainingPrefs: IteratorPrefs = IteratorPrefs(c, sparkTrain.value, sparkValidation.value)
         (c, trainer(prefs, trainingPrefs))
-      }).map { case (c, res) => NeuralModelLoader.save(res.net, c, Config.count, name); res.evaluations }.collect().toSeq
+      }).collect.map { case (c, res) => NeuralModelLoader.save(res.net, c, Config.count, name); res.evaluations }.toSeq
       printResults(allRes, name)
     }
     sparkTrain.destroy()
@@ -227,8 +227,8 @@ sealed case class FeedforwardTrainer(
   }
 
   private def binaryTrainer(net: MultiLayerNetwork, neuralPrefs: NeuralPrefs, tw: IteratorPrefs): NeuralResult = {
-    val trainIter = new FeedForwardIterator(tw.training, IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
-    val testIter = new FeedForwardIterator(tw.validation, IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new FeedForwardIterator(tw.training.asInstanceOf[CorpusVectors], IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
+    val testIter = new FeedForwardIterator(tw.validation.asInstanceOf[CorpusVectors], IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(name, tw.label, neuralPrefs, net, trainIter, testIter)
   }
 }
@@ -245,16 +245,17 @@ sealed case class RecurrentTrainer(
   override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int) = throw new IllegalStateException("RNN does not support BoW")
 
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
+    feat = "w2v"
     W2VLoader.preload(wordVectors = true, documentVectors = false)
-    trainNetwork(CorpusDataset.genW2VDataset(validation), label => CorpusDataset.genW2VDataset(processTraining(train, superSample)(label)), name, minibatchSize, learningRate, binaryRNNTrainer)
+    trainNetwork(CorpusDataset.genW2VMatrix(validation), label => CorpusDataset.genW2VMatrix(processTraining(train, superSample)(label)), name, minibatchSize, learningRate, binaryRNNTrainer)
   }
 
   // Binary trainers
   private def binaryRNNTrainer(neuralPrefs: NeuralPrefs, tw: IteratorPrefs): NeuralResult = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     val net = RNN.createBinary(neuralPrefs.copy(hiddenNodes = hiddenNodes))
-    val trainIter = new RNNIterator(tw.training.articles, Some(tw.label), batchSize = neuralPrefs.minibatchSize)
-    val testIter = new RNNIterator(tw.validation.articles, Some(tw.label), batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new RNNIterator(tw.training.asInstanceOf[CorpusMatrix], Some(tw.label), batchSize = neuralPrefs.minibatchSize)
+    val testIter = new RNNIterator(tw.validation.asInstanceOf[CorpusMatrix], Some(tw.label), batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(name, tw.label, neuralPrefs, net, trainIter, testIter)
   }
 }

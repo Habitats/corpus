@@ -202,14 +202,14 @@ sealed trait Testable {
 case class FeedforwardTester(modelName: String) extends Testable {
   lazy val ffa: Map[String, NeuralModel] = NeuralModelLoader.models(modelName)
 
-  override def iter(test: CorpusDataset, label: String): DataSetIterator = new FeedForwardIterator(test, IPTC.topCategories.indexOf(label), 500)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator = new FeedForwardIterator(test.asInstanceOf[CorpusVectors], IPTC.topCategories.indexOf(label), 500)
   override def models(modelName: String): Map[String, NeuralModel] = ffa
 }
 
 case class RecurrentTester(modelName: String) extends Testable {
   lazy val rnn: Map[String, NeuralModel] = NeuralModelLoader.models(modelName)
 
-  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test.articles, Some(label), 50)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test.asInstanceOf[CorpusMatrix], Some(label), 50)
   override def models(modelName: String): Map[String, NeuralModel] = rnn
 }
 

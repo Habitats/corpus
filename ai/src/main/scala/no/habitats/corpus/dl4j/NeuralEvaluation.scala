@@ -17,7 +17,7 @@ case class NeuralEvaluation(eval: Evaluation, epoch: Int, label: String, neuralP
 
   private lazy val fullStats = Seq[(String, String)](
     "Category" -> f"$label%41s",
-    "Epoch" -> f"${s"$epoch${neuralPrefs.map(i => "/" + (i.listener.iterCount - 1)).getOrElse("")}"}%6s",
+    "Epoch" -> f"${s"$epoch${neuralPrefs.map(i => "/" + i.listener.iterCount).getOrElse("")}"}%6s",
     "TP" -> f"$tp%5d",
     "FP" -> f"$fp%5d",
     "FN" -> f"$fn%5d",
