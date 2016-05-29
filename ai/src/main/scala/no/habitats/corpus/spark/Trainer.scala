@@ -209,7 +209,7 @@ sealed case class RecurrentTrainer(
 
   override val prefix = "rnn"
 
-  override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int) = ???
+  override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int) = throw new IllegalStateException("RNN does not support BoW")
 
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     W2VLoader.preload(wordVectors = true, documentVectors = false)
