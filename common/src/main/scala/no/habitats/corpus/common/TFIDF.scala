@@ -17,12 +17,12 @@ case class TFIDF(documentsWithTerm: Map[String, Int], phrases: Set[String], docu
 
   private val vocabSize  : Int                         = phrases.size
   private val phraseIndex: Array[String]               = phrases.toArray.sorted
-  private val memo       : mutable.Map[String, Vector] = mutable.Map[String, Vector]()
+  private val memo       : mutable.LongMap[Vector] = mutable.LongMap[Vector]()
 
   def contains(id: String) = phrases.contains(id)
 
   def toVector(article: Article): Vector = {
-    memo.getOrElseUpdate(article.id, {
+    memo.getOrElseUpdate(article.id.toLong, {
       val values: Seq[(Int, Double)] = for {
         i <- phraseIndex.indices
         w = phraseIndex(i) if article.ann.contains(w)
