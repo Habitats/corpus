@@ -191,15 +191,15 @@ object Cacher extends RddSerializer {
     val validation = rdd.filter(a => validationIds.contains(a.id))
     saveAsText(validation.map(Article.serialize).sortBy(a => Math.random), "nyt_validation_ordered" + name)
 
-    savePhrases(train, validation, test)
+    savePhrases(train, validation, test, name)
   }
 
-  def savePhrases(train: RDD[Article], validation: RDD[Article], test: RDD[Article]): Set[String] = {
+  def savePhrases(train: RDD[Article], validation: RDD[Article], test: RDD[Article], name: String): Set[String] = {
     val trainIds = train.flatMap(_.ann.keySet).collect().toSet
     val testIds = train.flatMap(_.ann.keySet).collect().toSet
     val validationIds = train.flatMap(_.ann.keySet).collect().toSet
-    val phrasesToKeep: Set[String] = trainIds.filter(id => testIds.contains(id) || validationIds.contains(id))
-    //    Log.toFile(phrasesToKeep.mkString("\n"), "phrases.txt")
+    val phrasesToKeep: Set[String] = trainIds.union(testIds ++ validationIds)
+    Log.toFile(phrasesToKeep.mkString("\n"), Config.cachePath + s"excluded_ids_$name.txt")
     phrasesToKeep
   }
 
@@ -210,6 +210,8 @@ object Cacher extends RddSerializer {
     saveAsText(splits(0), "nyt_train_shuffled")
     saveAsText(splits(1), "nyt_validation_shuffled")
     saveAsText(splits(2), "nyt_test_shuffled")
+
+    //TODO: EXCLUSION SAVING MISSING
   }
 
   def cacheSubSampledShuffled() = {
@@ -249,16 +251,25 @@ object RelativeSplitter extends Splitter {
     val numTrain = (trainFraction * s).round.toInt
     val numTest, numVal = ((testValFraction * s) / 2).round.toInt
     val trainIds = ids.slice(0, numTrain).toSet
-    saveAsText(rdd.filter(a => trainIds.contains(a.id.toInt)).map(Article.serialize), s"$name/nyt_${name}_${buckets}_train")
-    for (i <- 0 until buckets) yield {
+    val train: RDD[Article] = rdd.filter(a => trainIds.contains(a.id.toInt))
+    saveAsText(train.map(Article.serialize), s"$name/nyt_${name}_${buckets}_train")
+    val exclusionIds = (for (i <- 0 until buckets) yield {
       val from = numTrain + i * (numTest + numVal)
       val until = numTrain + (i + 1) * (numTest + numVal)
+
       val bucketIds = Random.shuffle(ids.slice(from.toInt, until.toInt).toSet)
       val testIds = bucketIds.slice(0, bucketIds.size / 2)
       val valIds = bucketIds.slice(bucketIds.size / 2, bucketIds.size)
-      saveAsText(rdd.filter(a => testIds.contains(ordering(a))).map(Article.serialize), s"$name/nyt_${name}_${buckets}-${i}_test")
-      saveAsText(rdd.filter(a => valIds.contains(ordering(a))).map(Article.serialize), s"$name/nyt_${name}_${buckets}-${i}_validation")
-    }
+
+      val test: RDD[Article] = rdd.filter(a => testIds.contains(ordering(a)))
+      val validation: RDD[Article] = rdd.filter(a => valIds.contains(ordering(a)))
+      saveAsText(test.map(Article.serialize), s"$name/nyt_${name}_${buckets}-${i}_test")
+      saveAsText(validation.map(Article.serialize), s"$name/nyt_${name}_${buckets}-${i}_validation")
+
+      (test.flatMap(_.ann.map(_._2.id)) ++ validation.flatMap(_.ann.map(_._2.id))).collect().toSet
+
+    }).reduce(_ ++ _).intersect(train.flatMap(_.ann.map(_._2.id)).collect().toSet)
+    Log.toFile(exclusionIds.mkString("\n"), s"$name/excluded_ids_$name.txt", Config.cachePath)
     rdd.unpersist()
   }
 }
