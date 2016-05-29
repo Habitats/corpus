@@ -101,7 +101,9 @@ object SparkUtil {
         case "trainNaiveBoWTypes" => Trainer.trainRNNW2VTypes()
         case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
 
-        case "train" =>
+        case "trainVirt" => Trainer.virt()
+        case "trainST1" => Trainer.st1()
+        case "trainST2" => Trainer.st2()
 
         // Testing
         case "verifyModels" => Log.v("Models are: " + Tester.verifyAll())
