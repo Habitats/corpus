@@ -13,12 +13,12 @@ import org.nd4j.linalg.indexing.NDArrayIndex
 
 import scala.collection.JavaConverters._
 
-class RNNIterator(allArticles: CorpusMatrix, label: Option[String], batchSize: Int) extends DataSetIterator {
+class RNNIterator(allArticles: CorpusMatrix, label: String, batchSize: Int) extends DataSetIterator {
   W2VLoader.preload(wordVectors = true, documentVectors = false)
 
   // 32 may be a good starting point,
   var counter                       = 0
-  val categories: util.List[String] = label.fold(IPTC.topCategories.toList)(List(_)).asJava
+  val labelIndex = IPTC.topCategories.indexOf(label)
 
   override def next(num: Int): DataSet = {
     val articles = allArticles.data.slice(cursor, cursor + num)
@@ -39,7 +39,7 @@ class RNNIterator(allArticles: CorpusMatrix, label: Option[String], batchSize: I
       }
       // binary
       val labelIndex: Int = annotations.length - 1
-      val label: Int = articles(i)._2(i)
+      val label: Int = articles(i)._2(labelIndex)
       labels.putScalar(Array(i, label, labelIndex), 1.0)
       // Specify that an output exists at the final time step for this example
       labelsMask.putScalar(Array(i, labelIndex), 1.0)
@@ -53,8 +53,8 @@ class RNNIterator(allArticles: CorpusMatrix, label: Option[String], batchSize: I
   override def totalExamples(): Int = allArticles.data.length
   override def inputColumns(): Int = 1000
   override def setPreProcessor(preProcessor: DataSetPreProcessor): Unit = throw new UnsupportedOperationException
-  override def getLabels: util.List[String] = categories
-  override def totalOutcomes(): Int = if (label.isDefined) 2 else getLabels.size
+  override def getLabels: util.List[String] = util.Arrays.asList("yes", "no")
+  override def totalOutcomes(): Int = 2
   override def reset(): Unit = counter = 0
   override def numExamples(): Int = totalExamples()
   override def next(): DataSet = next(batch)
