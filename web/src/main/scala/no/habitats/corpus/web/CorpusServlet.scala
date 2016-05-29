@@ -84,7 +84,7 @@ class CorpusServlet extends ScalatraServlet with JacksonJsonSupport with CorsSup
 
   get("/vec/size/?") {
     contentType = formats("txt")
-    W2VLoader.featureSize.toString
+    1000
   }
 
   def detailedInfo(text: String, confidence: Double) = {

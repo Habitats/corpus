@@ -95,9 +95,6 @@ object W2VLoader extends RddSerializer with VectorLoader {
   implicit val formats              = Serialization.formats(NoTypeHints)
   lazy     val loader: VectorLoader = if (false) new SparkVectorLoader() else new TextVectorLoader()
 
-  // TODO: NOT GOOD
-  val featureSize = 1000
-
   def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = loader.preload(wordVectors, documentVectors)
 
   def fromId(fb: String): Option[INDArray] = loader.fromId(fb)
@@ -133,7 +130,7 @@ object W2VLoader extends RddSerializer with VectorLoader {
       .filter(_.ann.nonEmpty)
       .filter(_.ann.map(_._2.fb).forall(W2VLoader.contains))
       .map(a => s"${a.id},${W2VLoader.toString(calculateDocumentVector(a.ann))}")
-    saveAsText(docVecs, s"document_vectors_${confidence}${(if (types) "_types" else "")}")
+    saveAsText(docVecs, s"document_vectors_$confidence${if (types) "_types" else ""}")
   }
 
   def toString(w2v: INDArray): String = w2v.data().asFloat().mkString(",")
