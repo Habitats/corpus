@@ -15,7 +15,7 @@ object Log extends Logging {
   val headers: mutable.Set[String] = mutable.Set[String]()
 
 //  def resultsFile(name: String) = {
-//    val resultsFile = new File(s"${Config.dataPath}res/$name")
+//    val resultsFile = new File(s"${Config.dataPath}res/$name.txt")
 //    resultsFile.getParentFile.mkdirs
 //    if (!resultsFile.exists) {
 //      i(s"Creating results file at ${resultsFile.getAbsolutePath} ...")

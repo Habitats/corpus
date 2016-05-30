@@ -305,7 +305,7 @@ sealed case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[St
   private def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], tfidf: Option[TFIDF] = None, superSample: Boolean) = {
     val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, superSample)(c), validation, tfidf))).toMap
     val predicted = MlLibUtils.testMLlibModels(validation, models, tfidf)
-    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"res/valid/$name")
+    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"res/valid/$name.txt")
     models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$name/${name}_${IPTC.trim(c)}.bin") }
   }
 }

@@ -127,7 +127,7 @@ object Tester {
       .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$name/$n")) }
       .sortBy(_._1)
     rdds.foreach { case (index, n) => {
-      Log.toFile(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", s"res/test/$name")
+      Log.toFile(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", s"res/test/$name.txt")
       tester.test(n, iteration = index)
     }
     }
@@ -177,7 +177,7 @@ sealed trait Testable {
   }
 
   def labelBased(test: RDD[Article], iteration: Int): Seq[NeuralEvaluation] = {
-    if (iteration == 0) Log.toFile(s"Testing $name ...", s"res/test/$name")
+    if (iteration == 0) Log.toFile(s"Testing $name ...", s"res/test/$name.txt")
     val testDataset: CorpusDataset = dataset(test)
     models(name).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
       val test = iter(testDataset, models._1).asScala.toTraversable
@@ -208,11 +208,11 @@ case class NaiveBayesTester(name: String) extends Testable {
   override def verify: Boolean = Try(nb).isSuccess
 
   override def test(articles: RDD[Article], includeExampleBased: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
-    Log.toFile(s"Testing Naive Bayes [$name] ...", s"res/test/$name")
+    Log.toFile(s"Testing Naive Bayes [$name] ...", s"res/test/$name.txt")
     val predicted = MlLibUtils.testMLlibModels(articles, nb, if (name.contains("bow")) Some(TFIDF.deserialize(name)) else None)
 
     Log.v("--- Predictions complete! ")
-    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"res/test/$name")
+    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"res/test/$name.txt")
     if (shouldLogResults) logResults(predicted)
     System.gc()
   }
