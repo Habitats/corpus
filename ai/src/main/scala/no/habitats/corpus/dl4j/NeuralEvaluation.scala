@@ -48,9 +48,8 @@ case class NeuralEvaluation(eval: Evaluation, epoch: Int, label: String, neuralP
   lazy val fn: Int     = eval.falseNegatives.getOrDefault(1, 0)
   lazy val m : Measure = Measure(tp = tp, fp = fp, fn = fn, tn = tn)
 
-  def log(folder: String, name: String, header: Boolean = false) = {
+  def log(resultFile: String, header: Boolean = false) = {
     //    Log.r2(confusion)
-    val resultFile = s"res/$folder/$name.txt"
     if (header) Log.toFile(statsHeader, resultFile)
     Log.toFile(stats, resultFile)
   }
@@ -61,9 +60,18 @@ case class NeuralEvaluation(eval: Evaluation, epoch: Int, label: String, neuralP
     //    if (i == 1) Log.r(statsHeader, s)
     Log.result(stats, s)
   }
+
+
 }
 
 object NeuralEvaluation {
+
+  def logLabels(labelEvals: Seq[NeuralEvaluation], resultFile: String) = {
+    Log.result("", resultFile)
+    Log.result(s"Category stats ...\n",resultFile)
+    labelEvals.sortBy(_.label).zipWithIndex.foreach { case (e, i) => e.log(resultFile, header = i == 0) }
+    Log.result("", resultFile)
+  }
 
   def apply(iter: Traversable[DataSet], net: MultiLayerNetwork, epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None, timeLeft: Option[Int] = None): NeuralEvaluation = {
     new NeuralEvaluation(eval(iter, net), epoch, label, neuralPrefs, learningRate(net), numHidden(net), timeLeft)
@@ -89,7 +97,7 @@ object NeuralEvaluation {
     e
   }
 
-  def log(evals: Seq[NeuralEvaluation], cats: Seq[String], iteration: Int, predicted: Option[RDD[Article]] = None) = {
+  def log(evals: Seq[NeuralEvaluation], resultFile: String, cats: Seq[String], iteration: Int, predicted: Option[RDD[Article]] = None) = {
     // Macro
     val maRecall = evals.map(_.m.recall).sum / cats.size
     val maPrecision = evals.map(_.m.precision).sum / cats.size
@@ -149,8 +157,10 @@ object NeuralEvaluation {
       )
     }).getOrElse(Nil)
 
-    Log.resultHeader((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString(""))
-    Log.result((labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString(""))
+    val accumulatedHeaders: String = (labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString("")
+    val accumulatedStats: String = (labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString("")
+    Log.resultHeader(accumulatedHeaders, resultFile)
+    Log.result(accumulatedStats, resultFile)
   }
 
   def numHidden(net: MultiLayerNetwork): String = {

@@ -67,29 +67,29 @@ object Log extends Logging {
 
   def i(m: Any) = log(m)
 
-  def result(m: Any, file: String = Config.resultsFileName) = {
+  def result(m: Any, file: String ) = {
     i(m)
     writeLine(f(m), resultsFile(file))
   }
 
-  def resultHeader(m: Any) = {
+  def resultHeader(m: Any, file: String) = {
     if (!headers.contains(m.toString)) {
-      result(m)
+      result(m, file)
       headers.add(m.toString)
     }
   }
 
-  def resultCats(m: Any) = {
+  def resultCats(m: Any, file: String) = {
     i(m)
     writeLine(f(m), resultsFile(Config.resultsCatsFileName))
   }
 
-  def h(m: Any) = {
+  def h(m: Any, file: String) = {
     writeLine("", resultsFile(Config.resultsFileName))
-    result(m)
+    result(m, file)
     if (Config.resultsFileName != Config.resultsCatsFileName) {
       writeLine("", resultsFile(Config.resultsCatsFileName))
-      resultCats(m)
+      resultCats(m, file)
     }
   }
 

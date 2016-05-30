@@ -109,10 +109,10 @@ object Trainer extends Serializable {
     Seq(25, 50, 75, 100).foreach(confidence => {
       val tag: Some[String] = Some(s"confidence-$confidence")
       Log.v(s"Training with confidence ${confidence} ...")
-      FeedforwardTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
-      FeedforwardTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
       //      NaiveBayesTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
       //      NaiveBayesTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+      //      FeedforwardTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
+      FeedforwardTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     })
   }
 
@@ -209,19 +209,17 @@ sealed trait NeuralTrainer {
   }
 
   def printResults(allRes: Seq[Seq[NeuralEvaluation]], name: String) = {
-    val iterations = allRes.head.size
+    val epochs = allRes.head.size
     Log.v("Accumulating results ...")
     Config.resultsFileName = s"valid/$name.txt"
     Config.resultsCatsFileName = Config.resultsFileName
-    Log.result("")
-    Log.result(name)
-    for (i <- 0 until iterations) {
+    val resultFile = s"res/valid/$name.txt"
+    Log.result("", resultFile)
+    Log.result(name, resultFile)
+    for (i <- 0 until epochs) {
       val labelEvals: Seq[NeuralEvaluation] = allRes.map(_ (i)).sortBy(_.label)
-      Log.result("")
-      Log.result(s"Category stats epoch $i ...\n")
-      labelEvals.sortBy(_.label).zipWithIndex.foreach { case (e, i) => e.log("valid", name, header = i == 0) }
-      Log.result("")
-      NeuralEvaluation.log(labelEvals, Config.cats, i)
+      NeuralEvaluation.logLabels(labelEvals, resultFile)
+      NeuralEvaluation.log(labelEvals, resultFile, Config.cats, i)
     }
   }
 }
@@ -317,7 +315,7 @@ sealed case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[St
   private def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], tfidf: Option[TFIDF] = None, superSample: Boolean) = {
     val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, superSample)(c), validation, tfidf))).toMap
     val predicted = MlLibUtils.testMLlibModels(validation, models, tfidf)
-    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()))
+    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"res/valid/$name")
     models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$name/${name}_${IPTC.trim(c)}.bin") }
   }
 }

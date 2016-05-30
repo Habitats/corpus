@@ -49,7 +49,7 @@ object MlLibUtils {
     })
   }
 
-  def evaluate(predicted: RDD[Article], prefs: Broadcast[Prefs]) = {
+  def evaluate(predicted: RDD[Article], prefs: Broadcast[Prefs], resultFile: String) = {
     predicted.cache()
     val sampleResult = predicted.map(_.toResult).reduce(_ + "\n" + _)
     Log.toFile(sampleResult, s"stats/sample_result_${Config.count}.txt")
@@ -59,16 +59,22 @@ object MlLibUtils {
     val cats = IPTC.topCategories.toSet
     val stats = MLStats(predicted, cats)
     if (stats.catStats.nonEmpty) {
-      val catHeader = stats.catStats.head.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 3}s").format(s._1)).mkString(f"${prefs.value.iteration}%3d# Category stats:\n", "", "\n")
-      Log.resultCats(stats.catStats.map(c => c.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 3}s").format(s._2)).mkString("")).mkString(catHeader, "\n", "\n"))
+      val catHeader = stats.catStats.head.map(s => formatHeader(s)).mkString(f"${prefs.value.iteration}%3d# Category stats:\n", "", "\n")
+      val catStats: Seq[String] = stats.catStats.map(c => c.map(s => formatColumn(s)).mkString(""))
+      Log.resultCats(catStats.mkString(catHeader, "\n", "\n"), resultFile)
     }
 
     if (prefs.value.iteration == 0) {
-      Log.result(stats.stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._1)).mkString(""))
+      val accumulatedHeaders: String = stats.stats.map(s => formatHeader(s)).mkString("")
+      Log.result(accumulatedHeaders, resultFile)
     }
-    Log.result(stats.stats.map(s => (s"%${Math.max(s._1.length, s._2.toString.length) + 2}s").format(s._2)).mkString(""))
+    val accumulatedStats: String = stats.stats.map(s => formatColumn(s)).mkString("")
+    Log.result(accumulatedStats, resultFile)
     predicted.unpersist()
   }
+  def formatHeader(s: (String, String)): String = (s"%${columnWidth(s)}s").format(s._1)
+  def formatColumn(s: (String, String)): String = (s"%${columnWidth(s)}s").format(s._2)
+  def columnWidth(s: (String, String)): Int = Math.max(s._1.length, s._2.toString.length) + 2
 }
 
 

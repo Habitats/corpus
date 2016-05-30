@@ -34,7 +34,6 @@ object NeuralTrainer extends Serializable {
         c += 1
       }
       val evaluation: NeuralEvaluation = NeuralEvaluation(testIter.asScala.toTraversable, net, epoch, label, Some(neuralPrefs))
-      evaluation.log(folder = s"train", name = name)
       trainIter.reset()
       neuralPrefs.listener.reset
       testIter.reset()
