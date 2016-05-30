@@ -167,6 +167,12 @@ sealed trait NeuralTrainer {
   case class IteratorPrefs(label: String, training: CorpusDataset, validation: CorpusDataset)
 
   def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], tp: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
+    val resultFile = s"train/$name.txt"
+    Log.toFile("", resultFile)
+    Log.toFile("", resultFile)
+    Log.toFile("", resultFile)
+    Log.toFile("Model: " + name + " - Args: " + Config.getArgs, resultFile)
+    Log.toFile("", resultFile)
     if (Config.parallelism > 1) parallel(validation, training(""), name, minibatchSize, learningRate, tp, Config.parallelism)
     else sequential(validation, training, name, minibatchSize, learningRate, tp)
   }
@@ -203,12 +209,12 @@ sealed trait NeuralTrainer {
   def printResults(allRes: Seq[Seq[NeuralEvaluation]], name: String) = {
     val epochs = allRes.head.size
     Log.v("Accumulating results ...")
-    val resultFile = s"res/valid/$name.txt"
+    val resultFile = s"train/$name.txt"
     Log.toFile("", resultFile)
-    Log.toFile(name, resultFile)
+    Log.toFile("Model: " + name + " - Args: " + Config.getArgs, resultFile)
     for (i <- 0 until epochs) {
       val labelEvals: Seq[NeuralEvaluation] = allRes.map(_ (i)).sortBy(_.label)
-      NeuralEvaluation.logLabels(labelEvals, resultFile)
+      NeuralEvaluation.logLabelStats(labelEvals, resultFile)
       NeuralEvaluation.log(labelEvals, resultFile, Config.cats, i)
     }
   }
@@ -236,7 +242,7 @@ sealed case class FeedforwardTrainer(
     feat = "bow"
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     val tfidf = TFIDF(train, termFrequencyThreshold)
-    Log.toFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
+    Log.saveToFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
     val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
     trainNetwork(
@@ -292,7 +298,7 @@ sealed case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[St
     feat = "bow"
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     val tfidf = TFIDF(train, termFrequencyThreshold)
-    Log.toFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
+    Log.saveToFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
     trainNaiveBayes(TFIDF.frequencyFilter(train, tfidf.phrases), TFIDF.frequencyFilter(validation, tfidf.phrases), Some(tfidf), superSample)
   }
 
@@ -305,7 +311,7 @@ sealed case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[St
   private def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], tfidf: Option[TFIDF] = None, superSample: Boolean) = {
     val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, superSample)(c), validation, tfidf))).toMap
     val predicted = MlLibUtils.testMLlibModels(validation, models, tfidf)
-    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"res/valid/$name.txt")
+    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"train/$name.txt")
     models.foreach { case (c, model) => MLlibModelLoader.save(model, s"$name/${name}_${IPTC.trim(c)}.bin") }
   }
 }

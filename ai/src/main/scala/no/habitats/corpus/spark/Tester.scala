@@ -127,7 +127,7 @@ object Tester {
       .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$name/$n")) }
       .sortBy(_._1)
     rdds.foreach { case (index, n) => {
-      Log.toFile(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", s"res/test/$name.txt")
+      Log.toFile(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", s"test/$name.txt")
       tester.test(n, iteration = index)
     }
     }
@@ -151,9 +151,9 @@ sealed trait Testable {
     Log.v(s"Testing ${test.count} articles ...")
     val predictedArticles: Option[RDD[Article]] = if (predict) Some(predictAll(test)) else None
 
-    val resultFile = s"res/test/$name.txt"
+    val resultFile = s"test/$name.txt"
     val labelEvals: Seq[NeuralEvaluation] = labelBased(test, iteration)
-    NeuralEvaluation.logLabels(labelEvals, resultFile)
+    NeuralEvaluation.logLabelStats(labelEvals, resultFile)
     NeuralEvaluation.log(labelEvals, resultFile, IPTC.topCategories, iteration, predictedArticles)
     if (shouldLogResults) predictedArticles.foreach(logResults)
     test.unpersist()
@@ -163,8 +163,8 @@ sealed trait Testable {
   def logResults(articles: RDD[Article]) = {
     articles.sortBy(_.id).foreach(a => {
       a.pred.foreach(p => {
-        val folder: String = Config.dataPath + s"res/predictions/$name/" + (if (a.iptc.contains(p)) "tp" else "fp")
-        Log.toFile(a.toStringFull, p, folder)
+        val folder: String = Config.dataPath + s"predictions/$name/" + (if (a.iptc.contains(p)) "tp" else "fp")
+        Log.saveToFile(a.toStringFull, p, folder)
       })
     })
   }
@@ -177,7 +177,7 @@ sealed trait Testable {
   }
 
   def labelBased(test: RDD[Article], iteration: Int): Seq[NeuralEvaluation] = {
-    if (iteration == 0) Log.toFile(s"Testing $name ...", s"res/test/$name.txt")
+    if (iteration == 0) Log.toFile(s"Testing $name ...", s"test/$name.txt")
     val testDataset: CorpusDataset = dataset(test)
     models(name).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
       val test = iter(testDataset, models._1).asScala.toTraversable
@@ -208,11 +208,11 @@ case class NaiveBayesTester(name: String) extends Testable {
   override def verify: Boolean = Try(nb).isSuccess
 
   override def test(articles: RDD[Article], includeExampleBased: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
-    Log.toFile(s"Testing Naive Bayes [$name] ...", s"res/test/$name.txt")
+    Log.toFile(s"Testing Naive Bayes [$name] ...", s"test/$name.txt")
     val predicted = MlLibUtils.testMLlibModels(articles, nb, if (name.contains("bow")) Some(TFIDF.deserialize(name)) else None)
 
     Log.v("--- Predictions complete! ")
-    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"res/test/$name.txt")
+    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"test/$name.txt")
     if (shouldLogResults) logResults(predicted)
     System.gc()
   }

@@ -22,20 +22,22 @@ object NeuralTrainer extends Serializable {
     val total = trainIter.totalExamples()
     val batch: Int = trainIter.batch
     val totalEpochs: Int = Config.epoch.getOrElse(neuralPrefs.epochs)
+    val resultFile = if(Config.parallelism > 1) s"train/$name/$label.txt" else s"train/$name.txt"
+
     val eval: Seq[NeuralEvaluation] = for (epoch <- 0 until totalEpochs) yield {
       var c = 1
       while (trainIter.hasNext) {
         net.fit(trainIter.next())
         if ((c % 10) - 1 == 0) {
           val left = timeLeft(total = total, iteration = c, batch = batch, label = label, epoch = epoch, totalEpoch = totalEpochs)
-          NeuralEvaluation(testIter.asScala.take(2).toTraversable, net, epoch, label, Some(neuralPrefs), Some(left)).logIntermediate(c)
+          NeuralEvaluation(testIter.asScala.take(2).toTraversable, net, epoch, label, Some(neuralPrefs), Some(left)).log(resultFile, c - 1)
           testIter.reset()
         }
         c += 1
       }
       val evaluation: NeuralEvaluation = NeuralEvaluation(testIter.asScala.toTraversable, net, epoch, label, Some(neuralPrefs))
       trainIter.reset()
-      neuralPrefs.listener.reset
+      neuralPrefs.listener.reset()
       testIter.reset()
       evaluation
     }

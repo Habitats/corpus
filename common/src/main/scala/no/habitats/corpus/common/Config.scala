@@ -109,7 +109,7 @@ object Config {
   val wikiDataIncludeBroad: Boolean = conf.getProperty("wikidata_include_broad").toBoolean
   val dbpediaSpotlightURL : String  = conf.getProperty("dbpedia_spotlight_url")
 
-  def argString: String = args.toString
+  def getArgs: Arguments = args
 
   def setArgs(arr: Array[String]) = {
     lazy val props: mutable.Map[String, String] = mutable.Map() ++ arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
@@ -150,7 +150,7 @@ object Config {
   lazy val rdd                   : String          = args.rdd.getOrElse(conf.getProperty("rdd"))
   lazy val partitions            : Int             = Try(args.partitions.getOrElse(conf.getProperty("partitions").toInt)).getOrElse(20)
   lazy val parallelism           : Int             = args.parallelism.getOrElse(1)
-  lazy val count                 : Int             = Try(args.count.getOrElse(conf.getProperty("count").toInt) match {case i => if (i == -1) Integer.MAX_VALUE else i}).getOrElse(Integer.MAX_VALUE)
+  lazy val count                 : Int             = Try(args.count.getOrElse(conf.getProperty("count").toInt) match { case i => if (i == -1) Integer.MAX_VALUE else i }).getOrElse(Integer.MAX_VALUE)
   lazy val cache                 : Boolean         = args.cache.getOrElse(false)
   lazy val histogram             : Boolean         = args.histogram.getOrElse(false)
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
@@ -193,5 +193,14 @@ object Config {
                         iterations: Option[Int] = None,
                         epoch: Option[Int] = None,
                         superSample: Option[Boolean] = None
-                      )
+                      ) {
+    override def toString = {
+      import java.lang.reflect._
+      getClass.getDeclaredFields.flatMap { field: Field =>
+        field.setAccessible(true)
+        val value: Option[_] = field.get(this).asInstanceOf[Option[_]]
+        value.map(v => field.getName + " = " + v)
+      }.sorted.mkString(", ")
+    }
+  }
 }

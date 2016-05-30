@@ -199,7 +199,7 @@ object Cacher extends RddSerializer {
     val testIds = train.flatMap(_.ann.keySet).collect().toSet
     val validationIds = train.flatMap(_.ann.keySet).collect().toSet
     val phrasesToKeep: Set[String] = trainIds.union(testIds ++ validationIds)
-    Log.toFile(phrasesToKeep.mkString("\n"), Config.cachePath + s"excluded_ids_$name.txt")
+    Log.saveToFile(phrasesToKeep.mkString("\n"), Config.cachePath + s"excluded_ids_$name.txt")
     phrasesToKeep
   }
 
@@ -269,7 +269,7 @@ object RelativeSplitter extends Splitter {
       (test.flatMap(_.ann.map(_._2.id)) ++ validation.flatMap(_.ann.map(_._2.id))).collect().toSet
 
     }).reduce(_ ++ _).intersect(train.flatMap(_.ann.map(_._2.id)).collect().toSet)
-    Log.toFile(exclusionIds.mkString("\n"), s"$name/excluded_ids_$name.txt", Config.cachePath)
+    Log.saveToFile(exclusionIds.mkString("\n"), s"$name/excluded_ids_$name.txt", Config.cachePath)
     rdd.unpersist()
   }
 }

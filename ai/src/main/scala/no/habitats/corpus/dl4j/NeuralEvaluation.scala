@@ -1,7 +1,7 @@
 package no.habitats.corpus.dl4j
 
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{IPTC, Log}
+import no.habitats.corpus.common.{Config, IPTC, Log}
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import no.habitats.corpus.mllib._
 import no.habitats.corpus.spark.SparkUtil
@@ -48,28 +48,22 @@ case class NeuralEvaluation(eval: Evaluation, epoch: Int, label: String, neuralP
   lazy val fn: Int     = eval.falseNegatives.getOrDefault(1, 0)
   lazy val m : Measure = Measure(tp = tp, fp = fp, fn = fn, tn = tn)
 
-  def log(resultFile: String, header: Boolean = false) = {
+  def log(resultFile: String, iteration: Int) = {
     //    Log.r2(confusion)
-    if (header) Log.toFile(statsHeader, resultFile)
+    if (iteration == 0) {
+      Log.toFile("", resultFile)
+      Log.toFile(statsHeader, resultFile)
+    }
     Log.toFile(stats, resultFile)
   }
-
-  def logIntermediate(i: Int) = {
-    //        Log.r2(confusion)
-    val s = s"spam/$label.txt"
-    //    if (i == 1) Log.r(statsHeader, s)
-    Log.toFile(stats, s)
-  }
-
-
 }
 
 object NeuralEvaluation {
 
-  def logLabels(labelEvals: Seq[NeuralEvaluation], resultFile: String) = {
+  def logLabelStats(labelEvals: Seq[NeuralEvaluation], resultFile: String) = {
     Log.toFile("", resultFile)
-    Log.toFile(s"Category stats ...\n",resultFile)
-    labelEvals.sortBy(_.label).zipWithIndex.foreach { case (e, i) => e.log(resultFile, header = i == 0) }
+    Log.toFile(s"Category stats ...", resultFile)
+    labelEvals.sortBy(_.label).zipWithIndex.foreach { case (e, i) => e.log(resultFile, i) }
     Log.toFile("", resultFile)
   }
 
@@ -159,7 +153,10 @@ object NeuralEvaluation {
 
     val accumulatedHeaders: String = (labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString("")
     val accumulatedStats: String = (labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString("")
-    Log.toFileHeader(accumulatedHeaders, resultFile)
+    if (iteration == 0) {
+      Log.toFile("", resultFile)
+      Log.toFile(accumulatedHeaders, resultFile)
+    }
     Log.toFile(accumulatedStats, resultFile)
   }
 

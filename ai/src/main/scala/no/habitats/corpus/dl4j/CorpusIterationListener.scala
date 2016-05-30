@@ -26,7 +26,7 @@ case class CorpusIterationListener() extends IterationListener {
     this.inv = true
   }
 
-  def reset = {iterCount = 0}
+  def reset() = {iterCount = 0}
 
   def iterationDone(model: Model, iteration: Int) {
     val result: Double = model.score
