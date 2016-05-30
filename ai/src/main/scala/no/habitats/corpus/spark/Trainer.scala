@@ -14,7 +14,6 @@ import org.apache.spark.rdd.RDD
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.collection.parallel.{ForkJoinTaskSupport, ParSeq}
-import scala.concurrent.Await
 import scala.language.implicitConversions
 
 object Trainer extends Serializable {
@@ -168,7 +167,7 @@ sealed trait NeuralTrainer {
 
   case class IteratorPrefs(label: String, training: CorpusDataset, validation: CorpusDataset)
 
-  def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], tp: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
+  def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], tp: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
     val resultFile = s"train/$name.txt"
     Log.toFile("", resultFile)
     Log.toFile("", resultFile)
@@ -179,9 +178,9 @@ sealed trait NeuralTrainer {
     else sequential(validation, training, name, minibatchSize, learningRate, tp)
   }
 
-  def sequential(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
-    for {lr <- learningRate} {
-      val prefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
+  def sequential(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
+    for {lr <- learningRate; mbs <- minibatchSize} {
+      val prefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = mbs)
       val allRes: Seq[Seq[NeuralEvaluation]] = Config.cats.map(c => {
         val trainingPrefs: IteratorPrefs = IteratorPrefs(c, training(c), validation)
         val res: NeuralResult = trainer(prefs, trainingPrefs)
@@ -192,22 +191,21 @@ sealed trait NeuralTrainer {
     }
   }
 
-  def parallel(validation: CorpusDataset, train: CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult, parallelism: Int) = {
+  def parallel(validation: CorpusDataset, train: CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult, parallelism: Int) = {
     // Force pre-generation of document vectors before entering Spark to avoid passing W2V references between executors
     Log.v("Broadcasting dataset ...")
     Log.v("Starting distributed training ...")
     val cats = Config.cats.par
     cats.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(Config.parallelism))
     // TODO: SPARK THIS UP, BUT DON'T FORGET THE W2V LOADER!
-    val eval = for {lr <- learningRate} yield {
+    for {lr <- learningRate; mbs <- minibatchSize} {
       val allRes: ParSeq[Seq[NeuralEvaluation]] = cats.map(c => {
-        val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
+        val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = mbs)
         val trainingPrefs: IteratorPrefs = IteratorPrefs(c, train, validation)
         (c, trainer(prefs, trainingPrefs))
       }).map { case (c, res) => NeuralModelLoader.save(res.net, c, Config.count, name); res.evaluations }
       printResults(allRes.seq, name)
     }
-    eval
   }
 
   def printResults(allRes: Seq[Seq[NeuralEvaluation]], name: String) = {
@@ -226,7 +224,7 @@ sealed trait NeuralTrainer {
 
 sealed case class FeedforwardTrainer(
                                       learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
-                                      minibatchSize: Int = Config.miniBatchSize.getOrElse(1000),
+                                      minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(1000)),
                                       superSample: Boolean = Config.superSample.getOrElse(false),
                                       tag: Option[String] = None
                                     ) extends ModelTrainer with NeuralTrainer {
@@ -264,7 +262,7 @@ sealed case class FeedforwardTrainer(
 
 sealed case class RecurrentTrainer(
                                     learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
-                                    minibatchSize: Int = Config.miniBatchSize.getOrElse(1000),
+                                    minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(1000)),
                                     superSample: Boolean = Config.superSample.getOrElse(false),
                                     hiddenNodes: Int = Config.hidden1.getOrElse(10),
                                     tag: Option[String] = None) extends ModelTrainer with NeuralTrainer {

@@ -47,8 +47,8 @@ object NeuralTrainer extends Serializable {
   }
 
   def timeLeft(totalTrainingSize: Int, currentIteration: Int, batch: Int, label: String, currentEpoch: Int, totalEpoch: Int): Int = {
-    val labelIndex = if (Config.parallelism == 0) Config.cats.toArray.sorted.indexOf(label) else 0
-    val totalLabels = if(Config.parallelism == 0) Config.cats.size else 1
+    val labelIndex = if (Config.parallelism == 1) Config.cats.toArray.sorted.indexOf(label) else 0
+    val totalLabels = if (Config.parallelism == 1) Config.cats.size else 1
     val duration = System.currentTimeMillis() - Config.start
 
     val articlesDoneBefore = totalEpoch * labelIndex * totalTrainingSize
