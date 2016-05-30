@@ -5,7 +5,6 @@ import java.io.{File, FileNotFoundException}
 import no.habitats.corpus.common.CorpusContext.sc
 import no.habitats.corpus.common.dl4j.FreebaseW2V
 import no.habitats.corpus.common.models.{Annotation, Article}
-import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
@@ -76,8 +75,9 @@ private class TextVectorLoader extends VectorLoader {
 
 object W2VLoader extends RddSerializer with VectorLoader {
 
-  implicit val formats              = Serialization.formats(NoTypeHints)
-  lazy     val loader: VectorLoader = new TextVectorLoader()
+  implicit val formats                           = Serialization.formats(NoTypeHints)
+  lazy     val loader: VectorLoader              = new TextVectorLoader()
+  lazy     val memo  : mutable.LongMap[INDArray] = new mutable.LongMap[INDArray]
 
   def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = loader.preload(wordVectors, documentVectors)
 
@@ -88,9 +88,11 @@ object W2VLoader extends RddSerializer with VectorLoader {
   def documentVector(a: Article): INDArray = loader.documentVector(a)
 
   def documentVector(articleId: String, annotationIds: Set[(String, Float)]): INDArray = {
-    val vectors: Iterable[INDArray] = annotationIds.flatMap { case (id, tfidf) => fromId(id).map(_.mul(tfidf)) }
-    val combined = vectors.reduce(_.addi(_))
-    combined
+    memo.getOrElseUpdate(articleId.toLong,  {
+      val vectors: Iterable[INDArray] = annotationIds.flatMap { case (id, tfidf) => fromId(id).map(_.mul(tfidf)) }
+      val combined = vectors.reduce(_.addi(_))
+      combined
+    })
   }
 
   @Deprecated

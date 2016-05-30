@@ -9,7 +9,7 @@ import scala.concurrent.ExecutionContext
   */
 object CorpusExecutionContext {
   implicit val executionContext = new ExecutionContext {
-    val threadPool = Executors.newFixedThreadPool(10)
+    val threadPool = Executors.newFixedThreadPool(Config.parallelism)
     def execute(runnable: Runnable) {
       threadPool.submit(runnable)
     }

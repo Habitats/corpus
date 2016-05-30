@@ -13,6 +13,7 @@ import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.language.implicitConversions
 
 object Trainer extends Serializable {
@@ -106,7 +107,7 @@ object Trainer extends Serializable {
   def trainFFNConfidence() = {
     def train(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt")
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
-    Seq( 50, 75, 100).foreach(confidence => {
+    Seq(50, 75, 100).foreach(confidence => {
       val tag: Some[String] = Some(s"confidence-$confidence")
       Log.v(s"Training with confidence ${confidence} ...")
       //      NaiveBayesTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
@@ -194,11 +195,13 @@ sealed trait NeuralTrainer {
     // Force pre-generation of document vectors before entering Spark to avoid passing W2V references between executors
     Log.v("Broadcasting dataset ...")
     Log.v("Starting distributed training ...")
+    val cats = Config.cats.par
+    cats.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(Config.parallelism))
     // TODO: SPARK THIS UP, BUT DON'T FORGET THE W2V LOADER!
     val eval = for {lr <- learningRate} yield {
-      val allRes: Seq[Seq[NeuralEvaluation]] = Config.cats.par.map(c => {
+      val allRes: Seq[Seq[NeuralEvaluation]] = cats.map(c => {
         val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
-        val trainingPrefs: IteratorPrefs = IteratorPrefs(c,train,validation)
+        val trainingPrefs: IteratorPrefs = IteratorPrefs(c, train, validation)
         (c, trainer(prefs, trainingPrefs))
       }).map { case (c, res) => NeuralModelLoader.save(res.net, c, Config.count, name); res.evaluations }.seq
       printResults(allRes, name)

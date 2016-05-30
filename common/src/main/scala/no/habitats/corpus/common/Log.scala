@@ -34,12 +34,14 @@ object Log extends Logging {
   }
 
   def toFile(m: String, fileName: String) = {
-    log(s"$fileName - " + m)
+    val padded = if(Config.parallelism > 1) f"$fileName%-69s" else fileName
+    log(s"$padded - " + m)
     saveToFile(f(m), fileName, Config.dataPath + "res/", overwrite = false)
   }
 
   def toList(m: Traversable[String], fileName: String) = {
-    log(s" - $fileName - " + m)
+    val padded = if(Config.parallelism > 1) f"$fileName%-69s" else fileName
+    log(s"$padded - " + m)
     saveToFile(m.map(_.toString).mkString(f("\n"), "\n", "\n"), fileName, Config.dataPath + "res/", overwrite = false)
   }
 
