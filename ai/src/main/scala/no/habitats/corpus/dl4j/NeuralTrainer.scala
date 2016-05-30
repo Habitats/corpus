@@ -3,7 +3,6 @@ package no.habitats.corpus.dl4j
 import no.habitats.corpus.common.{Config, Log}
 import org.bytedeco.javacpp.Pointer
 import org.deeplearning4j.datasets.iterator.DataSetIterator
-import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.collection.JavaConverters._
@@ -22,14 +21,18 @@ object NeuralTrainer extends Serializable {
     val total = trainIter.totalExamples()
     val batch: Int = trainIter.batch
     val totalEpochs: Int = Config.epoch.getOrElse(neuralPrefs.epochs)
-    val resultFile = if(Config.parallelism > 1) s"train/$name/$label.txt" else s"train/$name.txt"
+    val resultFile = if (Config.parallelism > 1) {
+      val r = s"train/$name/$label.txt"
+      Log.toFile(Config.getArgs.toString, r)
+      r
+    } else s"train/$name.txt"
 
     val eval: Seq[NeuralEvaluation] = for (epoch <- 0 until totalEpochs) yield {
       var c = 1
       while (trainIter.hasNext) {
         net.fit(trainIter.next())
         if ((c % 10) - 1 == 0) {
-          val left = timeLeft(total = total, iteration = c, batch = batch, label = label, epoch = epoch, totalEpoch = totalEpochs)
+          val left = timeLeft(totalTrainingSize = total, currentIteration = c, batch = batch, label = label, currentEpoch = epoch, totalEpoch = totalEpochs)
           NeuralEvaluation(testIter.asScala.take(2).toTraversable, net, epoch, label, Some(neuralPrefs), Some(left)).log(resultFile, c - 1)
           testIter.reset()
         }
@@ -44,19 +47,22 @@ object NeuralTrainer extends Serializable {
     NeuralResult(eval, net)
   }
 
-  def timeLeft(total: Int, iteration: Int, batch: Int, label: String, epoch: Int, totalEpoch: Int): Int = {
-    val labelIndex = Config.cats.toArray.sorted.indexOf(label)
+  def timeLeft(totalTrainingSize: Int, currentIteration: Int, batch: Int, label: String, currentEpoch: Int, totalEpoch: Int): Int = {
+    val labelIndex = if (Config.parallelism == 0) Config.cats.toArray.sorted.indexOf(label) else Config.cats.toArray.sorted.indexOf(label) / Config.parallelism
+    val totalLabels = Config.cats.size / Config.parallelism
     val duration = System.currentTimeMillis() - Config.start
-    val articlesDone = (iteration * batch) + (total * epoch) + (labelIndex * total * totalEpoch)
-    val articlesPerSecond = articlesDone / duration.toDouble
 
-    val remainingBatch = total - (iteration * batch)
-    val remainingLabels = Config.cats.size - labelIndex - 1
-    val remainingEpochs = (totalEpoch - epoch - 1) + remainingLabels * totalEpoch
-    val remainingArticles = remainingBatch + (remainingEpochs * total)
+    val articlesDoneBefore = totalEpoch * labelIndex * totalTrainingSize
+    val articlesDoneBeforeCurrentLabel = currentEpoch * totalTrainingSize
+    val articlesDoneBeforeCurrentIteration = currentIteration * batch
+    val articlesDone = articlesDoneBefore + articlesDoneBeforeCurrentLabel + articlesDoneBeforeCurrentIteration
 
-    val remaining = remainingArticles / articlesPerSecond
+    val totalArticlesToDo = totalTrainingSize * totalLabels * totalEpoch
+    val articlesRemaining = totalArticlesToDo - articlesDone
 
-    remaining.toInt
+    val articleFrequency = articlesDone / duration.toDouble
+    val remainingTime = articlesRemaining / articleFrequency
+
+    remainingTime.toInt
   }
 }
