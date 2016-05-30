@@ -61,15 +61,15 @@ object MlLibUtils {
     if (stats.catStats.nonEmpty) {
       val catHeader = stats.catStats.head.map(s => formatHeader(s)).mkString(f"${prefs.value.iteration}%3d# Category stats:\n", "", "\n")
       val catStats: Seq[String] = stats.catStats.map(c => c.map(s => formatColumn(s)).mkString(""))
-      Log.resultCats(catStats.mkString(catHeader, "\n", "\n"), resultFile)
+      Log.toFile(catStats.mkString(catHeader, "\n", "\n"), resultFile)
     }
 
     if (prefs.value.iteration == 0) {
       val accumulatedHeaders: String = stats.stats.map(s => formatHeader(s)).mkString("")
-      Log.result(accumulatedHeaders, resultFile)
+      Log.toFile(accumulatedHeaders, resultFile)
     }
     val accumulatedStats: String = stats.stats.map(s => formatColumn(s)).mkString("")
-    Log.result(accumulatedStats, resultFile)
+    Log.toFile(accumulatedStats, resultFile)
     predicted.unpersist()
   }
   def formatHeader(s: (String, String)): String = (s"%${columnWidth(s)}s").format(s._1)

@@ -10,8 +10,9 @@ import org.nd4j.linalg.api.ndarray.INDArray
 sealed trait CorpusDataset {
   def label(articleIndex: Int, labelIndex: Int): Int
 }
-case class CorpusVectors(data: Array[(INDArray, Array[Int])]) extends CorpusDataset {
-  override def label(articleIndex: Int, labelIndex: Int): Int = data(articleIndex)._2(labelIndex)
+
+case class CorpusVectors(data: Array[(String, Set[(String, Float)], Array[Int], Int)]) extends CorpusDataset {
+  override def label(articleIndex: Int, labelIndex: Int): Int = data(articleIndex)._3(labelIndex)
 }
 
 case class CorpusMatrix(data: Array[(Array[(String, Float)], Array[Int])]) extends CorpusDataset {
@@ -20,10 +21,16 @@ case class CorpusMatrix(data: Array[(Array[(String, Float)], Array[Int])]) exten
 
 object CorpusDataset {
 
+  def annotationSet(a: Article): Set[(String, Float)] =  a.ann.map(an => (an._1, an._2.tfIdf.toFloat)).toSet
+
   def labelArray(article: Article): Array[Int] = IPTC.topCategories.map(i => if (article.iptc.contains(i)) 1 else 0).toArray
 
   def genW2VDataset(articles: RDD[Article]): CorpusVectors = {
-    CorpusVectors(articles.collect().map(a => (W2VLoader.documentVector(a), labelArray(a))))
+    CorpusVectors(articles.collect().map(a => (a.id, annotationSet(a), labelArray(a), 1000)))
+  }
+
+  def genBoWDataset(articles: RDD[Article], size: Int): CorpusVectors = {
+    CorpusVectors(articles.collect().map(a => (a.id, annotationSet(a), labelArray(a), size)))
   }
 
   def genW2VMatrix(articles: RDD[Article]): CorpusMatrix = {
@@ -31,33 +38,5 @@ object CorpusDataset {
       val annotationVectors = a.ann.values.toArray.sortBy(_.offset).map(an => (an.id, an.tfIdf.toFloat))
       (annotationVectors, labelArray(a))
     }).collect)
-  }
-
-  def genBoWDataset(articles: RDD[Article], tfidf: TFIDF): CorpusVectors = {
-    CorpusVectors(articles.collect().map(a => (MLLibUtil.toVector(MlLibUtils.toVector(Some(tfidf), a)), IPTC.topCategories.map(i => if (a.iptc.contains(i)) 1 else 0).toArray)))
-  }
-
-  def testSpace(): CorpusVectors = {
-    val articles = Fetcher.annotatedRddMinimal
-    W2VLoader.preload(true, false)
-    val articleVectors = CorpusDataset.genW2VDataset(articles)
-    Log.v("hello")
-    articleVectors
-  }
-
-  def testSpace2(): CorpusMatrix = {
-    val articles = Fetcher.annotatedRddMinimal
-    W2VLoader.preload(true, false)
-    val articleVectors = CorpusDataset.genW2VMatrix(articles)
-    Log.v("hello2")
-    articleVectors
-  }
-
-  def testSpace3(): CorpusVectors = {
-    val articles = Fetcher.annotatedRddMinimal
-    W2VLoader.preload(true, false)
-    val articleVectors = CorpusDataset.genBoWDataset(articles, TFIDF.deserialize("all-ffn-bow"))
-    Log.v("hello3")
-    articleVectors
   }
 }

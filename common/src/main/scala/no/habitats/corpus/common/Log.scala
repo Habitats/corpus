@@ -14,15 +14,15 @@ object Log extends Logging {
   val marker                       = MarkerFactory.getMarker("CORPUS")
   val headers: mutable.Set[String] = mutable.Set[String]()
 
-  def resultsFile(name: String) = {
-    val resultsFile = new File(s"${Config.dataPath}res/$name")
-    resultsFile.getParentFile.mkdirs
-    if (!resultsFile.exists) {
-      i(s"Creating results file at ${resultsFile.getAbsolutePath} ...")
-      resultsFile.createNewFile
-    }
-    resultsFile
-  }
+//  def resultsFile(name: String) = {
+//    val resultsFile = new File(s"${Config.dataPath}res/$name")
+//    resultsFile.getParentFile.mkdirs
+//    if (!resultsFile.exists) {
+//      i(s"Creating results file at ${resultsFile.getAbsolutePath} ...")
+//      resultsFile.createNewFile
+//    }
+//    resultsFile
+//  }
 
   private def writeLine(m: String, file: File) = synchronized {
     val writer = new PrintWriter(new FileOutputStream(file, true))
@@ -58,40 +58,13 @@ object Log extends Logging {
   }
 
   def init() = {
-    writeLine("", resultsFile(Config.resultsFileName))
-    Config.cats.foreach(c => writeLine("\n", resultsFile(s"spam/$c.txt")))
-    Config.cats.foreach(c => writeLine(Config.argString, resultsFile(s"spam/$c.txt")))
+    Config.cats.foreach(c => toFile("\n", s"res/spam/$c.txt"))
+    Config.cats.foreach(c => toFile(Config.argString, s"res/spam/$c.txt"))
   }
 
   def f(m: Any): String = LocalDateTime.now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + " > " + m
 
   def i(m: Any) = log(m)
-
-  def result(m: Any, file: String ) = {
-    i(m)
-    writeLine(f(m), resultsFile(file))
-  }
-
-  def resultHeader(m: Any, file: String) = {
-    if (!headers.contains(m.toString)) {
-      result(m, file)
-      headers.add(m.toString)
-    }
-  }
-
-  def resultCats(m: Any, file: String) = {
-    i(m)
-    writeLine(f(m), resultsFile(Config.resultsCatsFileName))
-  }
-
-  def h(m: Any, file: String) = {
-    writeLine("", resultsFile(Config.resultsFileName))
-    result(m, file)
-    if (Config.resultsFileName != Config.resultsCatsFileName) {
-      writeLine("", resultsFile(Config.resultsCatsFileName))
-      resultCats(m, file)
-    }
-  }
 
   def v(m: Any) = log(m)
 

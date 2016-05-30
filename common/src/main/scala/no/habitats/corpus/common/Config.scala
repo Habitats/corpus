@@ -109,11 +109,6 @@ object Config {
   val wikiDataIncludeBroad: Boolean = conf.getProperty("wikidata_include_broad").toBoolean
   val dbpediaSpotlightURL : String  = conf.getProperty("dbpedia_spotlight_url")
 
-  // Dynamic variables for file caching
-  // TODO: this shouldn't be here. really.
-  var resultsFileName     = "results.txt"
-  var resultsCatsFileName = "results_cats.txt"
-
   def argString: String = args.toString
 
   def setArgs(arr: Array[String]) = {

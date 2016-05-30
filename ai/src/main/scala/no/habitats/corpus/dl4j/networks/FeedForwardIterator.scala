@@ -2,7 +2,7 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
-import no.habitats.corpus.common.Config
+import no.habitats.corpus.common.{Config, W2VLoader}
 import no.habitats.corpus.spark.CorpusVectors
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.nd4j.linalg.dataset.DataSet
@@ -20,10 +20,12 @@ class FeedForwardIterator(training: CorpusVectors, label: Int, batchSize: Int) e
     val labels = Nd4j.create(articles.size, totalOutcomes)
 
     for (i <- articles.indices) {
-      features.putRow(i, articles(i)._1)
+      val annotationIds: Set[(String, Float)] = articles(i)._2
+      val articleId = articles(i)._1
+      features.putRow(i, W2VLoader.documentVector(articleId, annotationIds))
 
       // binary
-      labels.putScalar(Array(i, articles(i)._2(label)), 1.0)
+      labels.putScalar(Array(i, articles(i)._3(label)), 1.0)
     }
 
     counter += articles.size
@@ -33,7 +35,7 @@ class FeedForwardIterator(training: CorpusVectors, label: Int, batchSize: Int) e
   override def batch(): Int = Math.min(Config.miniBatchSize.getOrElse(batchSize), Math.max(training.data.size - counter, 0))
   override def cursor(): Int = counter
   override def totalExamples(): Int = training.data.size
-  override def inputColumns(): Int = training.data(0)._1.size(1)
+  override def inputColumns(): Int = training.data.head._4
   override def setPreProcessor(preProcessor: DataSetPreProcessor): Unit = throw new UnsupportedOperationException
   override def getLabels: util.List[String] = util.Arrays.asList("yes", "no")
   override def totalOutcomes(): Int = 2

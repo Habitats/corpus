@@ -26,8 +26,6 @@ object Tester {
   }
 
   def testModels() = {
-    Config.resultsFileName = "test/all.txt"
-    Config.resultsCatsFileName = "test/all.txt"
     Log.v("Testing models")
     val test = Fetcher.annotatedTestOrdered.map(_.toMinimal)
     tester("all-ffn-bow").test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
@@ -40,8 +38,6 @@ object Tester {
   def verifyAll(): Boolean = new File(Config.modelPath).listFiles().map(_.getName).map(tester).forall(_.verify)
 
   def testSub() = {
-    Config.resultsFileName = "test/sub.txt"
-    Config.resultsCatsFileName = "test/sub.txt"
     Log.v("Testing sub models")
     val test = Fetcher.subTestOrdered.map(_.toMinimal)
     val includeExampleBased = true
@@ -53,8 +49,6 @@ object Tester {
   }
 
   def testEmbeddedVsBoW() = {
-    Config.resultsFileName = "test/embedded_vs_bow.txt"
-    Config.resultsCatsFileName = "test/embedded_vs_bow_cats.txt"
     Log.v("Testing embedded vs. BoW")
     val test = Fetcher.annotatedTestOrdered.map(_.toMinimal)
 
@@ -66,8 +60,6 @@ object Tester {
   }
 
   def testFFNBow() = {
-    Config.resultsFileName = "test/embedded_vs_bow.txt"
-    Config.resultsCatsFileName = "test/embedded_vs_bow.txt"
     Log.v("Testing embedded vs. BoW")
     val test = Fetcher.annotatedTestOrdered
 
@@ -76,8 +68,6 @@ object Tester {
   }
 
   def testTypesInclusion() = {
-    Config.resultsFileName = "test/type_inclusion.txt"
-    Config.resultsCatsFileName = "test/type_inclusion.txt"
     Log.v("Testing type inclusion")
     val rddOrdered = Fetcher.subTestOrdered.map(_.toMinimal)
 
@@ -90,9 +80,6 @@ object Tester {
   }
 
   def testShuffledVsOrdered() = {
-
-    Config.resultsFileName = "test/shuffled_vs_ordered.txt"
-    Config.resultsCatsFileName = "test/shuffled_vs_ordered.txt"
     Log.v("Testing shuffled vs. ordered")
 
     // Shuffled
@@ -108,8 +95,6 @@ object Tester {
   }
 
   def testLengths() = {
-    Config.resultsFileName = "test/lengths.txt"
-    Config.resultsCatsFileName = "test/lengths_cats.txt"
     Log.v("Testing Lengths")
     testBuckets("length", tester("ffn-w2v-ordered"), _.wc)
     testBuckets("length", tester("nb-bow"), _.id.toInt)
@@ -117,8 +102,6 @@ object Tester {
   }
 
   def testTimeDecay() = {
-    Config.resultsFileName = "test/time_decay.txt"
-    Config.resultsCatsFileName = "test/time_decay_cats.txt"
     Log.v("Testing Time Decay")
     //    testBuckets("time", FeedforwardTester("ffn-w2v-time-all"), _.id.toInt)
     testBuckets("time", tester("ffn-bow-time-all"), _.id.toInt)
@@ -127,14 +110,12 @@ object Tester {
   }
 
   def testConfidence() = {
-    Config.resultsFileName = "test/confidence.txt"
-    Config.resultsCatsFileName = "test/confidence_cats.txt"
     Log.v("Testing Confidence Levels")
     for (confidence <- Seq(25, 50, 75, 100)) {
-      FeedforwardTester(s"ffn-w2v-confidence-${confidence}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
-      //      FeedforwardTester(s"ffn-bow-confidence-${confidence}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict= true)
-      NaiveBayesTester(s"nb-w2v-confidence-${confidence}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
-      NaiveBayesTester(s"nb-bow-confidence-${confidence}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
+//      FeedforwardTester(s"confidence-${confidence}_ffn_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
+      FeedforwardTester(s"confidence-${confidence}_ffn_w2v_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
+      NaiveBayesTester(s"confidence-${confidence}_nb_w2v_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
+      NaiveBayesTester(s"confidence-${confidence}_nb_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
     }
   }
 
@@ -146,7 +127,7 @@ object Tester {
       .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$name/$n")) }
       .sortBy(_._1)
     rdds.foreach { case (index, n) => {
-      Log.resultCats(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}",s"res/test$name")
+      Log.toFile(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", s"res/test/$name")
       tester.test(n, iteration = index)
     }
     }
@@ -188,7 +169,7 @@ sealed trait Testable {
     })
   }
 
-  def dataset(test: RDD[Article]): CorpusDataset = if (name.contains("bow")) CorpusDataset.genBoWDataset(test, TFIDF.deserialize(name)) else CorpusDataset.genW2VDataset(test)
+  def dataset(test: RDD[Article]): CorpusDataset = if (name.contains("bow")) CorpusDataset.genBoWDataset(test, TFIDF.deserialize(name).phrases.size) else CorpusDataset.genW2VDataset(test)
 
   def predictAll(test: RDD[Article]): RDD[Article] = {
     val modelType = if (name.toLowerCase.contains("bow")) Some(TFIDF.deserialize(name)) else None
@@ -196,7 +177,7 @@ sealed trait Testable {
   }
 
   def labelBased(test: RDD[Article], iteration: Int): Seq[NeuralEvaluation] = {
-    if (iteration == 0) Log.result(s"Testing $name ...", s"res/test$name")
+    if (iteration == 0) Log.toFile(s"Testing $name ...", s"res/test/$name")
     val testDataset: CorpusDataset = dataset(test)
     models(name).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
       val test = iter(testDataset, models._1).asScala.toTraversable
@@ -227,7 +208,7 @@ case class NaiveBayesTester(name: String) extends Testable {
   override def verify: Boolean = Try(nb).isSuccess
 
   override def test(articles: RDD[Article], includeExampleBased: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
-    Log.result(s"Testing Naive Bayes [$name] ...", s"res/test/$name")
+    Log.toFile(s"Testing Naive Bayes [$name] ...", s"res/test/$name")
     val predicted = MlLibUtils.testMLlibModels(articles, nb, if (name.contains("bow")) Some(TFIDF.deserialize(name)) else None)
 
     Log.v("--- Predictions complete! ")

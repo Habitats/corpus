@@ -58,7 +58,7 @@ case class NeuralEvaluation(eval: Evaluation, epoch: Int, label: String, neuralP
     //        Log.r2(confusion)
     val s = s"spam/$label.txt"
     //    if (i == 1) Log.r(statsHeader, s)
-    Log.result(stats, s)
+    Log.toFile(stats, s)
   }
 
 
@@ -67,10 +67,10 @@ case class NeuralEvaluation(eval: Evaluation, epoch: Int, label: String, neuralP
 object NeuralEvaluation {
 
   def logLabels(labelEvals: Seq[NeuralEvaluation], resultFile: String) = {
-    Log.result("", resultFile)
-    Log.result(s"Category stats ...\n",resultFile)
+    Log.toFile("", resultFile)
+    Log.toFile(s"Category stats ...\n",resultFile)
     labelEvals.sortBy(_.label).zipWithIndex.foreach { case (e, i) => e.log(resultFile, header = i == 0) }
-    Log.result("", resultFile)
+    Log.toFile("", resultFile)
   }
 
   def apply(iter: Traversable[DataSet], net: MultiLayerNetwork, epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None, timeLeft: Option[Int] = None): NeuralEvaluation = {
@@ -159,8 +159,8 @@ object NeuralEvaluation {
 
     val accumulatedHeaders: String = (labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._1)).mkString("")
     val accumulatedStats: String = (labelStats ++ exampleStats).map(s => s"%${columnWidth(s)}s".format(s._2)).mkString("")
-    Log.resultHeader(accumulatedHeaders, resultFile)
-    Log.result(accumulatedStats, resultFile)
+    Log.toFileHeader(accumulatedHeaders, resultFile)
+    Log.toFile(accumulatedStats, resultFile)
   }
 
   def numHidden(net: MultiLayerNetwork): String = {

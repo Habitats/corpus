@@ -106,7 +106,7 @@ object Trainer extends Serializable {
   def trainFFNConfidence() = {
     def train(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt")
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
-    Seq(25, 50, 75, 100).foreach(confidence => {
+    Seq( 50, 75, 100).foreach(confidence => {
       val tag: Some[String] = Some(s"confidence-$confidence")
       Log.v(s"Training with confidence ${confidence} ...")
       //      NaiveBayesTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
@@ -151,12 +151,7 @@ sealed trait ModelTrainer {
   val superSample: Boolean
   var feat: String = "UNINITIALIZED"
 
-  lazy val name: String = {
-    val name = s"${tag.map(_ + "_").getOrElse("")}${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
-    Config.resultsFileName = s"train/$name.txt"
-    Config.resultsCatsFileName = Config.resultsFileName
-    name
-  }
+  lazy val name: String = s"${tag.map(_ + "_").getOrElse("")}${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
 
   def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int = 100)
 
@@ -192,30 +187,25 @@ sealed trait NeuralTrainer {
   def parallel(validation: CorpusDataset, train: CorpusDataset, name: String, minibatchSize: Int, learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult, parallelism: Int) = {
     // Force pre-generation of document vectors before entering Spark to avoid passing W2V references between executors
     Log.v("Broadcasting dataset ...")
-    val sparkTrain = sc.broadcast(train)
-    val sparkValidation = sc.broadcast(train)
     Log.v("Starting distributed training ...")
+    // TODO: SPARK THIS UP, BUT DON'T FORGET THE W2V LOADER!
     val eval = for {lr <- learningRate} yield {
-      val allRes: Seq[Seq[NeuralEvaluation]] = sc.parallelize(Config.cats, numSlices = Math.min(Config.parallelism, Config.cats.size)).map(c => {
+      val allRes: Seq[Seq[NeuralEvaluation]] = Config.cats.par.map(c => {
         val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
-        val trainingPrefs: IteratorPrefs = IteratorPrefs(c, sparkTrain.value, sparkValidation.value)
+        val trainingPrefs: IteratorPrefs = IteratorPrefs(c,train,validation)
         (c, trainer(prefs, trainingPrefs))
-      }).collect.map { case (c, res) => NeuralModelLoader.save(res.net, c, Config.count, name); res.evaluations }.toSeq
+      }).map { case (c, res) => NeuralModelLoader.save(res.net, c, Config.count, name); res.evaluations }.seq
       printResults(allRes, name)
     }
-    sparkTrain.destroy()
-    sparkValidation.destroy()
     eval
   }
 
   def printResults(allRes: Seq[Seq[NeuralEvaluation]], name: String) = {
     val epochs = allRes.head.size
     Log.v("Accumulating results ...")
-    Config.resultsFileName = s"valid/$name.txt"
-    Config.resultsCatsFileName = Config.resultsFileName
     val resultFile = s"res/valid/$name.txt"
-    Log.result("", resultFile)
-    Log.result(name, resultFile)
+    Log.toFile("", resultFile)
+    Log.toFile(name, resultFile)
     for (i <- 0 until epochs) {
       val labelEvals: Seq[NeuralEvaluation] = allRes.map(_ (i)).sortBy(_.label)
       NeuralEvaluation.logLabels(labelEvals, resultFile)
@@ -250,7 +240,7 @@ sealed case class FeedforwardTrainer(
     val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
     trainNetwork(
-      CorpusDataset.genBoWDataset(processedValidation, tfidf), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf), name, minibatchSize, learningRate,
+      CorpusDataset.genBoWDataset(processedValidation, tfidf.phrases.size), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf.phrases.size), name, minibatchSize, learningRate,
       (neuralPrefs, iteratorPrefs) => binaryTrainer(FeedForward.createBoW(neuralPrefs, tfidf.phrases.size), neuralPrefs, iteratorPrefs)
     )
   }
