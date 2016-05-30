@@ -87,7 +87,7 @@ object W2VLoader extends RddSerializer with VectorLoader {
 
   def documentVector(a: Article): INDArray = loader.documentVector(a)
 
-  def documentVector(articleId: String, annotationIds: Set[(String, Float)]): INDArray = {
+  def documentVector(articleId: String, annotationIds: Set[(String, Float)]): INDArray = synchronized{
     memo.getOrElseUpdate(articleId.toLong,  {
       val vectors: Iterable[INDArray] = annotationIds.flatMap { case (id, tfidf) => fromId(id).map(_.mul(tfidf)) }
       val combined = vectors.reduce(_.addi(_))

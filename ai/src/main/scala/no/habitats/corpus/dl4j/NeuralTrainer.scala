@@ -17,7 +17,6 @@ object NeuralTrainer extends Serializable {
     //    Log.r(s"Training $label ...")
     //    Log.r2(s"Training $label ...")
     Config.init()
-    Log.v("Free bytes: " + Pointer.totalBytes())
     val total = trainIter.totalExamples()
     val batch: Int = trainIter.batch
     val totalEpochs: Int = Config.epoch.getOrElse(neuralPrefs.epochs)
@@ -48,8 +47,8 @@ object NeuralTrainer extends Serializable {
   }
 
   def timeLeft(totalTrainingSize: Int, currentIteration: Int, batch: Int, label: String, currentEpoch: Int, totalEpoch: Int): Int = {
-    val labelIndex = if (Config.parallelism == 0) Config.cats.toArray.sorted.indexOf(label) else Config.cats.toArray.sorted.indexOf(label) / Config.parallelism
-    val totalLabels = Config.cats.size / Config.parallelism
+    val labelIndex = if (Config.parallelism == 0) Config.cats.toArray.sorted.indexOf(label) else 0
+    val totalLabels = if(Config.parallelism == 0) Config.cats.size else 1
     val duration = System.currentTimeMillis() - Config.start
 
     val articlesDoneBefore = totalEpoch * labelIndex * totalTrainingSize

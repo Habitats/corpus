@@ -13,7 +13,8 @@ import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
-import scala.collection.parallel.ForkJoinTaskSupport
+import scala.collection.parallel.{ForkJoinTaskSupport, ParSeq}
+import scala.concurrent.Await
 import scala.language.implicitConversions
 
 object Trainer extends Serializable {
@@ -199,12 +200,12 @@ sealed trait NeuralTrainer {
     cats.tasksupport = new ForkJoinTaskSupport(new scala.concurrent.forkjoin.ForkJoinPool(Config.parallelism))
     // TODO: SPARK THIS UP, BUT DON'T FORGET THE W2V LOADER!
     val eval = for {lr <- learningRate} yield {
-      val allRes: Seq[Seq[NeuralEvaluation]] = cats.map(c => {
+      val allRes: ParSeq[Seq[NeuralEvaluation]] = cats.map(c => {
         val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = minibatchSize)
         val trainingPrefs: IteratorPrefs = IteratorPrefs(c, train, validation)
         (c, trainer(prefs, trainingPrefs))
-      }).map { case (c, res) => NeuralModelLoader.save(res.net, c, Config.count, name); res.evaluations }.seq
-      printResults(allRes, name)
+      }).map { case (c, res) => NeuralModelLoader.save(res.net, c, Config.count, name); res.evaluations }
+      printResults(allRes.seq, name)
     }
     eval
   }
