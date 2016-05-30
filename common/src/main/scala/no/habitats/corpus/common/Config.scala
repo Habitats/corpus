@@ -87,7 +87,7 @@ object Config {
 
   def balanced(label: String): String = dataPath + s"nyt/separated_w2v_min10/${label}_balanced.txt"
 
-  private var args        : Arguments = null
+  private var args        : Arguments = Arguments()
   private var sparkConfig : String    = null
   private val configRoot  : String    = {
     val c = if (local) {
@@ -153,9 +153,9 @@ object Config {
 
   lazy val job                   : String          = args.job.getOrElse(conf.getProperty("job"))
   lazy val rdd                   : String          = args.rdd.getOrElse(conf.getProperty("rdd"))
-  lazy val partitions            : Int             = args.partitions.getOrElse(conf.getProperty("partitions").toInt)
+  lazy val partitions            : Int             = Try(args.partitions.getOrElse(conf.getProperty("partitions").toInt)).getOrElse(20)
   lazy val parallelism           : Int             = args.parallelism.getOrElse(1)
-  lazy val count                 : Int             = args.count.getOrElse(conf.getProperty("count").toInt) match {case i => if (i == -1) Integer.MAX_VALUE else i}
+  lazy val count                 : Int             = Try(args.count.getOrElse(conf.getProperty("count").toInt) match {case i => if (i == -1) Integer.MAX_VALUE else i}).getOrElse(Integer.MAX_VALUE)
   lazy val cache                 : Boolean         = args.cache.getOrElse(false)
   lazy val histogram             : Boolean         = args.histogram.getOrElse(false)
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
@@ -175,28 +175,28 @@ object Config {
   lazy val logResults            : Option[Boolean] = args.logResults
 
   case class Arguments(
-                        partitions: Option[Int],
-                        parallelism: Option[Int],
-                        rdd: Option[String],
-                        job: Option[String],
-                        count: Option[Int],
-                        category: Option[String],
-                        iptcFilter: Option[Set[String]],
-                        useApi: Option[Boolean],
-                        learningRate: Option[Double],
-                        confidence: Option[Double],
-                        l2: Option[Double],
-                        miniBatchSize: Option[Int],
-                        cache: Option[Boolean],
-                        histogram: Option[Boolean],
-                        logResults: Option[Boolean],
-                        types: Option[Boolean],
-                        hidden1: Option[Int],
-                        hidden2: Option[Int],
-                        hidden3: Option[Int],
-                        tft: Option[Int],
-                        iterations: Option[Int],
-                        epoch: Option[Int],
-                        superSample: Option[Boolean]
+                        partitions: Option[Int] = None,
+                        parallelism: Option[Int] = None,
+                        rdd: Option[String] = None,
+                        job: Option[String] = None,
+                        count: Option[Int] = None,
+                        category: Option[String] = None,
+                        iptcFilter: Option[Set[String]] = None,
+                        useApi: Option[Boolean] = None,
+                        learningRate: Option[Double] = None,
+                        confidence: Option[Double] = None,
+                        l2: Option[Double] = None,
+                        miniBatchSize: Option[Int] = None,
+                        cache: Option[Boolean] = None,
+                        histogram: Option[Boolean] = None,
+                        logResults: Option[Boolean] = None,
+                        types: Option[Boolean] = None,
+                        hidden1: Option[Int] = None,
+                        hidden2: Option[Int] = None,
+                        hidden3: Option[Int] = None,
+                        tft: Option[Int] = None,
+                        iterations: Option[Int] = None,
+                        epoch: Option[Int] = None,
+                        superSample: Option[Boolean] = None
                       )
 }

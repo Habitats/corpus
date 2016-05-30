@@ -1,7 +1,7 @@
 package no.habitats.corpus.spark
 
+import no.habitats.corpus.common._
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{CorpusContext, IPTC, TFIDF, W2VLoader}
 import no.habitats.corpus.mllib.MlLibUtils
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.spark.util.MLLibUtil
@@ -35,5 +35,29 @@ object CorpusDataset {
 
   def genBoWDataset(articles: RDD[Article], tfidf: TFIDF): CorpusVectors = {
     CorpusVectors(articles.collect().map(a => (MLLibUtil.toVector(MlLibUtils.toVector(Some(tfidf), a)), IPTC.topCategories.map(i => if (a.iptc.contains(i)) 1 else 0).toArray)))
+  }
+
+  def testSpace(): CorpusVectors = {
+    val articles = Fetcher.annotatedRddMinimal
+    W2VLoader.preload(true, false)
+    val articleVectors = CorpusDataset.genW2VDataset(articles)
+    Log.v("hello")
+    articleVectors
+  }
+
+  def testSpace2(): CorpusMatrix = {
+    val articles = Fetcher.annotatedRddMinimal
+    W2VLoader.preload(true, false)
+    val articleVectors = CorpusDataset.genW2VMatrix(articles)
+    Log.v("hello2")
+    articleVectors
+  }
+
+  def testSpace3(): CorpusVectors = {
+    val articles = Fetcher.annotatedRddMinimal
+    W2VLoader.preload(true, false)
+    val articleVectors = CorpusDataset.genBoWDataset(articles, TFIDF.deserialize("all-ffn-bow"))
+    Log.v("hello3")
+    articleVectors
   }
 }
