@@ -62,9 +62,8 @@ object NeuralEvaluation {
 
   def logLabelStats(labelEvals: Seq[NeuralEvaluation], resultFile: String) = {
     Log.toFile("", resultFile)
-    Log.toFile(s"Category stats ...", resultFile)
+    Log.toFile(s"Validation stats ...", resultFile)
     labelEvals.sortBy(_.label).zipWithIndex.foreach { case (e, i) => e.log(resultFile, i) }
-    Log.toFile("", resultFile)
   }
 
   def apply(iter: Traversable[DataSet], net: MultiLayerNetwork, epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None, timeLeft: Option[Int] = None): NeuralEvaluation = {
