@@ -23,8 +23,8 @@ case class CorpusDataset(data: Array[SimpleArticle], private val transformer: (S
 
 object CorpusDataset {
 
-  def bowVector(articleId: String, annotationIds: Map[String, Float], phrases: Set[String]): INDArray = {
-    Nd4j.create(phrases.toArray.map(id => annotationIds.getOrElse(id, 0f)))
+  def bowVector(articleId: String, annotationIds: Map[String, Float], phrases: Array[(String, Int)]): INDArray = {
+    Nd4j.create(phrases.map(id => annotationIds.getOrElse(id._1, 0f)))
   }
 
   def documentVector(articleId: String, annotationIds: Map[String, Float]): INDArray = {
@@ -38,22 +38,23 @@ object CorpusDataset {
   }
 
   def annotationSet(a: Article, tfidf: TFIDF, ordered: Boolean): Map[String, Float] = {
-    if (ordered) ListMap(a.ann.values.toList.sortBy(_.offset).map(an => (an.id, tfidf.tfidf(a, an).toFloat)): _ *)
-    else a.ann.values.toList.sortBy(_.offset).map(an => (an.id, tfidf.tfidf(a, an).toFloat)).toMap
+    def pair(an: Annotation): (String, Float) = (an.id, tfidf.tfidf(a, an).toFloat)
+    val annotations: Iterable[Annotation] = a.ann.values.filter(an => tfidf.phrases.contains(an.id))
+    if (ordered) ListMap(annotations.toList.sortBy(_.offset).map(pair): _ *) else annotations.map(pair).toMap
   }
 
   def labelArray(article: Article): Array[Int] = IPTC.topCategories.map(i => if (article.iptc.contains(i)) 1 else 0).toArray
 
   def genW2VDataset(articles: RDD[Article], tfidf: TFIDF): CorpusDataset = {
-    CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = false), labelArray(a), 1000)).collect(), (articleId, annotationIds) => documentVector(articleId, annotationIds))
+    CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = false), labelArray(a), 1000)).filter(_.annotations.nonEmpty).collect(), (articleId, annotationIds) => documentVector(articleId, annotationIds))
   }
 
   def genBoWDataset(articles: RDD[Article], tfidf: TFIDF): CorpusDataset = {
-    CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = false), labelArray(a), tfidf.phrases.size)).collect(), (articles, annotationIds) => bowVector(articles, annotationIds, tfidf.phrases))
+    CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = false), labelArray(a), tfidf.phrases.size)).filter(_.annotations.nonEmpty).collect(), (articles, annotationIds) => bowVector(articles, annotationIds, tfidf.phrasesList))
   }
 
   def genW2VMatrix(articles: RDD[Article], tfidf: TFIDF): CorpusDataset = {
-    CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = true), labelArray(a), 1000)).collect, (annotationId, annotationIds) => wordVector(annotationId, annotationIds(annotationId)))
+    CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = true), labelArray(a), 1000)).filter(_.annotations.nonEmpty).collect, (annotationId, annotationIds) => wordVector(annotationId, annotationIds(annotationId)))
   }
 
   // High level API for vector conversion
@@ -62,7 +63,7 @@ object CorpusDataset {
   }
 
   def bowVector(article: Article, tfidf: TFIDF): INDArray = {
-    bowVector(article.id, annotationSet(article, tfidf, false), tfidf.phrases)
+    bowVector(article.id, annotationSet(article, tfidf, false), tfidf.phrasesList)
   }
 
   def documentVectorMlLib(article: Article, tfidf: TFIDF, ordered: Boolean): Vector = {
@@ -70,8 +71,8 @@ object CorpusDataset {
   }
 
   def bowVectorMlLib(article: Article, tfidf: TFIDF): Vector = {
-    val set: Map[String, Float] = annotationSet(article, tfidf, false)
-    val data: Seq[(Int, Double)] = tfidf.phrases.zipWithIndex.toList.map { case (p, i) => (i, set.getOrElse(p, 0f).toDouble) }
+    val set: Map[String, Float] = annotationSet(article, tfidf, ordered = false)
+    val data = set.toList.map(i => (tfidf.phraseIndex(i._1), i._2.toDouble))
     Vectors.sparse(tfidf.phrases.size, data)
   }
 

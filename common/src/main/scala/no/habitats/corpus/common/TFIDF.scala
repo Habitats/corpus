@@ -3,21 +3,19 @@ package no.habitats.corpus.common
 import java.io.File
 
 import no.habitats.corpus.common.models.{Annotation, Article}
-import org.apache.spark.mllib.linalg.Vector
 import org.apache.spark.rdd.RDD
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.json4s.jackson.Serialization._
 
-import scala.collection.mutable
+import scala.collection.immutable.SortedSet
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
 
-case class TFIDF(documentsWithTerm: Map[String, Int], phrases: Set[String], documentCount: Int, name: String) {
+case class TFIDF(documentsWithTerm: Map[String, Int], phrases: SortedSet[String], documentCount: Int, name: String) {
 
-  private val vocabSize  : Int                     = phrases.size
-  private val phraseIndex: Array[String]           = phrases.toArray.sorted
-  private val memo       : mutable.LongMap[Vector] = mutable.LongMap[Vector]()
+  lazy val phrasesList: Array[(String, Int)] = phrases.zipWithIndex.toArray
+  lazy val phraseIndex: Map[String, Int]     = phrases.zipWithIndex.toMap
 
   def contains(id: String) = phrases.contains(id)
 
@@ -36,7 +34,7 @@ object TFIDF {
   def apply(train: RDD[Article], threshold: Int, name: String): TFIDF = {
     val originalPhraseCount = train.flatMap(_.ann.keySet).distinct.count
     val documentsWithTerm: Map[String, Int] = train.flatMap(_.ann.values).map(a => (a.id, 1)).reduceByKey(_ + _).filter(_._2 > Config.termFrequencyThreshold.getOrElse(threshold)).collect.toMap
-    val phrases = documentsWithTerm.keySet
+    val phrases = documentsWithTerm.keySet.to[SortedSet]
     // This didn't have much effect
     // .intersect(Config.dataFile(Config.dataPath + "nyt/time/excluded_ids_time.txt").getLines().map(_.trim).toSet)
 

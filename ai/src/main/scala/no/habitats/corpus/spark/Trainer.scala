@@ -253,7 +253,6 @@ sealed case class FeedforwardTrainer(tag: Option[String] = None,
 
   override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int) = {
     feat = "bow"
-    W2VLoader.preload()
     val tfidf = TFIDF(train, termFrequencyThreshold, name)
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
     val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
@@ -294,7 +293,6 @@ sealed case class RecurrentTrainer(tag: Option[String] = None,
 
   // Binary trainers
   private def binaryRNNTrainer(neuralPrefs: NeuralPrefs, tw: IteratorPrefs): NeuralResult = {
-    W2VLoader.preload()
     val realPrefs: NeuralPrefs = neuralPrefs.copy(hiddenNodes = hiddenNodes)
     val net = RNN.createBinary(realPrefs)
     val trainIter = new RNNIterator(tw.training, tw.label, batchSize = neuralPrefs.minibatchSize)
@@ -309,7 +307,6 @@ sealed case class NaiveBayesTrainer(tag: Option[String] = None, superSample: Boo
 
   override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int) = {
     feat = "bow"
-    W2VLoader.preload()
     val tfidf = TFIDF(train, termFrequencyThreshold, name)
     trainNaiveBayes(TFIDF.frequencyFilter(train, tfidf.phrases), TFIDF.frequencyFilter(validation, tfidf.phrases), tfidf, superSample)
   }
