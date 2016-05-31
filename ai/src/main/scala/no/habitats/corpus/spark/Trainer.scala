@@ -35,7 +35,7 @@ object Trainer extends Serializable {
     val (train, validation) = Fetcher.ordered()
     val tag = Some("super")
     FeedforwardTrainer(tag, superSample = true).trainW2V(train, validation)
-    FeedforwardTrainer(tag, superSample = true).trainBoW(train, validation)
+    FeedforwardTrainer(tag, superSample = true).trainBoW(train, validation, termFrequencyThreshold = 100)
     //    NaiveBayesTrainer(tag, superSample = true).trainW2V(train, validation)
     //    NaiveBayesTrainer(tag, superSample = true).trainBoW(train, validation, termFrequencyThreshold = 100)
     RecurrentTrainer(tag, superSample = true).trainW2V(train, validation)
@@ -46,7 +46,7 @@ object Trainer extends Serializable {
     val (train, validation) = Fetcher.ordered(types = true)
     val tag = Some("types")
     FeedforwardTrainer(tag).trainW2V(train, validation)
-    FeedforwardTrainer(tag).trainBoW(train, validation)
+    FeedforwardTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
     //    NaiveBayesTrainer(tag).trainW2V(train, validation)
     //    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
     RecurrentTrainer(tag).trainW2V(train, validation)
@@ -58,9 +58,9 @@ object Trainer extends Serializable {
     val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
     val tag = Some("time")
     FeedforwardTrainer(tag).trainW2V(train, validation)
-    FeedforwardTrainer(tag).trainBoW(train, validation)
+    FeedforwardTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 5)
     NaiveBayesTrainer(tag).trainW2V(train, validation)
-    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
+    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 5)
     RecurrentTrainer(tag).trainW2V(train, validation)
   }
 
@@ -251,7 +251,7 @@ sealed case class FeedforwardTrainer(tag: Option[String] = None,
     )
   }
 
-  override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int = 100) = {
+  override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int) = {
     feat = "bow"
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     val tfidf = TFIDF(train, termFrequencyThreshold)
