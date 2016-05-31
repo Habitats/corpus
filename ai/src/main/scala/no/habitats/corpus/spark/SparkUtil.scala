@@ -88,22 +88,15 @@ object SparkUtil {
         case "trainNaiveW2V" => Trainer.trainNaiveW2V()
         case "trainNaiveBoW" => Trainer.trainNaiveBoW()
 
-        case "trainConfidence" => Trainer.trainFFNConfidence()
-
         case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
         case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
         case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
 
-        case "trainFFNBoWTime" => Trainer.trainFFNBoWTime()
-        case "trainFFNW2VTime" => Trainer.trainFFNW2VTime()
-
-        case "trainRNNTypes" => Trainer.trainRNNW2VTypes()
-        case "trainNaiveBoWTypes" => Trainer.trainRNNW2VTypes()
-        case "trainFFNW2VTypes" => Trainer.trainFFNW2VTypes()
-
-        case "trainVirt" => Trainer.virt()
-        case "trainST1" => Trainer.st1()
-        case "trainST2" => Trainer.st2()
+        case "trainBaseline" => Trainer.baseline()
+        case "trainSuper" => Trainer.supersampled()
+        case "trainTypes" => Trainer.types()
+        case "trainTime" => Trainer.types()
+        case "trainConfidence" => Trainer.confidence()
 
         // Testing
         case "verifyModels" => Log.v("Models are: " + Tester.verifyAll())

@@ -20,7 +20,7 @@ object Trainer extends Serializable {
 
   implicit def seqthis(a: Double): Seq[Double] = Seq(a)
 
-  // Ex1/2 - Confidence
+  // Ex1/2 - Baseline
   def baseline() = {
     val (train, validation) = Fetcher.ordered()
     val tag = Some("baseline")
@@ -41,7 +41,7 @@ object Trainer extends Serializable {
     RecurrentTrainer(tag, superSample = true).trainW2V(train, validation)
   }
 
-  // Ex3 - Confidence
+  // Ex3 - Types
   def types() = {
     val (train, validation) = Fetcher.ordered(types = true)
     val tag = Some("types")
@@ -52,7 +52,7 @@ object Trainer extends Serializable {
     RecurrentTrainer(tag).trainW2V(train, validation)
   }
 
-  // Ex5 - Confidence
+  // Ex5 - Time
   def time() = {
     val train = Fetcher.by("time/nyt_time_10_train.txt")
     val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
@@ -65,7 +65,7 @@ object Trainer extends Serializable {
   }
 
   // Ex2 - Confidence
-  def trainFFNConfidence() = {
+  def confidence() = {
     def train(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt")
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
     def tag(confidence: Int): Some[String] = Some(s"confidence-$confidence")
