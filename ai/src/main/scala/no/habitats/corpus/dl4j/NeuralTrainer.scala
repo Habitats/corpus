@@ -43,6 +43,7 @@ object NeuralTrainer extends Serializable {
       testIter.reset()
       evaluation
     }
+    System.gc()
     NeuralResult(eval, net)
   }
 

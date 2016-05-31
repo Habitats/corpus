@@ -17,7 +17,19 @@ import scala.collection.parallel.{ForkJoinTaskSupport, ParSeq}
 import scala.language.implicitConversions
 
 object Trainer extends Serializable {
-  def st1() = {
+  def virt() = {
+    val (train, validation) = Fetcher.ordered(types = true)
+    val learningRates = Seq(0.05, 0.025)
+    for(lr <- learningRates) {
+      NaiveBayesTrainer(tag = Some("types")).trainBoW(train, validation, termFrequencyThreshold = 100)
+      NaiveBayesTrainer(tag = Some("types")).trainW2V(train, validation)
+      FeedforwardTrainer(tag = Some("types"), learningRate = lr).trainBoW(train, validation, termFrequencyThreshold = 100)
+      FeedforwardTrainer(tag = Some("types"), learningRate = lr).trainW2V(train, validation)
+      RecurrentTrainer(tag = Some("types"), learningRate = lr).trainW2V(train, validation)
+    }
+  }
+
+  def st2() = {
     val (train, validation) = Fetcher.ordered()
     FeedforwardTrainer(superSample = false).trainW2V(train, validation)
     FeedforwardTrainer(superSample = false).trainBoW(train, validation)
@@ -27,23 +39,12 @@ object Trainer extends Serializable {
     RecurrentTrainer(superSample = true).trainBoW(train, validation)
   }
 
-  def st2() = {
+  def st1() = {
     val train = Fetcher.by("time/nyt_time_10_train.txt")
     val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
-    val learningRates = Seq(1.0, 0.75, 0.5, 0.25)
-    NaiveBayesTrainer(tag = Some("time")).trainBoW(train, validation, termFrequencyThreshold = 10)
-    NaiveBayesTrainer(tag = Some("time")).trainW2V(train, validation)
-    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 10)
-    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
-    RecurrentTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
-  }
-
-  def virt() = {
-    val train = Fetcher.by("time/nyt_time_10_train.txt")
-    val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
-    val learningRates = 0.5
-    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 10)
-    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
+    val learningRates = Seq(0.5, 0.75, 0.25)
+//    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 10)
+//    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
     RecurrentTrainer(tag = Some("time-h10"), learningRate = learningRates, hiddenNodes = 10).trainW2V(train, validation)
     RecurrentTrainer(tag = Some("time-h20"), learningRate = learningRates, hiddenNodes = 20).trainW2V(train, validation)
     RecurrentTrainer(tag = Some("time-h100"), learningRate = learningRates, hiddenNodes = 100).trainW2V(train, validation)
@@ -109,13 +110,14 @@ object Trainer extends Serializable {
     def train(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt")
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
     val lr = Seq(0.5, 2.0, 1.5, 1.0, 0.75, 0.25, 0.1, 0.05)
+    for(s <- Seq(false, true))
     Seq(25, 50, 75, 100).foreach(confidence => {
       val tag: Some[String] = Some(s"confidence-$confidence")
       Log.v(s"Training with confidence ${confidence} ...")
-      NaiveBayesTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
-      NaiveBayesTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-      FeedforwardTrainer(tag = tag, learningRate = lr).trainW2V(train = train(confidence), validation = validation(confidence))
-      FeedforwardTrainer(tag = tag, learningRate = lr).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+      NaiveBayesTrainer(tag = tag, superSample = s).trainW2V(train = train(confidence), validation = validation(confidence))
+      NaiveBayesTrainer(tag = tag, superSample = s).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+      FeedforwardTrainer(tag = tag, superSample = s, learningRate = lr).trainW2V(train = train(confidence), validation = validation(confidence))
+      FeedforwardTrainer(tag = tag, superSample = s, learningRate = lr).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     })
     Seq(25, 50, 75, 100).foreach(confidence => {
       val tag: Some[String] = Some(s"confidence-$confidence")
