@@ -104,9 +104,9 @@ object Tester {
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
     //    testBuckets("time", FeedforwardTester("ffn-w2v-time-all"), _.id.toInt)
-    testBuckets("time", tester("ffn-bow-time-all"), _.id.toInt)
-    //    testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
-    //    testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
+//    testBuckets("time", tester("ffn-bow-time-all"), _.id.toInt)
+        testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
+        testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
   }
 
   def testConfidence() = {
@@ -194,14 +194,14 @@ sealed trait Testable {
 case class FeedforwardTester(name: String) extends Testable {
   lazy val ffa: Map[String, NeuralModel] = NeuralModelLoader.models(name)
 
-  override def iter(test: CorpusDataset, label: String): DataSetIterator = new FeedForwardIterator(test.asInstanceOf[CorpusVectors], IPTC.topCategories.indexOf(label), 500)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator = new FeedForwardIterator(test, IPTC.topCategories.indexOf(label), 500)
   override def models(modelName: String): Map[String, NeuralModel] = ffa
 }
 
 case class RecurrentTester(name: String) extends Testable {
   lazy val rnn: Map[String, NeuralModel] = NeuralModelLoader.models(name)
 
-  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test.asInstanceOf[CorpusMatrix], label, 50)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test, label, 50)
   override def models(modelName: String): Map[String, NeuralModel] = rnn
 }
 

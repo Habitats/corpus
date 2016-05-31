@@ -255,8 +255,8 @@ sealed case class FeedforwardTrainer(
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     val tfidf = TFIDF(train, termFrequencyThreshold)
     Log.saveToFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
-    val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
+    val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
     trainNetwork(
       CorpusDataset.genBoWDataset(processedValidation, tfidf), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf), name, minibatchSize, learningRate,
       (neuralPrefs, iteratorPrefs) => binaryTrainer(FeedForward.createBoW(neuralPrefs, tfidf.phrases.size), neuralPrefs, iteratorPrefs)
@@ -264,8 +264,8 @@ sealed case class FeedforwardTrainer(
   }
 
   private def binaryTrainer(net: MultiLayerNetwork, neuralPrefs: NeuralPrefs, tw: IteratorPrefs): NeuralResult = {
-    val trainIter = new FeedForwardIterator(tw.training.asInstanceOf[CorpusVectors], IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
-    val testIter = new FeedForwardIterator(tw.validation.asInstanceOf[CorpusVectors], IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new FeedForwardIterator(tw.training, IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
+    val testIter = new FeedForwardIterator(tw.validation, IPTC.topCategories.indexOf(tw.label), batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(name, tw.label, neuralPrefs, net, trainIter, testIter)
   }
 }
@@ -297,8 +297,8 @@ sealed case class RecurrentTrainer(
     W2VLoader.preload(wordVectors = true, documentVectors = false)
     val realPrefs: NeuralPrefs = neuralPrefs.copy(hiddenNodes = hiddenNodes)
     val net = RNN.createBinary(realPrefs)
-    val trainIter = new RNNIterator(tw.training.asInstanceOf[CorpusMatrix], tw.label, batchSize = neuralPrefs.minibatchSize)
-    val testIter = new RNNIterator(tw.validation.asInstanceOf[CorpusMatrix], tw.label, batchSize = neuralPrefs.minibatchSize)
+    val trainIter = new RNNIterator(tw.training, tw.label, batchSize = neuralPrefs.minibatchSize)
+    val testIter = new RNNIterator(tw.validation, tw.label, batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.train(name, tw.label, realPrefs, net, trainIter, testIter)
   }
 }
