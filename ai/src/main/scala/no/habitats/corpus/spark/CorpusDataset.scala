@@ -7,14 +7,17 @@ import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 
 import scala.collection.immutable.ListMap
-import scala.collection.{Map, Set, mutable}
+import scala.collection.{Map, Set}
 
 case class SimpleArticle(id: String, annotations: Map[String, Float], labels: Array[Int], featureSize: Int)
 
 case class CorpusDataset(data: Array[SimpleArticle], private val transformer: (String, Map[String, Float]) => INDArray) {
-  lazy val memo: mutable.LongMap[INDArray] = new mutable.LongMap[INDArray]
+  lazy val memo: scala.collection.mutable.LongMap[INDArray] = new scala.collection.mutable.LongMap[INDArray]
 
-  def toVector(articleId: String, annotationIds: Map[String, Float]): INDArray = synchronized(memo.getOrElseUpdate(articleId.toLong, transformer(articleId, annotationIds)))
+  def toVector(articleId: String, annotationIds: Map[String, Float]): INDArray = {
+    if (Config.memo) synchronized(memo.getOrElseUpdate(articleId.toLong, transformer(articleId, annotationIds)))
+    else transformer(articleId, annotationIds)
+  }
 }
 
 object CorpusDataset {

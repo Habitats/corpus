@@ -136,6 +136,7 @@ object Config {
       hidden3 = props.remove("h3").map(_.toInt),
       tft = props.remove("tft").map(_.toInt),
       superSample = props.remove("super").map(_.toBoolean),
+      memo = props.remove("memo").map(_.toBoolean),
       iterations = props.remove("iter").map(_.toInt),
       epoch = props.remove("epoch").map(_.toInt),
       logResults = props.remove("logres").map(_.toBoolean)
@@ -154,6 +155,7 @@ object Config {
   lazy val cache                 : Boolean         = args.cache.getOrElse(false)
   lazy val histogram             : Boolean         = args.histogram.getOrElse(false)
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
+  lazy val memo                  : Boolean         = args.memo.getOrElse(false)
   lazy val category              : Option[String]  = args.category
   lazy val learningRate          : Option[Double]  = args.learningRate
   lazy val confidence            : Option[Double]  = args.confidence
@@ -192,6 +194,7 @@ object Config {
                         tft: Option[Int] = None,
                         iterations: Option[Int] = None,
                         epoch: Option[Int] = None,
+                        memo: Option[Boolean] = None,
                         superSample: Option[Boolean] = None
                       ) {
     override def toString = {

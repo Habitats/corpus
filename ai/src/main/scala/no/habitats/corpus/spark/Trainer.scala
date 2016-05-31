@@ -17,40 +17,88 @@ import scala.collection.parallel.{ForkJoinTaskSupport, ParSeq}
 import scala.language.implicitConversions
 
 object Trainer extends Serializable {
-  def virt() = {
-    val (train, validation) = Fetcher.ordered(types = true)
-    val learningRates = Seq(0.05, 0.025)
-    for (lr <- learningRates) {
-      NaiveBayesTrainer(tag = Some("types")).trainBoW(train, validation, termFrequencyThreshold = 100)
-      NaiveBayesTrainer(tag = Some("types")).trainW2V(train, validation)
-      FeedforwardTrainer(tag = Some("types"), learningRate = lr).trainBoW(train, validation, termFrequencyThreshold = 100)
-      FeedforwardTrainer(tag = Some("types"), learningRate = lr).trainW2V(train, validation)
-      RecurrentTrainer(tag = Some("types"), learningRate = lr).trainW2V(train, validation)
-    }
-  }
-
-  def st2() = {
-    val (train, validation) = Fetcher.ordered()
-    FeedforwardTrainer(superSample = false).trainW2V(train, validation)
-    FeedforwardTrainer(superSample = false).trainBoW(train, validation)
-    RecurrentTrainer(superSample = false).trainBoW(train, validation)
-    FeedforwardTrainer(superSample = true).trainW2V(train, validation)
-    FeedforwardTrainer(superSample = true).trainBoW(train, validation)
-    RecurrentTrainer(superSample = true).trainBoW(train, validation)
-  }
-
-  def st1() = {
-    val train = Fetcher.by("time/nyt_time_10_train.txt")
-    val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
-    val learningRates = Seq(0.5, 0.75, 0.25)
-    //    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 10)
-    //    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
-    RecurrentTrainer(tag = Some("time-h10"), learningRate = learningRates, hiddenNodes = 10).trainW2V(train, validation)
-    RecurrentTrainer(tag = Some("time-h20"), learningRate = learningRates, hiddenNodes = 20).trainW2V(train, validation)
-    RecurrentTrainer(tag = Some("time-h100"), learningRate = learningRates, hiddenNodes = 100).trainW2V(train, validation)
-  }
 
   implicit def seqthis(a: Double): Seq[Double] = Seq(a)
+
+  // Ex1/2 - Confidence
+  def baseline() = {
+    val (train, validation) = Fetcher.ordered()
+    val tag = Some("baseline")
+    //    FeedforwardTrainer(tag).trainW2V(train, validation)
+    FeedforwardTrainer(tag).trainBoW(train, validation)
+    //    NaiveBayesTrainer(tag).trainW2V(train, validation)
+    //    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
+    RecurrentTrainer(tag).trainW2V(train, validation)
+  }
+
+  def supersampled() = {
+    val (train, validation) = Fetcher.ordered()
+    val tag = Some("super")
+    FeedforwardTrainer(tag, superSample = true).trainW2V(train, validation)
+    FeedforwardTrainer(tag, superSample = true).trainBoW(train, validation)
+    //    NaiveBayesTrainer(tag, superSample = true).trainW2V(train, validation)
+    //    NaiveBayesTrainer(tag, superSample = true).trainBoW(train, validation, termFrequencyThreshold = 100)
+    RecurrentTrainer(tag, superSample = true).trainW2V(train, validation)
+  }
+
+  // Ex3 - Confidence
+  def types() = {
+    val (train, validation) = Fetcher.ordered(types = true)
+    val tag = Some("types")
+    FeedforwardTrainer(tag).trainW2V(train, validation)
+    FeedforwardTrainer(tag).trainBoW(train, validation)
+    //    NaiveBayesTrainer(tag).trainW2V(train, validation)
+    //    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
+    RecurrentTrainer(tag).trainW2V(train, validation)
+  }
+
+  // Ex5 - Confidence
+  def time() = {
+    val train = Fetcher.by("time/nyt_time_10_train.txt")
+    val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
+    val tag = Some("time")
+    FeedforwardTrainer(tag).trainW2V(train, validation)
+    FeedforwardTrainer(tag).trainBoW(train, validation)
+    NaiveBayesTrainer(tag).trainW2V(train, validation)
+    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
+    RecurrentTrainer(tag).trainW2V(train, validation)
+  }
+
+  // Ex2 - Confidence
+  def trainFFNConfidence() = {
+    def train(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt")
+    def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
+    def tag(confidence: Int): Some[String] = Some(s"confidence-$confidence")
+
+    val learningRates = Seq(0.5)
+    var confidence = 25
+    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+    RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+
+    confidence = 50
+    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+    RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+
+    confidence = 75
+    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+    RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+
+    confidence = 100
+    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+    RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+  }
 
   // ### Best models
   // ## Subsampled
@@ -105,52 +153,6 @@ object Trainer extends Serializable {
     NaiveBayesTrainer().trainBoW(train, validation, termFrequencyThreshold = 100)
   }
 
-  // Ex2 - Confidence
-  def trainFFNConfidence() = {
-    def train(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt")
-    def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
-    val learningRates = Seq(0.5, 2.0, 1.5, 1.0, 0.75, 0.25, 0.1, 0.05)
-    for {s <- Seq(false, true); lr <- learningRates} {
-      Seq(50, 75, 100).foreach(confidence => {
-        val tag: Some[String] = Some(s"confidence-$confidence")
-        Log.v(s"Training with confidence ${confidence} ...")
-        //        NaiveBayesTrainer(tag = tag, superSample = s).trainW2V(train = train(confidence), validation = validation(confidence))
-        //        NaiveBayesTrainer(tag = tag, superSample = s).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-        //        FeedforwardTrainer(tag = tag, superSample = s, learningRate = lr).trainW2V(train = train(confidence), validation = validation(confidence))
-        FeedforwardTrainer(tag = tag, superSample = s, learningRate = lr).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-      })
-    }
-    Seq(25, 50, 75, 100).foreach(confidence => {
-      val tag: Some[String] = Some(s"confidence-$confidence")
-      RecurrentTrainer(tag = tag, learningRate = learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    })
-  }
-
-  // Ex3 - Types
-  def trainFFNW2VTypes() = {
-    val (train, validation) = Fetcher.ordered(types = true)
-    FeedforwardTrainer(tag = Some("types")).trainW2V(train, validation)
-  }
-
-  def trainRNNW2VTypes() = {
-    val (train, validation) = Fetcher.ordered(types = true)
-    RecurrentTrainer(tag = Some("types")).trainW2V(train, validation)
-  }
-
-  // Ex4 - Lenghts - Use baseline
-
-  // Ex5 - Extrapolation
-  def trainFFNBoWTime() = {
-    val train = Fetcher.by("time/nyt_time_train.txt")
-    val validation = Fetcher.by("time/nyt_time_0_validation.txt")
-    FeedforwardTrainer(tag = Some("time")).trainBoW(train, validation)
-  }
-
-  def trainFFNW2VTime() = {
-    val train = Fetcher.by("time/nyt_time_train.txt")
-    val validation = Fetcher.by("time/nyt_time_0_validation.txt")
-    FeedforwardTrainer(tag = Some("time"), learningRate = 0.5).trainW2V(train, validation)
-  }
 }
 
 sealed trait ModelTrainer {
@@ -231,11 +233,10 @@ sealed trait NeuralTrainer {
   }
 }
 
-sealed case class FeedforwardTrainer(
-                                      learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
-                                      minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(1000)),
-                                      superSample: Boolean = Config.superSample.getOrElse(false),
-                                      tag: Option[String] = None
+sealed case class FeedforwardTrainer(tag: Option[String] = None,
+                                     learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
+                                     minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(1000)),
+                                     superSample: Boolean = Config.superSample.getOrElse(false)
                                     ) extends ModelTrainer with NeuralTrainer {
 
   override val prefix = "ffn"
@@ -270,12 +271,12 @@ sealed case class FeedforwardTrainer(
   }
 }
 
-sealed case class RecurrentTrainer(
-                                    learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
-                                    minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(1000)),
-                                    superSample: Boolean = Config.superSample.getOrElse(false),
-                                    hiddenNodes: Int = Config.hidden1.getOrElse(10),
-                                    tag: Option[String] = None) extends ModelTrainer with NeuralTrainer {
+sealed case class RecurrentTrainer(tag: Option[String] = None,
+                                   learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
+                                   minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(1000)),
+                                   superSample: Boolean = Config.superSample.getOrElse(false),
+                                   hiddenNodes: Int = Config.hidden1.getOrElse(10)
+                                  ) extends ModelTrainer with NeuralTrainer {
 
   override val prefix = "rnn"
 
@@ -303,7 +304,7 @@ sealed case class RecurrentTrainer(
   }
 }
 
-sealed case class NaiveBayesTrainer(superSample: Boolean = false, tag: Option[String] = None) extends ModelTrainer {
+sealed case class NaiveBayesTrainer(tag: Option[String] = None, superSample: Boolean = false) extends ModelTrainer {
 
   override val prefix = "nb"
 
