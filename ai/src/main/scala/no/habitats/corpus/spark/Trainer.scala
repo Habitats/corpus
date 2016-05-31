@@ -72,28 +72,28 @@ object Trainer extends Serializable {
 
     val learningRates = Seq(0.5)
     var confidence = 25
-    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 50
-    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-    FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+    //    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 75
-    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+//    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 100
-    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+//    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
