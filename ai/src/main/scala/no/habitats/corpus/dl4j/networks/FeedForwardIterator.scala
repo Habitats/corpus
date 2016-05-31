@@ -2,18 +2,22 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
-import no.habitats.corpus.common.{Config, W2VLoader}
+import no.habitats.corpus.common.{Config, Log}
 import no.habitats.corpus.spark.CorpusVectors
 import org.deeplearning4j.datasets.iterator.DataSetIterator
+import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j
 
 import scala.collection.Map
+import scala.util.{Failure, Success, Try}
 
 class FeedForwardIterator(training: CorpusVectors, label: Int, batchSize: Int) extends DataSetIterator {
   // 32 may be a good starting point,
   var counter = 0
+
+  var working = ""
 
   override def next(num: Int): DataSet = {
     val articles = training.data.slice(cursor, cursor + num)
@@ -24,7 +28,14 @@ class FeedForwardIterator(training: CorpusVectors, label: Int, batchSize: Int) e
     for (i <- articles.indices) {
       val annotationIds: Map[String, Float] = articles(i)._2
       val articleId = articles(i)._1
-      features.putRow(i, training.transformer(articleId, annotationIds))
+      val vector: INDArray = training.transformer(articleId, annotationIds)
+      Try(features.putRow(i, vector)) match {
+        case Failure(e) =>
+          Log.v("ERROR: " + vector.shapeInfoToString() + " working: " + working+ " correct: " + features.shapeInfoToString())
+        case Success(s) =>
+          working = s.shapeInfoToString()
+          s
+      }
 
       // binary
       labels.putScalar(Array(i, articles(i)._3(label)), 1.0)

@@ -20,7 +20,7 @@ object Trainer extends Serializable {
   def virt() = {
     val (train, validation) = Fetcher.ordered(types = true)
     val learningRates = Seq(0.05, 0.025)
-    for(lr <- learningRates) {
+    for (lr <- learningRates) {
       NaiveBayesTrainer(tag = Some("types")).trainBoW(train, validation, termFrequencyThreshold = 100)
       NaiveBayesTrainer(tag = Some("types")).trainW2V(train, validation)
       FeedforwardTrainer(tag = Some("types"), learningRate = lr).trainBoW(train, validation, termFrequencyThreshold = 100)
@@ -43,8 +43,8 @@ object Trainer extends Serializable {
     val train = Fetcher.by("time/nyt_time_10_train.txt")
     val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
     val learningRates = Seq(0.5, 0.75, 0.25)
-//    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 10)
-//    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
+    //    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 10)
+    //    FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainW2V(train, validation)
     RecurrentTrainer(tag = Some("time-h10"), learningRate = learningRates, hiddenNodes = 10).trainW2V(train, validation)
     RecurrentTrainer(tag = Some("time-h20"), learningRate = learningRates, hiddenNodes = 20).trainW2V(train, validation)
     RecurrentTrainer(tag = Some("time-h100"), learningRate = learningRates, hiddenNodes = 100).trainW2V(train, validation)
@@ -109,19 +109,20 @@ object Trainer extends Serializable {
   def trainFFNConfidence() = {
     def train(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt")
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
-    val lr = Seq(0.5, 2.0, 1.5, 1.0, 0.75, 0.25, 0.1, 0.05)
-    for(s <- Seq(false, true))
+    val learningRates = Seq(0.5, 2.0, 1.5, 1.0, 0.75, 0.25, 0.1, 0.05)
+    for {s <- Seq(false, true); lr <- learningRates} {
+      Seq(50, 75, 100).foreach(confidence => {
+        val tag: Some[String] = Some(s"confidence-$confidence")
+        Log.v(s"Training with confidence ${confidence} ...")
+        //        NaiveBayesTrainer(tag = tag, superSample = s).trainW2V(train = train(confidence), validation = validation(confidence))
+        //        NaiveBayesTrainer(tag = tag, superSample = s).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+        //        FeedforwardTrainer(tag = tag, superSample = s, learningRate = lr).trainW2V(train = train(confidence), validation = validation(confidence))
+        FeedforwardTrainer(tag = tag, superSample = s, learningRate = lr).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+      })
+    }
     Seq(25, 50, 75, 100).foreach(confidence => {
       val tag: Some[String] = Some(s"confidence-$confidence")
-      Log.v(s"Training with confidence ${confidence} ...")
-      NaiveBayesTrainer(tag = tag, superSample = s).trainW2V(train = train(confidence), validation = validation(confidence))
-      NaiveBayesTrainer(tag = tag, superSample = s).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-      FeedforwardTrainer(tag = tag, superSample = s, learningRate = lr).trainW2V(train = train(confidence), validation = validation(confidence))
-      FeedforwardTrainer(tag = tag, superSample = s, learningRate = lr).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    })
-    Seq(25, 50, 75, 100).foreach(confidence => {
-      val tag: Some[String] = Some(s"confidence-$confidence")
-      RecurrentTrainer(tag = tag, learningRate = lr).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+      RecurrentTrainer(tag = tag, learningRate = learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     })
   }
 
@@ -242,8 +243,9 @@ sealed case class FeedforwardTrainer(
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     feat = "w2v"
     W2VLoader.preload(wordVectors = true, documentVectors = true)
+    val tfidf = TFIDF(train, 0)
     trainNetwork(
-      CorpusDataset.genW2VDataset(validation), label => CorpusDataset.genW2VDataset(processTraining(train, superSample)(label)), name, minibatchSize, learningRate,
+      CorpusDataset.genW2VDataset(validation, tfidf), label => CorpusDataset.genW2VDataset(processTraining(train, superSample)(label), tfidf), name, minibatchSize, learningRate,
       (neuralPrefs, iteratorPrefs) => binaryTrainer(FeedForward.create(neuralPrefs), neuralPrefs, iteratorPrefs)
     )
   }
@@ -256,7 +258,7 @@ sealed case class FeedforwardTrainer(
     val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
     trainNetwork(
-      CorpusDataset.genBoWDataset(processedValidation, tfidf.phrases), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf.phrases), name, minibatchSize, learningRate,
+      CorpusDataset.genBoWDataset(processedValidation, tfidf), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf), name, minibatchSize, learningRate,
       (neuralPrefs, iteratorPrefs) => binaryTrainer(FeedForward.createBoW(neuralPrefs, tfidf.phrases.size), neuralPrefs, iteratorPrefs)
     )
   }
@@ -282,9 +284,10 @@ sealed case class RecurrentTrainer(
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     feat = "w2v"
     W2VLoader.preload(wordVectors = true, documentVectors = false)
+    val tfidf = TFIDF(train, 100)
     trainNetwork(
-      CorpusDataset.genW2VMatrix(validation),
-      label => CorpusDataset.genW2VMatrix(processTraining(train, superSample)(label)),
+      CorpusDataset.genW2VMatrix(validation, tfidf),
+      label => CorpusDataset.genW2VMatrix(processTraining(train, superSample)(label), tfidf),
       name, minibatchSize, learningRate, binaryRNNTrainer
     )
   }

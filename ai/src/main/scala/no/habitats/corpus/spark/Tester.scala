@@ -169,7 +169,10 @@ sealed trait Testable {
     })
   }
 
-  def dataset(test: RDD[Article]): CorpusDataset = if (name.contains("bow")) CorpusDataset.genBoWDataset(test, TFIDF.deserialize(name).phrases) else CorpusDataset.genW2VDataset(test)
+  def dataset(test: RDD[Article]): CorpusDataset = {
+    val tfidf = TFIDF.deserialize(name)
+    if (name.contains("bow")) CorpusDataset.genBoWDataset(test, tfidf) else CorpusDataset.genW2VDataset(test, tfidf)
+  }
 
   def predictAll(test: RDD[Article]): RDD[Article] = {
     val modelType = if (name.toLowerCase.contains("bow")) Some(TFIDF.deserialize(name)) else None

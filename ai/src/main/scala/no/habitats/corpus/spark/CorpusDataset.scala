@@ -36,21 +36,21 @@ object CorpusDataset {
     })
   }
 
-  def annotationSet(a: Article): Map[String, Float] = a.ann.map(an => (an._1, an._2.tfIdf.toFloat))
+  def annotationSet(a: Article, tfidf: TFIDF): Map[String, Float] = a.ann.map(an => (an._1, tfidf.tfidf(a, an._2).toFloat))
 
   def labelArray(article: Article): Array[Int] = IPTC.topCategories.map(i => if (article.iptc.contains(i)) 1 else 0).toArray
 
-  def genW2VDataset(articles: RDD[Article]): CorpusVectors = {
-    CorpusVectors(articles.map(a => (a.id, annotationSet(a), labelArray(a), 1000)).collect(), (articleId, annotationIds) => documentVector(articleId, annotationIds))
+  def genW2VDataset(articles: RDD[Article], tfidf: TFIDF): CorpusVectors = {
+    CorpusVectors(articles.map(a => (a.id, annotationSet(a, tfidf), labelArray(a), 1000)).collect(), (articleId, annotationIds) => documentVector(articleId, annotationIds))
   }
 
-  def genBoWDataset(articles: RDD[Article], phrases: Set[String]): CorpusVectors = {
-    CorpusVectors(articles.map(a => (a.id, annotationSet(a), labelArray(a), phrases.size)).collect(), (articles, annotationIds) => bowVector(articles, annotationIds, phrases))
+  def genBoWDataset(articles: RDD[Article], tfidf: TFIDF): CorpusVectors = {
+    CorpusVectors(articles.map(a => (a.id, annotationSet(a, tfidf), labelArray(a), tfidf.phrases.size)).collect(), (articles, annotationIds) => bowVector(articles, annotationIds, tfidf.phrases))
   }
 
-  def genW2VMatrix(articles: RDD[Article]): CorpusMatrix = {
+  def genW2VMatrix(articles: RDD[Article], tfidf: TFIDF): CorpusMatrix = {
     CorpusMatrix(articles.map(a => {
-      val annotationVectors = a.ann.values.toArray.sortBy(_.offset).map(an => (an.id, an.tfIdf.toFloat))
+      val annotationVectors = a.ann.values.toArray.sortBy(_.offset).map(an => (an.id, tfidf.tfidf(a, an).toFloat))
       (annotationVectors, labelArray(a))
     }).collect, (annotationId) => W2VLoader.fromId(annotationId).get)
   }
