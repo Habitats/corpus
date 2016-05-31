@@ -20,16 +20,17 @@ object Trainer extends Serializable {
   def st1() = {
     val (train, validation) = Fetcher.ordered()
     FeedforwardTrainer(superSample = false).trainW2V(train, validation)
-    FeedforwardTrainer(superSample = true).trainW2V(train, validation)
     FeedforwardTrainer(superSample = false).trainBoW(train, validation)
-    FeedforwardTrainer(superSample = true).trainBoW(train, validation)
     RecurrentTrainer(superSample = false).trainBoW(train, validation)
+    FeedforwardTrainer(superSample = true).trainW2V(train, validation)
+    FeedforwardTrainer(superSample = true).trainBoW(train, validation)
+    RecurrentTrainer(superSample = true).trainBoW(train, validation)
   }
 
   def st2() = {
     val train = Fetcher.by("time/nyt_time_10_train.txt")
     val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
-    val learningRates = Seq(1.0, 0.75, 0.5, 0.25, 0.1, 0.075, 0.05)
+    val learningRates = Seq(1.0, 0.75, 0.5, 0.25)
     NaiveBayesTrainer(tag = Some("time")).trainBoW(train, validation, termFrequencyThreshold = 10)
     NaiveBayesTrainer(tag = Some("time")).trainW2V(train, validation)
     FeedforwardTrainer(tag = Some("time"), learningRate = learningRates).trainBoW(train, validation, termFrequencyThreshold = 10)
@@ -107,13 +108,18 @@ object Trainer extends Serializable {
   def trainFFNConfidence() = {
     def train(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt")
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
-    Seq(50, 75, 100).foreach(confidence => {
+    val lr = Seq(0.5, 2.0, 1.5, 1.0, 0.75, 0.25, 0.1, 0.05)
+    Seq(25, 50, 75, 100).foreach(confidence => {
       val tag: Some[String] = Some(s"confidence-$confidence")
       Log.v(s"Training with confidence ${confidence} ...")
-      //      NaiveBayesTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
-      //      NaiveBayesTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-      //      FeedforwardTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
-      FeedforwardTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+      NaiveBayesTrainer(tag = tag).trainW2V(train = train(confidence), validation = validation(confidence))
+      NaiveBayesTrainer(tag = tag).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+      FeedforwardTrainer(tag = tag, learningRate = lr).trainW2V(train = train(confidence), validation = validation(confidence))
+      FeedforwardTrainer(tag = tag, learningRate = lr).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
+    })
+    Seq(25, 50, 75, 100).foreach(confidence => {
+      val tag: Some[String] = Some(s"confidence-$confidence")
+      RecurrentTrainer(tag = tag, learningRate = lr).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     })
   }
 
@@ -248,7 +254,7 @@ sealed case class FeedforwardTrainer(
     val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
     trainNetwork(
-      CorpusDataset.genBoWDataset(processedValidation, tfidf.phrases.size), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf.phrases.size), name, minibatchSize, learningRate,
+      CorpusDataset.genBoWDataset(processedValidation, tfidf.phrases), label => CorpusDataset.genBoWDataset(processTraining(processedTraining, superSample)(label), tfidf.phrases), name, minibatchSize, learningRate,
       (neuralPrefs, iteratorPrefs) => binaryTrainer(FeedForward.createBoW(neuralPrefs, tfidf.phrases.size), neuralPrefs, iteratorPrefs)
     )
   }

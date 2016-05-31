@@ -75,9 +75,8 @@ private class TextVectorLoader extends VectorLoader {
 
 object W2VLoader extends RddSerializer with VectorLoader {
 
-  implicit val formats                           = Serialization.formats(NoTypeHints)
-  lazy     val loader: VectorLoader              = new TextVectorLoader()
-  lazy     val memo  : mutable.LongMap[INDArray] = new mutable.LongMap[INDArray]
+  implicit val formats                            = Serialization.formats(NoTypeHints)
+  lazy     val loader : VectorLoader              = new TextVectorLoader()
 
   def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = loader.preload(wordVectors, documentVectors)
 
@@ -86,14 +85,6 @@ object W2VLoader extends RddSerializer with VectorLoader {
   def contains(fb: String): Boolean = loader.contains(fb)
 
   def documentVector(a: Article): INDArray = loader.documentVector(a)
-
-  def documentVector(articleId: String, annotationIds: Set[(String, Float)]): INDArray = synchronized{
-    memo.getOrElseUpdate(articleId.toLong,  {
-      val vectors: Iterable[INDArray] = annotationIds.flatMap { case (id, tfidf) => fromId(id).map(_.mul(tfidf)) }
-      val combined = vectors.reduce(_.addi(_))
-      combined
-    })
-  }
 
   @Deprecated
   def calculateDocumentVector(ann: Map[String, Annotation]): INDArray = {

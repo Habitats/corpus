@@ -9,6 +9,8 @@ import org.nd4j.linalg.dataset.DataSet
 import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j
 
+import scala.collection.Map
+
 class FeedForwardIterator(training: CorpusVectors, label: Int, batchSize: Int) extends DataSetIterator {
   // 32 may be a good starting point,
   var counter = 0
@@ -20,9 +22,9 @@ class FeedForwardIterator(training: CorpusVectors, label: Int, batchSize: Int) e
     val labels = Nd4j.create(articles.size, totalOutcomes)
 
     for (i <- articles.indices) {
-      val annotationIds: Set[(String, Float)] = articles(i)._2
+      val annotationIds: Map[String, Float] = articles(i)._2
       val articleId = articles(i)._1
-      features.putRow(i, W2VLoader.documentVector(articleId, annotationIds))
+      features.putRow(i, training.transformer(articleId, annotationIds))
 
       // binary
       labels.putScalar(Array(i, articles(i)._3(label)), 1.0)
