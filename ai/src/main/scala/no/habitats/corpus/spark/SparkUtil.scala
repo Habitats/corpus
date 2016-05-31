@@ -95,7 +95,7 @@ object SparkUtil {
         case "trainBaseline" => Trainer.baseline()
         case "trainSuper" => Trainer.supersampled()
         case "trainTypes" => Trainer.types()
-        case "trainTime" => Trainer.types()
+        case "trainTime" => Trainer.time()
         case "trainConfidence" => Trainer.confidence()
 
         // Testing
