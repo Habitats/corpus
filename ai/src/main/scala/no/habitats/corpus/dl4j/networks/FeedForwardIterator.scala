@@ -2,8 +2,8 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
+import no.habitats.corpus.common.models.CorpusDataset
 import no.habitats.corpus.common.{Config, Log}
-import no.habitats.corpus.spark.CorpusDataset
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet

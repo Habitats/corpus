@@ -1,13 +1,14 @@
-package no.habitats.corpus.spark
+package no.habitats.corpus.common.models
 
 import no.habitats.corpus.common._
-import no.habitats.corpus.common.models.Article
+import org.apache.spark.mllib.linalg.{Vector, Vectors}
 import org.apache.spark.rdd.RDD
+import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 
+import scala.collection.Map
 import scala.collection.immutable.ListMap
-import scala.collection.{Map, Set}
 
 case class SimpleArticle(id: String, annotations: Map[String, Float], labels: Array[Int], featureSize: Int)
 
@@ -53,5 +54,34 @@ object CorpusDataset {
 
   def genW2VMatrix(articles: RDD[Article], tfidf: TFIDF): CorpusDataset = {
     CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = true), labelArray(a), 1000)).collect, (annotationId, annotationIds) => wordVector(annotationId, annotationIds(annotationId)))
+  }
+
+  // High level API for vector conversion
+  def documentVector(article: Article, tfidf: TFIDF, ordered: Boolean): INDArray = {
+    documentVector(article.id, annotationSet(article, tfidf, ordered))
+  }
+
+  def bowVector(article: Article, tfidf: TFIDF): INDArray = {
+    bowVector(article.id, annotationSet(article, tfidf, false), tfidf.phrases)
+  }
+
+  def documentVectorMlLib(article: Article, tfidf: TFIDF, ordered: Boolean): Vector = {
+    MLLibUtil.toVector(documentVector(article.id, annotationSet(article, tfidf, ordered)))
+  }
+
+  def bowVectorMlLib(article: Article, tfidf: TFIDF): Vector = {
+    val set: Map[String, Float] = annotationSet(article, tfidf, false)
+    val data: Seq[(Int, Double)] = tfidf.phrases.zipWithIndex.toList.map { case (p, i) => (i, set.getOrElse(p, 0f).toDouble) }
+    Vectors.sparse(tfidf.phrases.size, data)
+  }
+
+  def toVector(tfidf: TFIDF, a: Article): Vector = {
+    if (tfidf.contains("w2v")) CorpusDataset.documentVectorMlLib(a, tfidf, ordered = false)
+    else CorpusDataset.bowVectorMlLib(a, tfidf)
+  }
+
+  def toINDArray(tfidf: TFIDF, a: Article): INDArray = {
+    if (tfidf.contains("w2v")) CorpusDataset.documentVector(a, tfidf, ordered = false)
+    else CorpusDataset.bowVector(a, tfidf)
   }
 }

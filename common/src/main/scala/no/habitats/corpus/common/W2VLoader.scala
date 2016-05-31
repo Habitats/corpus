@@ -40,37 +40,22 @@ sealed trait VectorLoader {
 
   def fromId(fb: String): Option[INDArray]
   def contains(fb: String): Boolean
-  def documentVector(a: Article): INDArray
-  def preload(wordVectors: Boolean, documentVectors: Boolean): Unit
+  def preload()
 }
 
 private class BinaryVectorLoader extends VectorLoader {
   override def fromId(fb: String): Option[INDArray] = if (contains(fb)) Some(Nd4j.create(FreebaseW2V.gVec.getWordVector(fb))) else None
-  override def documentVector(a: Article): INDArray = W2VLoader.calculateDocumentVector(a.ann)
   override def contains(fb: String): Boolean = FreebaseW2V.gVec.hasWord(fb)
-  override def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = FreebaseW2V.gVec
+  override def preload() = FreebaseW2V.gVec
 }
 
 private class TextVectorLoader extends VectorLoader {
   lazy val ids            : Set[String]                                    = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
   lazy val vectors        : Map[String, INDArray]                          = loadVectors(Config.freebaseToWord2Vec())
-  lazy val documentVectors: scala.collection.mutable.Map[String, INDArray] = {
-    if (!Config.cache) Log.v("Illegal cache access. Cache is disabled!")
-    mutable.Map[String, INDArray]() ++ loadVectors(Config.documentVectors())
-  }
 
   override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
-
-  override def documentVector(a: Article): INDArray = {
-    if (Config.cache) documentVectors.getOrElseUpdate(a.id, W2VLoader.calculateDocumentVector(a.ann))
-    else W2VLoader.calculateDocumentVector(a.ann)
-  }
   override def contains(fb: String): Boolean = ids.contains(fb)
-
-  override def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = {
-    if (Config.cache && documentVectors) this.documentVectors
-    if (wordVectors) vectors
-  }
+  override def preload() = vectors
 }
 
 object W2VLoader extends RddSerializer with VectorLoader {
@@ -78,25 +63,11 @@ object W2VLoader extends RddSerializer with VectorLoader {
   implicit val formats                            = Serialization.formats(NoTypeHints)
   lazy     val loader : VectorLoader              = new TextVectorLoader()
 
-  def preload(wordVectors: Boolean, documentVectors: Boolean): Unit = loader.preload(wordVectors, documentVectors)
+  def preload(): Unit = loader.preload()
 
   def fromId(fb: String): Option[INDArray] = loader.fromId(fb)
 
   def contains(fb: String): Boolean = loader.contains(fb)
-
-  def documentVector(a: Article): INDArray = loader.documentVector(a)
-
-  @Deprecated
-  def calculateDocumentVector(ann: Map[String, Annotation]): INDArray = {
-    // Old way
-    //    val vectors: Iterable[INDArray] = ann.values.map(_.fb).flatMap(fromId)
-    //    val combined: INDArray = squash(vectors)
-
-    // New way
-    val vectors: Iterable[INDArray] = ann.values.map(an => (an.tfIdf, an.fb)).flatMap { case (tfidf, id) => fromId(id).map(_.mul(tfidf)) }
-    val combined = vectors.reduce(_.addi(_))
-    combined
-  }
 
   def normalize(combined: INDArray): INDArray = {
     // Min: -0.15568943321704865
@@ -107,15 +78,6 @@ object W2VLoader extends RddSerializer with VectorLoader {
   }
 
   def squash(vectors: Iterable[INDArray]): INDArray = vectors.map(_.dup).reduce(_.addi(_)).divi(vectors.size)
-
-  def cacheDocumentVectors(rdd: RDD[Article], confidence: Double, types: Boolean) = {
-    W2VLoader.preload(wordVectors = true, documentVectors = false)
-    val docVecs = rdd
-      .filter(_.ann.nonEmpty)
-      .filter(_.ann.map(_._2.fb).forall(W2VLoader.contains))
-      .map(a => s"${a.id},${W2VLoader.toString(calculateDocumentVector(a.ann))}")
-    saveAsText(docVecs, s"document_vectors_$confidence${if (types) "_types" else ""}")
-  }
 
   def toString(w2v: INDArray): String = w2v.data().asFloat().mkString(",")
   def fromString(w2v: String): INDArray = Nd4j.create(w2v.split(",").map(_.toFloat))

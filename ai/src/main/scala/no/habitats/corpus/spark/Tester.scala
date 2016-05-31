@@ -6,7 +6,7 @@ import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
 import no.habitats.corpus.common.dl4j.{NeuralModel, NeuralModelLoader, NeuralPredictor}
 import no.habitats.corpus.common.mllib.MLlibModelLoader
-import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.models.{Article, CorpusDataset}
 import no.habitats.corpus.dl4j.NeuralEvaluation
 import no.habitats.corpus.dl4j.networks.{FeedForwardIterator, RNNIterator}
 import no.habitats.corpus.mllib.{MlLibUtils, Prefs}
@@ -175,7 +175,7 @@ sealed trait Testable {
   }
 
   def predictAll(test: RDD[Article]): RDD[Article] = {
-    val modelType = if (name.toLowerCase.contains("bow")) Some(TFIDF.deserialize(name)) else None
+    val modelType = TFIDF.deserialize(name)
     NeuralPredictor.predict(test, models(name), modelType)
   }
 
@@ -212,7 +212,7 @@ case class NaiveBayesTester(name: String) extends Testable {
 
   override def test(articles: RDD[Article], includeExampleBased: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
     Log.toFile(s"Testing Naive Bayes [$name] ...", s"test/$name.txt")
-    val predicted = MlLibUtils.testMLlibModels(articles, nb, if (name.contains("bow")) Some(TFIDF.deserialize(name)) else None)
+    val predicted = MlLibUtils.testMLlibModels(articles, nb, TFIDF.deserialize(name))
 
     Log.v("--- Predictions complete! ")
     MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"test/$name.txt")

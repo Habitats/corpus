@@ -3,7 +3,7 @@ package no.habitats.corpus.spark
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common.dl4j.NeuralModelLoader
 import no.habitats.corpus.common.mllib.MLlibModelLoader
-import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.models.{Article, CorpusDataset}
 import no.habitats.corpus.common.{Config, _}
 import no.habitats.corpus.dl4j.NeuralTrainer.NeuralResult
 import no.habitats.corpus.dl4j.networks.{FeedForward, FeedForwardIterator, RNN, RNNIterator}
@@ -86,14 +86,14 @@ object Trainer extends Serializable {
     RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 75
-//    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     //    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 100
-//    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
     FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
@@ -243,8 +243,8 @@ sealed case class FeedforwardTrainer(tag: Option[String] = None,
 
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     feat = "w2v"
-    W2VLoader.preload(wordVectors = true, documentVectors = true)
-    val tfidf = TFIDF(train, 0)
+    W2VLoader.preload()
+    val tfidf = TFIDF(train, 0, name)
     trainNetwork(
       CorpusDataset.genW2VDataset(validation, tfidf), label => CorpusDataset.genW2VDataset(processTraining(train, superSample)(label), tfidf), name, minibatchSize, learningRate,
       (neuralPrefs, iteratorPrefs) => binaryTrainer(FeedForward.create(neuralPrefs), neuralPrefs, iteratorPrefs)
@@ -253,9 +253,8 @@ sealed case class FeedforwardTrainer(tag: Option[String] = None,
 
   override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int) = {
     feat = "bow"
-    W2VLoader.preload(wordVectors = true, documentVectors = false)
-    val tfidf = TFIDF(train, termFrequencyThreshold)
-    Log.saveToFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
+    W2VLoader.preload()
+    val tfidf = TFIDF(train, termFrequencyThreshold, name)
     val processedTraining: RDD[Article] = TFIDF.frequencyFilter(train, tfidf.phrases)
     val processedValidation: RDD[Article] = TFIDF.frequencyFilter(validation, tfidf.phrases)
     trainNetwork(
@@ -284,8 +283,8 @@ sealed case class RecurrentTrainer(tag: Option[String] = None,
 
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     feat = "w2v"
-    W2VLoader.preload(wordVectors = true, documentVectors = false)
-    val tfidf = TFIDF(train, 100)
+    W2VLoader.preload()
+    val tfidf = TFIDF(train, 0, name)
     trainNetwork(
       CorpusDataset.genW2VMatrix(validation, tfidf),
       label => CorpusDataset.genW2VMatrix(processTraining(train, superSample)(label), tfidf),
@@ -295,7 +294,7 @@ sealed case class RecurrentTrainer(tag: Option[String] = None,
 
   // Binary trainers
   private def binaryRNNTrainer(neuralPrefs: NeuralPrefs, tw: IteratorPrefs): NeuralResult = {
-    W2VLoader.preload(wordVectors = true, documentVectors = false)
+    W2VLoader.preload()
     val realPrefs: NeuralPrefs = neuralPrefs.copy(hiddenNodes = hiddenNodes)
     val net = RNN.createBinary(realPrefs)
     val trainIter = new RNNIterator(tw.training, tw.label, batchSize = neuralPrefs.minibatchSize)
@@ -310,19 +309,19 @@ sealed case class NaiveBayesTrainer(tag: Option[String] = None, superSample: Boo
 
   override def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int) = {
     feat = "bow"
-    W2VLoader.preload(wordVectors = true, documentVectors = false)
-    val tfidf = TFIDF(train, termFrequencyThreshold)
-    Log.saveToFile(TFIDF.serialize(tfidf), name + "/" + name + "-tfidf.txt", Config.cachePath, overwrite = true)
-    trainNaiveBayes(TFIDF.frequencyFilter(train, tfidf.phrases), TFIDF.frequencyFilter(validation, tfidf.phrases), Some(tfidf), superSample)
+    W2VLoader.preload()
+    val tfidf = TFIDF(train, termFrequencyThreshold, name)
+    trainNaiveBayes(TFIDF.frequencyFilter(train, tfidf.phrases), TFIDF.frequencyFilter(validation, tfidf.phrases), tfidf, superSample)
   }
 
   override def trainW2V(train: RDD[Article], validation: RDD[Article]) = {
     feat = "w2v"
-    W2VLoader.preload(wordVectors = true, documentVectors = true)
-    trainNaiveBayes(train, validation, None, superSample)
+    W2VLoader.preload()
+    val tfidf = TFIDF(train, 0, name)
+    trainNaiveBayes(train, validation, tfidf, superSample)
   }
 
-  private def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], tfidf: Option[TFIDF] = None, superSample: Boolean) = {
+  private def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], tfidf: TFIDF, superSample: Boolean) = {
     val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, superSample)(c), validation, tfidf))).toMap
     val predicted = MlLibUtils.testMLlibModels(validation, models, tfidf)
     MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"train/$name.txt")

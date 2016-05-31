@@ -53,10 +53,6 @@ object SparkUtil {
           c <- Seq(0.25, 0.75, 1.0)
           t <- Seq(true, false)
         } yield Fetcher.ordered(confidence = c, types = t)._1
-        case "cacheDocumentVectors" => for {
-          c <- Seq(0.25, 0.75, 1.0)
-          t <- Seq(true, false)
-        } yield W2VLoader.cacheDocumentVectors(Fetcher.ordered(confidence = c, types = t)._1, confidence = c, types = t)
 
         case "cacheAnnotated" => Cacher.annotateAndCacheArticles(confidence = 0.25)
         case "cacheMiniCorpus" => Cacher.cacheMiniCorpus()
@@ -70,7 +66,6 @@ object SparkUtil {
           Cacher.cacheSubSampledShuffled()
         case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
         case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
-        case "cacheTFIDF" => Cacher.cacheTfidf()
         case "cache" =>
           Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".txt"), s.toString))
 

@@ -1,7 +1,7 @@
 package no.habitats.corpus.mllib
 
 import no.habitats.corpus.common._
-import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.models.{Article, CorpusDataset}
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.mllib.classification._
 import org.apache.spark.mllib.linalg.Vector
@@ -10,19 +10,9 @@ import org.apache.spark.rdd.RDD
 
 object MlLibUtils {
 
-  def multiLabelClassification(c: String, train: RDD[Article], test: RDD[Article], tfidf: Option[TFIDF]): NaiveBayesModel = {
-    val training: RDD[(Set[String], Vector)] = train.map(a => (a.iptc, toVector(tfidf, a)))
+  def multiLabelClassification(c: String, train: RDD[Article], test: RDD[Article], tfidf: TFIDF): NaiveBayesModel = {
+    val training: RDD[(Set[String], Vector)] = train.map(a => (a.iptc, CorpusDataset.toVector(tfidf, a)))
     trainModelsNaiveBayedMultiNominal(training, c)
-  }
-
-  /** Created either a BoW or a squashed W2V document vector */
-  def toVector(tfidf: Option[TFIDF], a: Article): Vector = {
-    tfidf match {
-      // Use w2v document vector
-      case None => a.documentVectorMlLib
-      // Use BoW phrase vector
-      case Some(v) => v.toVector(a)
-    }
   }
 
   def trainModelsNaiveBayedMultiNominal(training: RDD[(Set[String], Vector)], c: String): NaiveBayesModel = {
@@ -34,13 +24,14 @@ object MlLibUtils {
     model
   }
 
-  def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], tfidf: Option[TFIDF]): RDD[Article] = {
-    if (tfidf.isEmpty) W2VLoader.preload(wordVectors = true, documentVectors = true)
-    val testing: RDD[(Article, Vector)] = test.map(t => (t, toVector(tfidf, t)))
+  def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], tfidf: TFIDF): RDD[Article] = {
+    if (tfidf.name.contains("w2v")) W2VLoader.preload()
+    val testing: RDD[(Article, Vector)] = test.map(a => (a, CorpusDataset.toVector(tfidf, a)))
     //    Log.v("Max:" + testing.map(_._2.toArray.max).max)
     //    Log.v("Min: " + testing.map(_._2.toArray.min).min)
     predictCategories(catModelPairs, testing)
   }
+
 
   def predictCategories(catModelPairs: Map[String, ClassificationModel], testing: RDD[(Article, Vector)], threshold: Double = 1d): RDD[Article] = {
     testing.map(t => {

@@ -34,12 +34,6 @@ object Cacher extends RddSerializer {
     saveAsText(clean, "nyt_corpus")
   }
 
-  def cacheTfidf() = {
-    val train = Fetcher.annotatedTrainOrdered
-    val tfidf = TFIDF(train, Config.termFrequencyThreshold.getOrElse(100))
-    //    train.map(a => a.copy(ann = a.ann.values.map(an => (an.id, an.copy(tfidf = tfidf.tfidf(a, an))))))
-  }
-
   def scrambler() = {
     for {
       n <- Seq("train", "test", "validation")
