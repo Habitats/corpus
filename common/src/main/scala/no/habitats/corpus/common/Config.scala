@@ -138,6 +138,7 @@ object Config {
       superSample = props.remove("super").map(_.toBoolean),
       memo = props.remove("memo").map(_.toBoolean),
       iterations = props.remove("iter").map(_.toInt),
+      tag = props.remove("tag"),
       epoch = props.remove("epoch").map(_.toInt),
       logResults = props.remove("logres").map(_.toBoolean)
     )
@@ -157,6 +158,7 @@ object Config {
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
   lazy val memo                  : Boolean         = args.memo.getOrElse(false)
   lazy val category              : Option[String]  = args.category
+  lazy val tag                   : Option[String]  = args.tag
   lazy val learningRate          : Option[Double]  = args.learningRate
   lazy val confidence            : Option[Double]  = args.confidence
   lazy val miniBatchSize         : Option[Int]     = args.miniBatchSize
@@ -178,6 +180,7 @@ object Config {
                         job: Option[String] = None,
                         count: Option[Int] = None,
                         category: Option[String] = None,
+                        tag: Option[String] = None,
                         iptcFilter: Option[Set[String]] = None,
                         useApi: Option[Boolean] = None,
                         learningRate: Option[Double] = None,

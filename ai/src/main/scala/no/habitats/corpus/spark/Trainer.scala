@@ -23,134 +23,139 @@ object Trainer extends Serializable {
   // Ex1/2 - Baseline
   def baseline() = {
     val (train, validation) = Fetcher.ordered()
-    val tag = Some("baseline")
-    //    FeedforwardTrainer(tag).trainW2V(train, validation)
-    FeedforwardTrainer(tag).trainBoW(train, validation)
+    val tag = "baseline"
+    val learningRate = 0.05
+    FeedforwardTrainer(tag, learningRate).trainW2V(train, validation)
+    FeedforwardTrainer(tag, learningRate).trainBoW(train, validation, termFrequencyThreshold = 100)
     //    NaiveBayesTrainer(tag).trainW2V(train, validation)
     //    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
-    RecurrentTrainer(tag).trainW2V(train, validation)
+    RecurrentTrainer(tag, learningRate).trainW2V(train, validation)
   }
 
   def supersampled() = {
     val (train, validation) = Fetcher.ordered()
-    val tag = Some("super")
-    FeedforwardTrainer(tag, superSample = true).trainW2V(train, validation)
-    FeedforwardTrainer(tag, superSample = true).trainBoW(train, validation, termFrequencyThreshold = 100)
-    //    NaiveBayesTrainer(tag, superSample = true).trainW2V(train, validation)
-    //    NaiveBayesTrainer(tag, superSample = true).trainBoW(train, validation, termFrequencyThreshold = 100)
-    RecurrentTrainer(tag, superSample = true).trainW2V(train, validation)
+    val tag = "super"
+    val learningRate = 0.05
+    FeedforwardTrainer(tag, learningRate, superSample = true).trainW2V(train, validation)
+    FeedforwardTrainer(tag, learningRate, superSample = true).trainBoW(train, validation, termFrequencyThreshold = 100)
+    NaiveBayesTrainer(tag, superSample = true).trainW2V(train, validation)
+    NaiveBayesTrainer(tag, superSample = true).trainBoW(train, validation, termFrequencyThreshold = 100)
+    RecurrentTrainer(tag, learningRate, superSample = true).trainW2V(train, validation)
   }
 
   // Ex3 - Types
   def types() = {
     val (train, validation) = Fetcher.ordered(types = true)
-    val tag = Some("types")
-    FeedforwardTrainer(tag).trainW2V(train, validation)
-    FeedforwardTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
-    //    NaiveBayesTrainer(tag).trainW2V(train, validation)
-    //    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
-    RecurrentTrainer(tag).trainW2V(train, validation)
+    val tag = "types"
+    val learningRate = 0.05
+    FeedforwardTrainer(tag, learningRate).trainW2V(train, validation)
+    FeedforwardTrainer(tag, learningRate).trainBoW(train, validation, termFrequencyThreshold = 100)
+    NaiveBayesTrainer(tag).trainW2V(train, validation)
+    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
+    RecurrentTrainer(tag, learningRate).trainW2V(train, validation)
   }
 
   // Ex5 - Time
   def time() = {
     val train = Fetcher.by("time/nyt_time_10_train.txt")
     val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
-    val tag = Some("time")
-    FeedforwardTrainer(tag).trainW2V(train, validation)
-    FeedforwardTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 5)
+    val tag = "time"
+    val learningRate = 0.5
+    FeedforwardTrainer(tag, learningRate).trainW2V(train, validation)
+    FeedforwardTrainer(tag, learningRate).trainBoW(train, validation, termFrequencyThreshold = 20)
     NaiveBayesTrainer(tag).trainW2V(train, validation)
-    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 5)
-    RecurrentTrainer(tag).trainW2V(train, validation)
+    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 20)
+    RecurrentTrainer(tag, learningRate).trainW2V(train, validation)
   }
 
   // Ex2 - Confidence
   def confidence() = {
     def train(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_train_ordered_${confidence}.txt")
     def validation(confidence: Int): RDD[Article] = Fetcher.by(s"confidence/nyt_mini_validation_ordered_${confidence}.txt")
-    def tag(confidence: Int): Some[String] = Some(s"confidence-$confidence")
+    def tag(confidence: Int): String = s"confidence-$confidence"
 
     val learningRates = Seq(0.5)
     var confidence = 25
-    //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-    FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    val termFrequencyThreshold: Int = 10
+//    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+//    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+        FeedforwardTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
+        FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+//    RecurrentTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 50
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    //    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-    //    FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+    FeedforwardTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
+    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+    //    RecurrentTrainer(tag(confidence),learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 75
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    //    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-    FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+    FeedforwardTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
+    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+    //    RecurrentTrainer(tag(confidence),learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 100
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    FeedforwardTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-    FeedforwardTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = 10)
-    RecurrentTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+    FeedforwardTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
+    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+    //    RecurrentTrainer(tag(confidence),learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
   }
 
   // ### Best models
   // ## Subsampled
   def trainRNNSubsampled() = {
     val (train, validation) = Fetcher.subsampled
-    RecurrentTrainer(tag = Some("sub"), learningRate = 0.5).trainW2V(train, validation)
+    RecurrentTrainer(tag = "sub", learningRate = 0.5).trainW2V(train, validation)
   }
 
   def trainFFNW2VSubsampled() = {
     val (train, validation) = Fetcher.subsampled
-    FeedforwardTrainer(tag = Some("sub"), learningRate = 0.5).trainW2V(train, validation)
+    FeedforwardTrainer(tag = "sub", learningRate = 0.5).trainW2V(train, validation)
   }
 
   def trainFFNBoWSubsampled() = {
     val (train, validation) = Fetcher.subsampled
-    FeedforwardTrainer(tag = Some("sub"), learningRate = 0.5).trainBoW(train, validation, termFrequencyThreshold = 5)
+    FeedforwardTrainer(tag = "sub", learningRate = 0.5).trainBoW(train, validation, termFrequencyThreshold = 5)
   }
 
   def trainNaiveW2VSubsampled() = {
     val (train, validation) = Fetcher.subsampled
-    NaiveBayesTrainer(tag = Some("sub")).trainW2V(train, validation)
+    NaiveBayesTrainer(tag = "sub").trainW2V(train, validation)
   }
 
   def trainNaiveBoWSubsampled() = {
     val (train, validation) = Fetcher.subsampled
-    NaiveBayesTrainer(tag = Some("bow-sub")).trainBoW(train, validation, termFrequencyThreshold = 5)
+    NaiveBayesTrainer(tag = "bow-sub").trainBoW(train, validation, termFrequencyThreshold = 5)
   }
 
   // Chosen baseline
   def trainRNNW2V() = {
     val (train, validation) = Fetcher.ordered()
-    RecurrentTrainer().trainW2V(train, validation)
+    RecurrentTrainer(Config.tag.getOrElse("yolo"), Seq(Config.learningRate.getOrElse(0.05))).trainW2V(train, validation)
   }
 
   def trainFFNW2V() = {
     val (train, validation) = Fetcher.ordered()
-    FeedforwardTrainer().trainW2V(train, validation)
+    FeedforwardTrainer(Config.tag.getOrElse("yolo"), Seq(Config.learningRate.getOrElse(0.05))).trainW2V(train, validation)
   }
 
   def trainFFNBoW() = {
     val (train, validation) = Fetcher.ordered()
-    FeedforwardTrainer().trainBoW(train, validation, termFrequencyThreshold = 100)
+    FeedforwardTrainer(Config.tag.getOrElse("yolo"), Seq(Config.learningRate.getOrElse(0.05))).trainBoW(train, validation, termFrequencyThreshold = 100)
   }
 
   def trainNaiveW2V() = {
     val (train, validation) = Fetcher.ordered()
-    NaiveBayesTrainer().trainW2V(train, validation)
+    NaiveBayesTrainer(Config.tag.getOrElse("yolo")).trainW2V(train, validation)
   }
 
   def trainNaiveBoW() = {
     val (train, validation) = Fetcher.ordered()
-    NaiveBayesTrainer().trainBoW(train, validation, termFrequencyThreshold = 100)
+    NaiveBayesTrainer(Config.tag.getOrElse("yolo")).trainBoW(train, validation, termFrequencyThreshold = 100)
   }
 
 }
@@ -159,13 +164,13 @@ sealed trait ModelTrainer {
 
   val count: String = if (Config.count == Int.MaxValue) "all" else Config.count.toString
   val prefix     : String
-  val tag        : Option[String]
+  val tag        : String
   val superSample: Boolean
   var feat: String = "UNINITIALIZED"
 
-  lazy val name: String = s"${tag.map(_ + "_").getOrElse("")}${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
+  lazy val name: String = s"${tag + "_"}${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
 
-  def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int = 100)
+  def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int)
 
   def trainW2V(train: RDD[Article], validation: RDD[Article])
 
@@ -233,8 +238,8 @@ sealed trait NeuralTrainer {
   }
 }
 
-sealed case class FeedforwardTrainer(tag: Option[String] = None,
-                                     learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
+sealed case class FeedforwardTrainer(tag: String,
+                                     learningRate: Seq[Double],
                                      minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(1000)),
                                      superSample: Boolean = Config.superSample.getOrElse(false)
                                     ) extends ModelTrainer with NeuralTrainer {
@@ -269,8 +274,8 @@ sealed case class FeedforwardTrainer(tag: Option[String] = None,
   }
 }
 
-sealed case class RecurrentTrainer(tag: Option[String] = None,
-                                   learningRate: Seq[Double] = Seq(Config.learningRate.getOrElse(0.05)),
+sealed case class RecurrentTrainer(tag: String,
+                                   learningRate: Seq[Double],
                                    minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(1000)),
                                    superSample: Boolean = Config.superSample.getOrElse(false),
                                    hiddenNodes: Int = Config.hidden1.getOrElse(10)
@@ -301,7 +306,7 @@ sealed case class RecurrentTrainer(tag: Option[String] = None,
   }
 }
 
-sealed case class NaiveBayesTrainer(tag: Option[String] = None, superSample: Boolean = false) extends ModelTrainer {
+sealed case class NaiveBayesTrainer(tag: String, superSample: Boolean = false) extends ModelTrainer {
 
   override val prefix = "nb"
 
