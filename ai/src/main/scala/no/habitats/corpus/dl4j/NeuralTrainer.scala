@@ -1,19 +1,21 @@
 package no.habitats.corpus.dl4j
 
+import no.habitats.corpus.common.dl4j.NeuralModelLoader
+import no.habitats.corpus.common.models.CorpusDataset
 import no.habitats.corpus.common.{Config, Log}
-import org.bytedeco.javacpp.Pointer
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.collection.JavaConverters._
+import scala.collection.parallel.{ForkJoinTaskSupport, ParSeq}
+import scala.concurrent.forkjoin.ForkJoinPool
 
-/**
-  * Created by mail on 06.05.2016.
-  */
-object NeuralTrainer extends Serializable {
+object NeuralTrainer {
+
+  case class IteratorPrefs(label: String, training: CorpusDataset, validation: CorpusDataset)
   case class NeuralResult(evaluations: Seq[NeuralEvaluation], net: MultiLayerNetwork)
 
-  def train(name: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): NeuralResult = {
+  def trainLabel(name: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): NeuralResult = {
     //    Log.r(s"Training $label ...")
     //    Log.r2(s"Training $label ...")
     Config.init()
@@ -47,7 +49,50 @@ object NeuralTrainer extends Serializable {
     NeuralResult(eval, net)
   }
 
-  def timeLeft(totalTrainingSize: Int, currentIteration: Int, batch: Int, label: String, currentEpoch: Int, totalEpoch: Int): Int = {
+  def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], tp: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
+    val resultFile = s"train/$name.txt"
+    Log.toFile("", resultFile)
+    Log.toFile("", resultFile)
+    Log.toFile("", resultFile)
+    Log.toFile("Model: " + name + " - Args: " + Config.getArgs, resultFile)
+    Log.toFile("", resultFile)
+    if (Config.parallelism > 1) parallel(validation, training(""), name, minibatchSize, learningRate, tp, Config.parallelism)
+    else sequential(validation, training, name, minibatchSize, learningRate, tp)
+  }
+
+  private def sequential(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
+    for {lr <- learningRate; mbs <- minibatchSize} {
+      val prefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = mbs)
+      val allRes: Seq[Seq[NeuralEvaluation]] = Config.cats.map(c => {
+        val trainingPrefs: IteratorPrefs = IteratorPrefs(c, training(c), validation)
+        val res: NeuralResult = trainer(prefs, trainingPrefs)
+        NeuralModelLoader.save(res.net, c, Config.count, name)
+        res.evaluations
+      })
+      printResults(allRes, name)
+    }
+  }
+
+  private def parallel(validation: CorpusDataset, train: CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult, parallelism: Int) = {
+    // Force pre-generation of document vectors before entering Spark to avoid passing W2V references between executors
+    Log.v("Broadcasting dataset ...")
+    Log.v("Starting distributed training ...")
+    val cats = Config.cats.par
+    cats.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(Config.parallelism))
+    // TODO: SPARK THIS UP, BUT DON'T FORGET THE W2V LOADER!
+    for {lr <- learningRate; mbs <- minibatchSize} {
+      val allRes: Seq[Seq[NeuralEvaluation]] = cats.map(c => {
+        val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = mbs)
+        val trainingPrefs: IteratorPrefs = IteratorPrefs(c, train, validation)
+        val res: NeuralResult = trainer(prefs, trainingPrefs)
+        NeuralModelLoader.save(res.net, c, Config.count, name)
+        res.evaluations
+      }).seq
+      printResults(allRes, name)
+    }
+  }
+
+  private def timeLeft(totalTrainingSize: Int, currentIteration: Int, batch: Int, label: String, currentEpoch: Int, totalEpoch: Int): Int = {
     val labelIndex = if (Config.parallelism == 1) Config.cats.toArray.sorted.indexOf(label) else 0
     val totalLabels = if (Config.parallelism == 1) Config.cats.size else 1
     val duration = System.currentTimeMillis() - Config.start
@@ -64,5 +109,18 @@ object NeuralTrainer extends Serializable {
     val remainingTime = articlesRemaining / articleFrequency
 
     remainingTime.toInt
+  }
+
+  private def printResults(allRes: Seq[Seq[NeuralEvaluation]], name: String) = {
+    val epochs = allRes.head.size
+    Log.v("Accumulating results ...")
+    val resultFile = s"train/$name.txt"
+    Log.toFile("", resultFile)
+    Log.toFile("Model: " + name + " - Args: " + Config.getArgs, resultFile)
+    for (i <- 0 until epochs) {
+      val labelEvals: Seq[NeuralEvaluation] = allRes.map(_ (i)).sortBy(_.label)
+      NeuralEvaluation.logLabelStats(labelEvals, resultFile)
+      NeuralEvaluation.log(labelEvals, resultFile, Config.cats, i)
+    }
   }
 }
