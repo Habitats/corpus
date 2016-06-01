@@ -206,7 +206,7 @@ object Config {
       getClass.getDeclaredFields.flatMap { field: Field =>
         field.setAccessible(true)
         val value: Option[_] = field.get(this).asInstanceOf[Option[_]]
-        value.map(v => field.getName + " = " + v)
+        value.map(v => field.getName + "=" + v)
       }.sorted.mkString(", ")
     }
   }
