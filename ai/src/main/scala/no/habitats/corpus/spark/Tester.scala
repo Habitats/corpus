@@ -96,26 +96,27 @@ object Tester {
 
   def testLengths() = {
     Log.v("Testing Lengths")
-    testBuckets("length", tester("ffn-w2v-ordered"), _.wc)
-    testBuckets("length", tester("nb-bow"), _.id.toInt)
-    testBuckets("length", tester("nb-w2v"), _.id.toInt)
+    testBuckets("length", tester("_length/length_ffn_w2v_all"), _.wc)
+    testBuckets("length", tester("_length/length_ffn_bow_all"), _.wc)
+    testBuckets("length", tester("_length/length_nb_bow_all"), _.wc)
+    testBuckets("length", tester("_length/length_nb_w2v_all"), _.wc)
   }
 
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
-//    testBuckets("time", FeedforwardTester("_time/time_ffn_w2v_all"), _.id.toInt)
-//    testBuckets("time", FeedforwardTester("_time/time_ffn_bow_all"), _.id.toInt)
-    testBuckets("time", NaiveBayesTester("_time/time_nb_bow_all"), _.id.toInt)
-    testBuckets("time", NaiveBayesTester("_time/time_nb_w2v_all"), _.id.toInt)
+    testBuckets("time", tester("_time/time_ffn_w2v_all"), _.id.toInt)
+    testBuckets("time", tester("_time/time_ffn_bow_all"), _.id.toInt)
+    testBuckets("time", tester("_time/time_nb_bow_all"), _.id.toInt)
+    testBuckets("time", tester("_time/time_nb_w2v_all"), _.id.toInt)
   }
 
   def testConfidence() = {
     Log.v("Testing Confidence Levels")
     for (confidence <- Seq(25, 50, 75, 100)) {
-      //      FeedforwardTester(s"confidence-${confidence}_ffn_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
-      FeedforwardTester(s"confidence-${confidence}_ffn_w2v_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
-      NaiveBayesTester(s"confidence-${confidence}_nb_w2v_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
-      NaiveBayesTester(s"confidence-${confidence}_nb_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
+      //      tester(s"confidence-${confidence}_ffn_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
+      tester(s"confidence-${confidence}_ffn_w2v_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
+      tester(s"confidence-${confidence}_nb_w2v_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
+      tester(s"confidence-${confidence}_nb_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
     }
   }
 

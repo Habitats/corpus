@@ -59,11 +59,11 @@ object Trainer extends Serializable {
     val validation = Fetcher.by("time/nyt_time_10-0_validation.txt")
     val tag = "time"
     val learningRate = 0.5
-    //    FeedforwardTrainer(tag, learningRate).trainW2V(train, validation)
-    //    FeedforwardTrainer(tag, learningRate).trainBoW(train, validation, termFrequencyThreshold = 20)
-    NaiveBayesTrainer(tag).trainW2V(train, validation)
-    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 20)
-    RecurrentTrainer(tag, learningRate).trainW2V(train, validation)
+        FeedforwardTrainer(tag, learningRate).trainW2V(train, validation)
+        FeedforwardTrainer(tag, learningRate).trainBoW(train, validation, termFrequencyThreshold = 20)
+//    NaiveBayesTrainer(tag).trainW2V(train, validation)
+//    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 20)
+//    RecurrentTrainer(tag, learningRate).trainW2V(train, validation)
   }
 
   // Ex2 - Confidence

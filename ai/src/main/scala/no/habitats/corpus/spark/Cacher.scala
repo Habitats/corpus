@@ -23,7 +23,7 @@ object Cacher extends RddSerializer {
   def annotateAndCacheArticles() = {
     Seq(0.25, 0.50, 0.75, 1.0).foreach(confidence => {
       val db = DBpediaFetcher.dbpediaAnnotations(confidence)
-      val rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db)).map(_.toMinimal).filter(_.ann.nonEmpty)
+      val rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
       saveAsText(rdd.map(Article.serialize), s"nyt_mini_train_annotated_$confidence")
     })
   }
@@ -58,10 +58,10 @@ object Cacher extends RddSerializer {
 
   def annotateAndCacheArticlesWithTypes(confidence: Double = 0.5) = {
     val db = DBpediaFetcher.dbpediaAnnotations(confidence, types = true)
-    val rdd = Fetcher.annotatedValidationOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db))
-    saveAsText(rdd.map(Article.serialize), "nyt_validation_ordered_types")
-    val rdd2 = Fetcher.annotatedTestOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db))
+    val rdd2 = Fetcher.annotatedTestOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
     saveAsText(rdd2.map(Article.serialize), "nyt_test_ordered_types")
+    val rdd = Fetcher.annotatedValidationOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
+    saveAsText(rdd.map(Article.serialize), "nyt_validation_ordered_types")
   }
 
   def cacheMinimalArticles(rdd: RDD[Article], name: String) = {

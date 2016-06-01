@@ -9,12 +9,10 @@ import org.json4s._
 import org.json4s.jackson.JsonMethods._
 import org.json4s.jackson.Serialization
 
-import scala.collection.mutable
 import scala.concurrent.Await
 import scala.concurrent.duration._
 
 object DBpediaFetcher {
-  val annotations = mutable.Map[String, Map[String, Seq[Annotation]]]()
 
   def dbpedia(confidence: Double, json: Boolean = false): RDD[DBPediaAnnotation] = {
     val name = Config.dataPath + s"dbpedia/dbpedia_all_$confidence.${if (json) "json" else "txt"}"
@@ -26,15 +24,14 @@ object DBpediaFetcher {
   private def fetchDbpediaAnnotations(confidence: Double, json: Boolean, types: Boolean): Map[String, Seq[Annotation]] = {
     dbpedia(confidence, json)
       .flatMap(ann => if (types) Seq(AnnotationUtils.fromDbpedia(ann)) else Nil ++ AnnotationUtils.fromDBpediaType(ann))
-      //      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
-      .groupBy(_.articleId)
-      .filter(_._2.nonEmpty)
-      .map { case (k, v) => (k, v.toSeq.filter(ann => W2VLoader.contains(ann.fb))) }
+      .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
+      .map(a => (a.articleId, Seq(a)))
+      .reduceByKey(_ ++ _)
       .collect.toMap
   }
 
   def dbpediaAnnotations(confidence: Double, types: Boolean = false, json: Boolean = false): Map[String, Seq[Annotation]] = {
-    annotations.getOrElseUpdate(confidence + "_" + types, fetchDbpediaAnnotations(confidence, json, types))
+    fetchDbpediaAnnotations(confidence, json, types)
   }
 }
 

@@ -137,6 +137,7 @@ object Config {
       hidden3 = props.remove("h3").map(_.toInt),
       tft = props.remove("tft").map(_.toInt),
       superSample = props.remove("super").map(_.toBoolean),
+      time = props.remove("time").map(_.toBoolean),
       memo = props.remove("memo").map(_.toBoolean),
       iterations = props.remove("iter").map(_.toInt),
       tag = props.remove("tag"),
@@ -158,6 +159,7 @@ object Config {
   lazy val histogram             : Boolean         = args.histogram.getOrElse(false)
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
   lazy val memo                  : Boolean         = args.memo.getOrElse(false)
+  lazy val time                  : Boolean         = args.time.getOrElse(false)
   lazy val category              : Option[String]  = args.category
   lazy val tag                   : Option[String]  = args.tag
   lazy val learningRate          : Option[Double]  = args.learningRate
@@ -192,6 +194,7 @@ object Config {
                         histogram: Option[Boolean] = None,
                         logResults: Option[Boolean] = None,
                         types: Option[Boolean] = None,
+                        time: Option[Boolean] = None,
                         hidden1: Option[Int] = None,
                         hidden2: Option[Int] = None,
                         hidden3: Option[Int] = None,
