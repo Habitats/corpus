@@ -40,7 +40,7 @@ object MlLibUtils {
     })
   }
 
-  def evaluate(predicted: RDD[Article], prefs: Broadcast[Prefs], resultFile: String) = {
+  def evaluate(predicted: RDD[Article], prefs: Broadcast[Prefs], resultFile: String, resultFileLabels: String) = {
     predicted.cache()
     val sampleResult = predicted.map(_.toResult).reduce(_ + "\n" + _)
     Log.saveToFile(sampleResult, s"stats/sample_result_${Config.count}.txt")
@@ -52,7 +52,7 @@ object MlLibUtils {
     if (stats.catStats.nonEmpty) {
       val catHeader = stats.catStats.head.map(s => formatHeader(s)).mkString(f"${prefs.value.iteration}%3d# Category stats:\n", "", "\n")
       val catStats: Seq[String] = stats.catStats.map(c => c.map(s => formatColumn(s)).mkString(""))
-      Log.toFile(catStats.mkString(catHeader, "\n", "\n"), resultFile)
+      Log.toFile(catStats.mkString(catHeader, "\n", "\n"), resultFileLabels)
     }
 
     if (prefs.value.iteration == 0) {

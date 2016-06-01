@@ -105,8 +105,8 @@ object Tester {
     Log.v("Testing Time Decay")
     testBuckets("time", FeedforwardTester("_time/time_ffn_w2v_all"), _.id.toInt)
     testBuckets("time", FeedforwardTester("_time/time_ffn_bow_all"), _.id.toInt)
-    testBuckets("time", NaiveBayesTester("_time/time_nb_w2v_all"), _.id.toInt)
     testBuckets("time", NaiveBayesTester("_time/time_nb_bow_all"), _.id.toInt)
+    testBuckets("time", NaiveBayesTester("_time/time_nb_w2v_all"), _.id.toInt)
   }
 
   def testConfidence() = {
@@ -121,13 +121,16 @@ object Tester {
 
   /** Test model on every test set matching name */
   def testBuckets(name: String, tester: Testable, criterion: Article => Double) = {
+    Log.toFile("", s"test/${tester.name}.txt")
+    Log.toFile(s"Testing $name - ${Config.getArgs}", s"test/${tester.name}.txt")
+    Log.toFile("", s"test/${tester.name}.txt")
     val rdds: Array[(Int, RDD[Article])] = new File(Config.dataPath + s"nyt/$name/").listFiles
       .map(_.getName).filter(_.contains(s"test"))
       .map(n => (n.split("_|-").filter(s => Try(s.toInt).isSuccess).last.toInt, n))
       .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$name/$n")) }
       .sortBy(_._1)
     rdds.foreach { case (index, n) => {
-      Log.toFile(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", s"test/$name.txt")
+      Log.toFile(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", s"test/${tester.name}_labels.txt")
       tester.test(n, iteration = index)
     }
     }
@@ -152,8 +155,9 @@ sealed trait Testable {
     val predictedArticles: Option[RDD[Article]] = if (predict) Some(predictAll(test)) else None
 
     val resultFile = s"test/$name.txt"
+    val resultFileLabels = s"test/${name}_labels.txt"
     val labelEvals: Seq[NeuralEvaluation] = labelBased(test, iteration)
-    NeuralEvaluation.logLabelStats(labelEvals, resultFile)
+    NeuralEvaluation.logLabelStats(labelEvals, resultFileLabels)
     NeuralEvaluation.log(labelEvals, resultFile, IPTC.topCategories, iteration, predictedArticles)
     if (shouldLogResults) predictedArticles.foreach(logResults)
     test.unpersist()
@@ -211,11 +215,10 @@ case class NaiveBayesTester(name: String) extends Testable {
   override def verify: Boolean = Try(nb).isSuccess
 
   override def test(articles: RDD[Article], includeExampleBased: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
-    Log.toFile(s"Testing Naive Bayes [$name] ...", s"test/$name.txt")
     val predicted = MlLibUtils.testMLlibModels(articles, nb, TFIDF.deserialize(name))
 
     Log.v("--- Predictions complete! ")
-    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs()), s"test/$name.txt")
+    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs(iteration = iteration)), s"test/$name.txt", s"test/${name}_labels.txt")
     if (shouldLogResults) logResults(predicted)
     System.gc()
   }

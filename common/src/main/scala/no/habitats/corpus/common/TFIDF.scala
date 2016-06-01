@@ -12,10 +12,12 @@ import scala.collection.immutable.SortedSet
 import scala.io.Source
 import scala.util.{Failure, Success, Try}
 
-case class TFIDF(documentsWithTerm: Map[String, Int], phrases: Set[String], documentCount: Int, name: String) {
+case class TFIDF(documentsWithTerm: Map[String, Int], phrasess: Set[String], documentCount: Int, name: String) {
 
   lazy val phrasesList: Array[(String, Int)] = phrases.zipWithIndex.toArray
   lazy val phraseIndex: Map[String, Int]     = phrases.zipWithIndex.toMap
+  // Hack to get phrases(s) to deserialize into SortedSet correctly ...
+  lazy val phrases    : SortedSet[String]    = documentsWithTerm.keySet.to[SortedSet]
 
   def contains(id: String) = phrases.contains(id)
 
