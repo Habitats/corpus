@@ -5,7 +5,7 @@ import java.io.File
 import no.habitats.corpus._
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common._
-import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.models.{Annotation, Article, DBPediaAnnotation}
 import org.apache.spark.rdd.RDD
 import org.apache.spark.{SparkContext, SparkException}
 
@@ -64,7 +64,8 @@ object Fetcher extends RddSerializer {
     } else if (types && confidence == 0.5) {
       // This is cached too ...
       Log.v("Using cached training with types ...")
-      (annotatedTrainOrderedTypes, annotatedValidationOrdered)
+      val db = DBpediaFetcher.dbpediaAnnotations(confidence, types)
+      (annotatedTrainOrderedTypes, annotatedValidationOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db)))
     } else {
       // Otherwise compute dataset
       Log.v("Dataset not cached. Generating ...")

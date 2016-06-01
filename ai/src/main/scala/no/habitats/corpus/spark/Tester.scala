@@ -103,8 +103,8 @@ object Tester {
 
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
-    testBuckets("time", FeedforwardTester("_time/time_ffn_w2v_all"), _.id.toInt)
-    testBuckets("time", FeedforwardTester("_time/time_ffn_bow_all"), _.id.toInt)
+//    testBuckets("time", FeedforwardTester("_time/time_ffn_w2v_all"), _.id.toInt)
+//    testBuckets("time", FeedforwardTester("_time/time_ffn_bow_all"), _.id.toInt)
     testBuckets("time", NaiveBayesTester("_time/time_nb_bow_all"), _.id.toInt)
     testBuckets("time", NaiveBayesTester("_time/time_nb_w2v_all"), _.id.toInt)
   }

@@ -49,8 +49,8 @@ object TFIDF {
     tfidf
   }
 
-  def deserialize(name: String): TFIDF = {
-    val s: String = Try(Source.fromFile(new File(Config.modelPath + name).listFiles().filter(_.getName.contains("tfidf")).head).getLines().next()) match {
+  def deserialize(name: String, root: String = Config.modelPath): TFIDF = {
+    val s: String = Try(Source.fromFile(new File(root + name).listFiles().filter(_.getName.contains("tfidf")).head).getLines().next()) match {
       case Failure(ex) => throw new IllegalStateException(s"NO TFIDF CACHE! Failed fetching: ${Config.modelPath + name}")
       case Success(s) => s
     }

@@ -74,7 +74,7 @@ object SparkUtil {
         case "tnesDocumentVectors" => tnesDocumentVectors()
         case "tnesWordVectors" => tnesWordVectors()
         case "stats" =>
-          CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").lengthCorrelation()
+          CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").commonAnnotations()
 
         // Modelling
         case "trainRNNW2V" => Trainer.trainRNNW2V()

@@ -1,7 +1,7 @@
 package no.habitats.corpus
 
-import no.habitats.corpus.common.Log
 import no.habitats.corpus.common.models.Article
+import no.habitats.corpus.common.{Config, Log, TFIDF}
 import no.habitats.corpus.mllib.Preprocess
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
@@ -18,6 +18,30 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
     articleLengthsStatistics(rdd)
     annotationStatistics(rdd)
     rdd.unpersist()
+  }
+
+  def commonAnnotations() = {
+    val path = "stats/important_annotations/"
+    // This is wonky, but it works.
+    val tfidf = TFIDF.deserialize(path, root = Config.dataPath + "res/")
+
+    def expandAnnotations(a: Article): List[(String, String, Double)] = a.iptc.toList.flatMap(c => a.ann.values.map(an => (c, an.phrase, tfidf.tfidf(a, an))))
+
+    def fetchBest(pairs: List[(String, Double)]): List[(String, Double, Int)] = pairs.map(an => (an._1, an._2))
+      .groupBy(_._1)
+      .map { case (p, pairs) => (p, pairs.maxBy(_._2)._2, pairs.size) }
+      .filter(_._3 > 10)
+      .toList.sortBy(-_._2)
+
+    val importantAnnotations: Array[(String, List[(String, Double, Int)])] = rdd.filter(_.wc > 1000).flatMap(expandAnnotations)
+      .groupBy(_._1)
+      .map { case (c, pairs) => (c, pairs.toList.map(x => (x._2, x._3))) }
+      .map { case (c, pairs) => (c, fetchBest(pairs)) }.collect()
+
+    for (c <- importantAnnotations) {
+      val map: Traversable[String] = c._2.map { case (phrase, tfidf, mentions) => f"$phrase%40s $tfidf%2.5f $mentions%10d" }
+      Log.saveToList(map, s"$path${c._1}.txt", overwrite = true)
+    }
   }
 
   def termFrequencyAnalysis(): Unit = {

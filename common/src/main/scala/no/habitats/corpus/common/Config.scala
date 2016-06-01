@@ -110,7 +110,7 @@ object Config {
   val dbpediaSpotlightURL : String  = conf.getProperty("dbpedia_spotlight_url")
 
   def getArgs: Arguments = args
-  def prefsName: String = args.copy(job = None).toString.replaceAll("\\s+|,", "_")
+  def prefsName: String = args.copy(job = None).toString.replaceAll("\\s+|,", "_").replaceAll("_+", "_")
 
   def setArgs(arr: Array[String]) = {
     lazy val props: mutable.Map[String, String] = mutable.Map() ++ arr.map(_.split("=") match { case Array(k, v) => k -> v }).toMap
