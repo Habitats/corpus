@@ -46,8 +46,8 @@ object Trainer extends Serializable {
     val (train, validation) = Fetcher.ordered(types = true)
     val tag = "types"
     val learningRate = 0.05
-    FeedforwardTrainer(tag, learningRate).trainW2V(train, validation)
-//    FeedforwardTrainer(tag, learningRate).trainBoW(train, validation, termFrequencyThreshold = 100)
+//    FeedforwardTrainer(tag, learningRate).trainW2V(train, validation)
+    FeedforwardTrainer(tag, learningRate).trainBoW(train, validation, termFrequencyThreshold = 100)
 //    NaiveBayesTrainer(tag).trainW2V(train, validation)
 //    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
 //    RecurrentTrainer(tag, learningRate).trainW2V(train, validation)
