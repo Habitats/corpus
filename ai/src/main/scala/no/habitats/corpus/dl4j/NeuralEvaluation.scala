@@ -1,7 +1,7 @@
 package no.habitats.corpus.dl4j
 
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{Config, IPTC, Log}
+import no.habitats.corpus.common.{IPTC, Log}
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import no.habitats.corpus.mllib._
 import no.habitats.corpus.spark.SparkUtil
@@ -62,7 +62,7 @@ object NeuralEvaluation {
 
   def logLabelStats(labelEvals: Seq[NeuralEvaluation], resultFile: String) = {
     Log.toFile("", resultFile)
-    Log.toFile(s"Validation stats ...", resultFile)
+    Log.toFile(s"${if (resultFile.contains("test")) "Test" else "Validation"} stats ...", resultFile)
     labelEvals.sortBy(_.label).zipWithIndex.foreach { case (e, i) => e.log(resultFile, i) }
   }
 

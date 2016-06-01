@@ -30,7 +30,7 @@ object NeuralModelLoader {
   def models(path: String): Map[String, NeuralModel] = {
     val fileNames = new File(Config.modelPath + path).listFiles().map(_.getName).sorted
     val pairs = fileNames.filter(_.startsWith("conf")).zip(fileNames.filter(_.startsWith("coef"))).map { case (conf, coef) => {
-      val label = coef.substring(coef.indexOf("_") + 1, coef.lastIndexOf("_")).split("_").head
+      val label = coef.split("_|-").last.split("\\.").head // fetch "society" from "coefficients-confidence-25_ffn_w2v_all_society.bin"
       (label, NeuralModel(s"${Config.modelPath}$path/$conf", s"${Config.modelPath}$path/$coef"))
     }
     }.seq.toMap

@@ -78,29 +78,29 @@ object Trainer extends Serializable {
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     //        FeedforwardTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
-    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
-    //    RecurrentTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
+//    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+        RecurrentTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 50
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     //    FeedforwardTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
-    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
-    //    RecurrentTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
+//    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+        RecurrentTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 75
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     //    FeedforwardTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
-    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
-    //    RecurrentTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
+//    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+        RecurrentTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 100
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     //    FeedforwardTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
-    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
-    //    RecurrentTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
+//    FeedforwardTrainer(tag(confidence), learningRates).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+        RecurrentTrainer(tag(confidence), learningRates).trainW2V(train = train(confidence), validation = validation(confidence))
   }
 
   // ### Best models

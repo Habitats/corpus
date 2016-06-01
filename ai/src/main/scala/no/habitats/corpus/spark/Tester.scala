@@ -103,16 +103,16 @@ object Tester {
 
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
-    //    testBuckets("time", FeedforwardTester("ffn-w2v-time-all"), _.id.toInt)
-//    testBuckets("time", tester("ffn-bow-time-all"), _.id.toInt)
-        testBuckets("time", NaiveBayesTester("nb-bow"), _.id.toInt)
-        testBuckets("time", NaiveBayesTester("nb-w2v"), _.id.toInt)
+    testBuckets("time", FeedforwardTester("_time/time_ffn_w2v_all"), _.id.toInt)
+    testBuckets("time", FeedforwardTester("_time/time_ffn_bow_all"), _.id.toInt)
+    testBuckets("time", NaiveBayesTester("_time/time_nb_w2v_all"), _.id.toInt)
+    testBuckets("time", NaiveBayesTester("_time/time_nb_bow_all"), _.id.toInt)
   }
 
   def testConfidence() = {
     Log.v("Testing Confidence Levels")
     for (confidence <- Seq(25, 50, 75, 100)) {
-//      FeedforwardTester(s"confidence-${confidence}_ffn_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
+      //      FeedforwardTester(s"confidence-${confidence}_ffn_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
       FeedforwardTester(s"confidence-${confidence}_ffn_w2v_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
       NaiveBayesTester(s"confidence-${confidence}_nb_w2v_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
       NaiveBayesTester(s"confidence-${confidence}_nb_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"))
@@ -123,7 +123,7 @@ object Tester {
   def testBuckets(name: String, tester: Testable, criterion: Article => Double) = {
     val rdds: Array[(Int, RDD[Article])] = new File(Config.dataPath + s"nyt/$name/").listFiles
       .map(_.getName).filter(_.contains(s"test"))
-      .map(n => (n.split("_").filter(s => Try(s.toInt).isSuccess).head.toInt, n))
+      .map(n => (n.split("_|-").filter(s => Try(s.toInt).isSuccess).last.toInt, n))
       .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$name/$n")) }
       .sortBy(_._1)
     rdds.foreach { case (index, n) => {
@@ -182,12 +182,12 @@ sealed trait Testable {
   def labelBased(test: RDD[Article], iteration: Int): Seq[NeuralEvaluation] = {
     if (iteration == 0) Log.toFile(s"Testing $name ...", s"test/$name.txt")
     val testDataset: CorpusDataset = dataset(test)
-    models(name).toSeq.sortBy(_._1).zipWithIndex.map { case (models, i) => {
+    models(name).par.toSeq.zipWithIndex.map { case (models, i) => {
       val test = iter(testDataset, models._1).asScala.toTraversable
       val eval = NeuralEvaluation(test, models._2.network, i, models._1)
-      eval
+      (i, eval)
     }
-    }
+    }.seq.sortBy(_._1).map(_._2)
   }
 }
 
