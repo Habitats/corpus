@@ -107,27 +107,27 @@ object Trainer extends Serializable {
   // Chosen baseline
   def trainRNNW2V() = {
     val (train, validation) = Fetcher.ordered()
-    RecurrentTrainer(Config.tag.getOrElse("yolo"), Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
+    RecurrentTrainer(Config.tag.getOrElse(Config.prefsName), Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
   }
 
   def trainFFNW2V() = {
     val (train, validation) = Fetcher.ordered()
-    FeedforwardTrainer(Config.tag.getOrElse("yolo"), Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
+    FeedforwardTrainer(Config.tag.getOrElse(Config.prefsName), Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
   }
 
   def trainFFNBoW() = {
     val (train, validation) = Fetcher.ordered()
-    FeedforwardTrainer(Config.tag.getOrElse("yolo"), Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainBoW(train, validation, termFrequencyThreshold = 100)
+    FeedforwardTrainer(Config.tag.getOrElse(Config.prefsName), Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainBoW(train, validation, termFrequencyThreshold = 100)
   }
 
   def trainNaiveW2V() = {
     val (train, validation) = Fetcher.ordered()
-    NaiveBayesTrainer(Config.tag.getOrElse("yolo"), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
+    NaiveBayesTrainer(Config.tag.getOrElse(Config.prefsName), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
   }
 
   def trainNaiveBoW() = {
     val (train, validation) = Fetcher.ordered()
-    NaiveBayesTrainer(Config.tag.getOrElse("yolo"), superSample = Config.superSample.getOrElse(false)).trainBoW(train, validation, termFrequencyThreshold = 100)
+    NaiveBayesTrainer(Config.tag.getOrElse(Config.prefsName), superSample = Config.superSample.getOrElse(false)).trainBoW(train, validation, termFrequencyThreshold = 100)
   }
 
 }

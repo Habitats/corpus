@@ -83,10 +83,6 @@ object SparkUtil {
         case "trainNaiveW2V" => Trainer.trainNaiveW2V()
         case "trainNaiveBoW" => Trainer.trainNaiveBoW()
 
-        case "trainFFNW2VSubsampled" => Trainer.trainFFNW2VSubsampled()
-        case "trainFFNBoWSubsampled" => Trainer.trainFFNBoWSubsampled()
-        case "trainRNNSubsampled" => Trainer.trainRNNSubsampled()
-
         case "trainBaseline" => Trainer.baseline()
         case "trainSuper" => Trainer.supersampled()
         case "trainTypes" => Trainer.types()
