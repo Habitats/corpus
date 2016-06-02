@@ -96,18 +96,20 @@ object Tester {
 
   def testLengths() = {
     Log.v("Testing Lengths")
-    testBuckets("length", tester("_length/length_ffn_w2v_all"), _.wc)
-    testBuckets("length", tester("_length/length_ffn_bow_all"), _.wc)
-    testBuckets("length", tester("_length/length_nb_bow_all"), _.wc)
-    testBuckets("length", tester("_length/length_nb_w2v_all"), _.wc)
+//    testBuckets("length", tester("_baseline/nb_bow_all"), _.wc)
+    testBuckets("length", tester("_baseline/nb_w2v_all"), _.wc)
+    testBuckets("length", tester("_baseline/ffn_w2v_all"), _.wc)
+//    testBuckets("length", tester("_baseline/ffn_bow_all"), _.wc)
   }
 
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
-    testBuckets("time", tester("_time/time_ffn_w2v_all"), _.id.toInt)
-    testBuckets("time", tester("_time/time_ffn_bow_all"), _.id.toInt)
-    testBuckets("time", tester("_time/time_nb_bow_all"), _.id.toInt)
-    testBuckets("time", tester("_time/time_nb_w2v_all"), _.id.toInt)
+//    testBuckets("time", tester("_time/time_ffn_w2v_all"), _.id.toInt)
+//    testBuckets("time", tester("_time/time_ffn_bow_all"), _.id.toInt)
+//    testBuckets("time", tester("_time/time_nb_bow_all"), _.id.toInt)
+//    testBuckets("time", tester("_time/time_nb_w2v_all"), _.id.toInt)
+    testBuckets("time", tester("_time/epoch=10_learningRate=0.5_parallelism=10_time=true_ffn_w2v_all"), _.id.toInt)
+    testBuckets("time", tester("_time/epoch=10_learningRate=0.1_parallelism=10_time=true_ffn_w2v_all"), _.id.toInt)
   }
 
   def testConfidence() = {
@@ -122,16 +124,19 @@ object Tester {
 
   /** Test model on every test set matching name */
   def testBuckets(name: String, tester: Testable, criterion: Article => Double) = {
-    Log.toFile("", s"test/${tester.name}.txt")
-    Log.toFile(s"Testing $name - ${Config.getArgs}", s"test/${tester.name}.txt")
-    Log.toFile("", s"test/${tester.name}.txt")
-    val rdds: Array[(Int, RDD[Article])] = new File(Config.dataPath + s"nyt/$name/").listFiles
+    val modelName: String = tester.fullName.split("/").last
+    Log.toFile("", s"test/$name/${modelName}.txt")
+    Log.toFile(s"Testing $name - ${Config.getArgs}", s"test/$name/${modelName}.txt")
+    Log.toFile("", s"test/$name/${modelName}.txt")
+    val testFiles: Array[File] = new File(Config.dataPath + s"nyt/$name/").listFiles
+    Log.v("Test folder found: " + testFiles.map(_.getName).mkString(", "))
+    val rdds: Array[(Int, RDD[Article])] = testFiles
       .map(_.getName).filter(_.contains(s"test"))
-      .map(n => (n.split("_|-").filter(s => Try(s.toInt).isSuccess).last.toInt, n))
+      .map(n => (n.split("_|-|\\.").filter(s => Try(s.toInt).isSuccess).last.toInt, n))
       .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$name/$n")) }
       .sortBy(_._1)
     rdds.foreach { case (index, n) => {
-      Log.toFile(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", s"test/${tester.name}_labels.txt")
+      Log.toFile(s"${name} group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", s"test/$name/${modelName}_labels.txt")
       tester.test(n, iteration = index)
     }
     }
@@ -142,21 +147,21 @@ sealed trait Testable {
 
   import scala.collection.JavaConverters._
 
-  val name: String
+  val fullName: String
 
   def iter(test: CorpusDataset, label: String): DataSetIterator = ???
 
   def models(modelName: String): Map[String, NeuralModel] = ???
 
-  def verify: Boolean = Try(models(name)).isSuccess
+  def verify: Boolean = Try(models(fullName)).isSuccess
 
   def test(test: RDD[Article], predict: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
     test.persist()
     Log.v(s"Testing ${test.count} articles ...")
     val predictedArticles: Option[RDD[Article]] = if (predict) Some(predictAll(test)) else None
 
-    val resultFile = s"test/$name.txt"
-    val resultFileLabels = s"test/${name}_labels.txt"
+    val resultFile = s"test/$fullName.txt"
+    val resultFileLabels = s"test/${fullName}_labels.txt"
     val labelEvals: Seq[NeuralEvaluation] = labelBased(test, iteration)
     NeuralEvaluation.logLabelStats(labelEvals, resultFileLabels)
     NeuralEvaluation.log(labelEvals, resultFile, IPTC.topCategories, iteration, predictedArticles)
@@ -168,26 +173,26 @@ sealed trait Testable {
   def logResults(articles: RDD[Article]) = {
     articles.sortBy(_.id).foreach(a => {
       a.pred.foreach(p => {
-        val folder: String = Config.dataPath + s"predictions/$name/" + (if (a.iptc.contains(p)) "tp" else "fp")
+        val folder: String = Config.dataPath + s"predictions/$fullName/" + (if (a.iptc.contains(p)) "tp" else "fp")
         Log.saveToFile(a.toStringFull, p, folder)
       })
     })
   }
 
   def dataset(test: RDD[Article]): CorpusDataset = {
-    val tfidf = TFIDF.deserialize(name)
-    if (name.contains("bow")) CorpusDataset.genBoWDataset(test, tfidf) else CorpusDataset.genW2VDataset(test, tfidf)
+    val tfidf = TFIDF.deserialize(fullName)
+    if (fullName.contains("bow")) CorpusDataset.genBoWDataset(test, tfidf) else CorpusDataset.genW2VDataset(test, tfidf)
   }
 
   def predictAll(test: RDD[Article]): RDD[Article] = {
-    val modelType = TFIDF.deserialize(name)
-    NeuralPredictor.predict(test, models(name), modelType)
+    val modelType = TFIDF.deserialize(fullName)
+    NeuralPredictor.predict(test, models(fullName), modelType)
   }
 
   def labelBased(test: RDD[Article], iteration: Int): Seq[NeuralEvaluation] = {
-    if (iteration == 0) Log.toFile(s"Testing $name ...", s"test/$name.txt")
+    if (iteration == 0) Log.toFile(s"Testing $fullName ...", s"test/$fullName.txt")
     val testDataset: CorpusDataset = dataset(test)
-    models(name).par.toSeq.zipWithIndex.map { case (models, i) => {
+    models(fullName).par.toSeq.zipWithIndex.map { case (models, i) => {
       val test = iter(testDataset, models._1).asScala.toTraversable
       val eval = NeuralEvaluation(test, models._2.network, i, models._1)
       (i, eval)
@@ -196,30 +201,30 @@ sealed trait Testable {
   }
 }
 
-case class FeedforwardTester(name: String) extends Testable {
-  lazy val ffa: Map[String, NeuralModel] = NeuralModelLoader.models(name)
+case class FeedforwardTester(fullName: String) extends Testable {
+  lazy val ffa: Map[String, NeuralModel] = NeuralModelLoader.models(fullName)
 
   override def iter(test: CorpusDataset, label: String): DataSetIterator = new FeedForwardIterator(test, IPTC.topCategories.indexOf(label), 500)
   override def models(modelName: String): Map[String, NeuralModel] = ffa
 }
 
-case class RecurrentTester(name: String) extends Testable {
-  lazy val rnn: Map[String, NeuralModel] = NeuralModelLoader.models(name)
+case class RecurrentTester(fullName: String) extends Testable {
+  lazy val rnn: Map[String, NeuralModel] = NeuralModelLoader.models(fullName)
 
   override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test, label, 50)
   override def models(modelName: String): Map[String, NeuralModel] = rnn
 }
 
-case class NaiveBayesTester(name: String) extends Testable {
-  lazy val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(c => (c, MLlibModelLoader.load(name, IPTC.trim(c)))).toMap
+case class NaiveBayesTester(fullName: String) extends Testable {
+  lazy val nb: Map[String, NaiveBayesModel] = IPTC.topCategories.map(c => (c, MLlibModelLoader.load(fullName, IPTC.trim(c)))).toMap
 
   override def verify: Boolean = Try(nb).isSuccess
 
   override def test(articles: RDD[Article], includeExampleBased: Boolean = false, iteration: Int = 0, shouldLogResults: Boolean = false) = {
-    val predicted = MlLibUtils.testMLlibModels(articles, nb, TFIDF.deserialize(name))
+    val predicted = MlLibUtils.testMLlibModels(articles, nb, TFIDF.deserialize(fullName))
 
     Log.v("--- Predictions complete! ")
-    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs(iteration = iteration)), s"test/$name.txt", s"test/${name}_labels.txt")
+    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs(iteration = iteration)), s"test/$fullName.txt", s"test/${fullName}_labels.txt")
     if (shouldLogResults) logResults(predicted)
     System.gc()
   }

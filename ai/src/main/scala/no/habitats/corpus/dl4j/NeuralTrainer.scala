@@ -7,13 +7,13 @@ import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
 import scala.collection.JavaConverters._
-import scala.collection.parallel.{ForkJoinTaskSupport, ParSeq}
+import scala.collection.parallel.ForkJoinTaskSupport
 import scala.concurrent.forkjoin.ForkJoinPool
 
 object NeuralTrainer {
 
   case class IteratorPrefs(label: String, training: CorpusDataset, validation: CorpusDataset)
-  case class NeuralResult(evaluations: Seq[NeuralEvaluation], net: MultiLayerNetwork)
+  case class NeuralResult(evaluations: Seq[NeuralEvaluation])
 
   def trainLabel(name: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): NeuralResult = {
     //    Log.r(s"Training $label ...")
@@ -28,7 +28,7 @@ object NeuralTrainer {
       r
     } else s"train/$name.txt"
 
-    val eval: Seq[NeuralEvaluation] = for (epoch <- 0 until totalEpochs) yield {
+    val evals: Seq[NeuralEvaluation] = for (epoch <- 0 until totalEpochs) yield {
       var c = 1
       while (trainIter.hasNext) {
         net.fit(trainIter.next())
@@ -43,10 +43,11 @@ object NeuralTrainer {
       trainIter.reset()
       neuralPrefs.listener.reset()
       testIter.reset()
+      NeuralModelLoader.save(net, label, Config.count, name + s"_e$epoch")
       evaluation
     }
     System.gc()
-    NeuralResult(eval, net)
+    NeuralResult(evals)
   }
 
   def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], tp: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
@@ -66,7 +67,6 @@ object NeuralTrainer {
       val allRes: Seq[Seq[NeuralEvaluation]] = Config.cats.map(c => {
         val trainingPrefs: IteratorPrefs = IteratorPrefs(c, training(c), validation)
         val res: NeuralResult = trainer(prefs, trainingPrefs)
-        NeuralModelLoader.save(res.net, c, Config.count, name)
         res.evaluations
       })
       printResults(allRes, name)
@@ -85,7 +85,6 @@ object NeuralTrainer {
         val prefs: NeuralPrefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = mbs)
         val trainingPrefs: IteratorPrefs = IteratorPrefs(c, train, validation)
         val res: NeuralResult = trainer(prefs, trainingPrefs)
-        NeuralModelLoader.save(res.net, c, Config.count, name)
         res.evaluations
       }).seq
       printResults(allRes, name)
