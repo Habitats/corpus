@@ -26,6 +26,7 @@ object Fetcher extends RddSerializer {
   lazy val rddMinimal                     : RDD[Article] = fetch("nyt/nyt_corpus_minimal.txt")
   // Processed NYT Corpus articles with annotations
   lazy val annotatedRdd                   : RDD[Article] = fetch("nyt/nyt_corpus_annotated_0.5.txt")
+  lazy val annotatedTypes                 : RDD[Article] = fetch("nyt/nyt_corpus_annotated_0.5_types.txt")
   lazy val annotatedRddMinimal            : RDD[Article] = fetch("nyt/nyt_corpus_annotated_0.5_minimal.txt")
   // Mini Corpus (ordered)
   lazy val miniCorpus                     : RDD[Article] = fetch("nyt/nyt_mini_ordered.txt")
