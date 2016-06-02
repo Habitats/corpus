@@ -44,7 +44,7 @@ object RNN {
         .nIn(vectorSize)
         .nOut(hiddenNodes)
         .name(s"$i")
-        .activation("softsign")
+        .activation(Config.activation.getOrElse("softsign"))
         .build())
       .layer(i.getAndIncrement(), new RnnOutputLayer.Builder()
         .nIn(hiddenNodes)

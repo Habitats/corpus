@@ -135,6 +135,7 @@ object Config {
       hidden1 = props.remove("h1").map(_.toInt),
       hidden2 = props.remove("h2").map(_.toInt),
       hidden3 = props.remove("h3").map(_.toInt),
+      activation = props.remove("activation"),
       tft = props.remove("tft").map(_.toInt),
       superSample = props.remove("super").map(_.toBoolean),
       time = props.remove("time").map(_.toBoolean),
@@ -162,6 +163,7 @@ object Config {
   lazy val time                  : Boolean         = args.time.getOrElse(false)
   lazy val category              : Option[String]  = args.category
   lazy val tag                   : Option[String]  = args.tag
+  lazy val activation            : Option[String]  = args.activation
   lazy val learningRate          : Option[Double]  = args.learningRate
   lazy val confidence            : Option[Double]  = args.confidence
   lazy val miniBatchSize         : Option[Int]     = args.miniBatchSize
@@ -185,6 +187,7 @@ object Config {
                         category: Option[String] = None,
                         tag: Option[String] = None,
                         iptcFilter: Option[Set[String]] = None,
+                        activation: Option[String] = None,
                         useApi: Option[Boolean] = None,
                         learningRate: Option[Double] = None,
                         confidence: Option[Double] = None,
