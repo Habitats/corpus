@@ -96,20 +96,20 @@ object Tester {
 
   def testLengths() = {
     Log.v("Testing Lengths")
-//    testBuckets("length", tester("_baseline/nb_bow_all"), _.wc)
-    testBuckets("length", tester("_baseline/nb_w2v_all"), _.wc)
-    testBuckets("length", tester("_baseline/ffn_w2v_all"), _.wc)
-//    testBuckets("length", tester("_baseline/ffn_bow_all"), _.wc)
+//    testBuckets("_length", tester("_baseline/nb_bow_all"), _.wc)
+    testBuckets("_length", tester("_baseline/nb_w2v_all"), _.wc)
+    testBuckets("_length", tester("_baseline/ffn_w2v_all"), _.wc)
+//    testBuckets("_length", tester("_baseline/ffn_bow_all"), _.wc)
   }
 
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
-//    testBuckets("time", tester("_time/time_ffn_w2v_all"), _.id.toInt)
-//    testBuckets("time", tester("_time/time_ffn_bow_all"), _.id.toInt)
-//    testBuckets("time", tester("_time/time_nb_bow_all"), _.id.toInt)
-//    testBuckets("time", tester("_time/time_nb_w2v_all"), _.id.toInt)
-    testBuckets("time", tester("_time/epoch=10_learningRate=0.5_parallelism=10_time=true_ffn_w2v_all"), _.id.toInt)
-    testBuckets("time", tester("_time/epoch=10_learningRate=0.1_parallelism=10_time=true_ffn_w2v_all"), _.id.toInt)
+//    testBuckets("_time", tester("_time/time_ffn_w2v_all"), _.id.toInt)
+//    testBuckets("_time", tester("_time/time_ffn_bow_all"), _.id.toInt)
+//    testBuckets("_time", tester("_time/time_nb_bow_all"), _.id.toInt)
+//    testBuckets("_time", tester("_time/time_nb_w2v_all"), _.id.toInt)
+    testBuckets("_time", tester("_time/epoch=10_learningRate=0.5_parallelism=10_time=true_ffn_w2v_all"), _.id.toInt)
+    testBuckets("_time", tester("_time/epoch=10_learningRate=0.1_parallelism=10_time=true_ffn_w2v_all"), _.id.toInt)
   }
 
   def testConfidence() = {
