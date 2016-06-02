@@ -28,13 +28,13 @@ object CorpusDataset {
   }
 
   def documentVector(articleId: String, annotationIds: Map[String, Float]): INDArray = {
-    val vectors: Iterable[INDArray] = annotationIds.map { case (id, tfidf) => wordVector(id, tfidf) }
+    val vectors: Iterable[INDArray] = annotationIds.map { case (id, tfidf) => wordVector(id, tfidf).mul(tfidf) }
     val combined = vectors.reduce(_.addi(_))
     combined
   }
 
   def wordVector(annotationId: String, tfidf: Float): INDArray = {
-    W2VLoader.fromId(annotationId).map(_.mul(tfidf)).getOrElse(throw new IllegalStateException(s"Missing word vector for $annotationId!"))
+    W2VLoader.fromId(annotationId).getOrElse(throw new IllegalStateException(s"Missing word vector for $annotationId!"))
   }
 
   def annotationSet(a: Article, tfidf: TFIDF, ordered: Boolean): Map[String, Float] = {
