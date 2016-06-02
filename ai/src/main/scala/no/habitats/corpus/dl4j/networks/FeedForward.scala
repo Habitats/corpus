@@ -33,7 +33,7 @@ object FeedForward {
         .nIn(numInputs)
         .nOut(firstLayer)
         .name(s"$i")
-        .activation("relu")
+        .activation(Config.activation.getOrElse("relu"))
         .build()
       )
       .layer(i.getAndIncrement(), new DenseLayer.Builder()
