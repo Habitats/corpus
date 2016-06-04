@@ -43,7 +43,7 @@ object NeuralTrainer {
       trainIter.reset()
       neuralPrefs.listener.reset()
       testIter.reset()
-      NeuralModelLoader.save(net, label, Config.count, name + s"_e$epoch")
+      NeuralModelLoader.save(net, label, Config.count, name)
       evaluation
     }
     System.gc()
