@@ -104,12 +104,11 @@ object Tester {
 
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
-//    testBuckets("_time", tester("_time/time_ffn_w2v_all"), _.id.toInt)
-//    testBuckets("_time", tester("_time/time_ffn_bow_all"), _.id.toInt)
-//    testBuckets("_time", tester("_time/time_nb_bow_all"), _.id.toInt)
-//    testBuckets("_time", tester("_time/time_nb_w2v_all"), _.id.toInt)
-    testBuckets("_time", tester("_time/epoch=10_learningRate=0.5_parallelism=10_time=true_ffn_w2v_all"), _.id.toInt)
-    testBuckets("_time", tester("_time/epoch=10_learningRate=0.1_parallelism=10_time=true_ffn_w2v_all"), _.id.toInt)
+    val path: String = "_time"
+    testBuckets(path, tester(path + "/time_ffn_w2v_all"), _.id.toInt)
+    testBuckets(path, tester(path + "/time_ffn_bow_all"), _.id.toInt)
+    testBuckets(path, tester(path + "/time_nb_bow_all"), _.id.toInt)
+    testBuckets(path, tester(path + "/time_nb_w2v_all"), _.id.toInt)
   }
 
   def testConfidence() = {

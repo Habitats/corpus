@@ -46,11 +46,11 @@ object Trainer extends Serializable {
     val (train, validation) = Fetcher.ordered(types = true)
     val tag = "types"
     val learningRate = 0.05
-    FeedforwardTrainer(tag, learningRate).trainW2V(train, validation)
-    FeedforwardTrainer(tag, learningRate).trainBoW(train, validation, termFrequencyThreshold = 100)
+//    FeedforwardTrainer(tag, learningRate).trainW2V(train, validation)
+//    FeedforwardTrainer(tag, learningRate).trainBoW(train, validation, termFrequencyThreshold = 100)
     NaiveBayesTrainer(tag).trainW2V(train, validation)
     NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold = 100)
-    RecurrentTrainer(tag, learningRate).trainW2V(train, validation)
+//    RecurrentTrainer(tag, learningRate).trainW2V(train, validation)
   }
 
   // Ex5 - Time
@@ -155,7 +155,7 @@ sealed trait ModelTrainer {
 
 sealed case class FeedforwardTrainer(tag: String,
                                      learningRate: Seq[Double],
-                                     minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(1000)),
+                                     minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(250)),
                                      superSample: Boolean = Config.superSample.getOrElse(false)
                                     ) extends ModelTrainer {
 
@@ -191,7 +191,7 @@ sealed case class FeedforwardTrainer(tag: String,
 
 sealed case class RecurrentTrainer(tag: String,
                                    learningRate: Seq[Double],
-                                   minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(1000)),
+                                   minibatchSize: Seq[Int] = Seq(Config.miniBatchSize.getOrElse(50)),
                                    superSample: Boolean = Config.superSample.getOrElse(false),
                                    hiddenNodes: Int = Config.hidden1.getOrElse(10)
                                   ) extends ModelTrainer {

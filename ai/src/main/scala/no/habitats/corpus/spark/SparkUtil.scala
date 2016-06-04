@@ -203,25 +203,25 @@ object SparkUtil {
     val seconds = x % 60 match {
       case e if e == 0 => ""
       case e if e == 1 => f" $e" + (if (short) "s" else " second")
-      case e if e > 0 => f" $e" + (if (short) "s" else " seconds")
+      case e => f" $e" + (if (short) "s" else " seconds")
     }
     x /= 60
     val minutes = x % 60 match {
       case e if e == 0 => ""
       case e if e == 1 => f" $e" + (if (short) "m" else " minute")
-      case e if e > 0 => f" $e" + (if (short) "m" else " minutes")
+      case e => f" $e" + (if (short) "m" else " minutes")
     }
     x /= 60
     val hours = x % 24 match {
       case e if e == 0 => ""
       case e if e == 1 => f" $e" + (if (short) "h" else " hour")
-      case e if e > 0 => f" $e" + (if (short) "h" else " hours")
+      case e => f" $e" + (if (short) "h" else " hours")
     }
     x /= 24
     val days = x match {
       case e if e == 0 => ""
       case e if e == 1 => f" $e" + (if (short) "d" else " day")
-      case e if e > 0 => f" $e" + (if (short) "d" else " days")
+      case e => f" $e" + (if (short) "d" else " days")
     }
     s"$days$hours$minutes$seconds" + (if (short) "" else s" ($ms ms)")
   }
