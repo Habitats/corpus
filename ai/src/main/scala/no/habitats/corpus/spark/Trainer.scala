@@ -142,7 +142,7 @@ sealed trait ModelTrainer {
   val superSample: Boolean
   var feat: String = "UNINITIALIZED"
 
-  lazy val name: String = s"${tag + "_"}${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
+  lazy val name: String = s"${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}${"_" + tag}"
 
   def trainBoW(train: RDD[Article], validation: RDD[Article], termFrequencyThreshold: Int)
 

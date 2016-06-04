@@ -226,4 +226,3 @@ object SparkUtil {
     s"$days$hours$minutes$seconds" + (if (short) "" else s" ($ms ms)")
   }
 }
-
