@@ -8,7 +8,7 @@ import org.apache.spark.util.StatCounter
 
 case class CorpusStats(rdd: RDD[Article], name: String) {
 
-  val statsFile = s"stats_${name}_general.txt"
+  val statsFile = Config.dataPath + s"stats_${name}_general.txt"
 
   def compute() = {
     rdd.cache()
@@ -21,9 +21,8 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
   }
 
   def commonAnnotations() = {
-    val path = "stats/important_annotations/"
     // This is wonky, but it works.
-    val tfidf = TFIDF.deserialize(path, root = Config.dataPath + "res/")
+    val tfidf = TFIDF.deserialize("fb_w2v_all")
 
     def expandAnnotations(a: Article): List[(String, String, Double)] = a.iptc.toList.flatMap(c => a.ann.values.map(an => (c, an.phrase, tfidf.tfidf(a, an))))
 
@@ -40,7 +39,7 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
 
     for (c <- importantAnnotations) {
       val map: Traversable[String] = c._2.map { case (phrase, tfidf, mentions) => f"$phrase%40s $tfidf%2.5f $mentions%10d" }
-      Log.saveToList(map, s"$path${c._1}.txt", overwrite = true)
+      Log.saveToList(map, Config.dataPath + s"stats/important_annotations/${c._1}.txt", overwrite = true)
     }
   }
 
@@ -52,7 +51,7 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
         filtered = Preprocess.frequencyFilter(filtered, phrases.toSet).filter(_.ann.nonEmpty)
         val annotationsIptc: RDD[Int] = filtered.map(_.ann.size)
         val stats = f"$i%5d ${filtered.count()}%7d ${phrases.size}%7d ${statsToPretty(annotationsIptc.stats(), "Annotations per article")}"
-        Log.saveToFile(stats, s"stats/term_frequency_${name}.txt")
+        Log.saveToFile(stats,Config.dataPath + s"stats/term_frequency_${name}.txt")
       }
     }
   }
@@ -84,7 +83,7 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
   }
 
   def lengthCorrelation() = {
-    Log.saveToList(rdd.map(a => a.ann.size + " " + a.wc).collect(), "length_correlation")
+    Log.saveToList(rdd.map(a => a.ann.size + " " + a.wc).collect(), Config.dataPath + "length_correlation")
   }
 
   private def statsToPretty(stats: StatCounter, name: String): String = f"${name}%30s - Max: ${stats.max.toInt}%10d - Min: ${stats.min.toInt}%3d - Std: ${stats.stdev}%7.2f - Mean: ${stats.mean}%7.2f - Variance: ${stats.variance}%15.2f"
@@ -94,22 +93,22 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
   def annotationStatistics(rdd: RDD[Article]) = {
     val annotationsIptc: RDD[Int] = rdd.map(_.ann.size)
     Log.saveToFile(statsToPretty(annotationsIptc.stats(), "Annotations per article"), statsFile)
-    Log.saveToList(pairs(annotationsIptc), s"stats/${name}_annotations_per_article.txt")
+    Log.saveToList(pairs(annotationsIptc), Config.dataPath + s"stats/${name}_annotations_per_article.txt")
 
     val mentionAnnotation: RDD[Int] = rdd.flatMap(_.ann.values.map(_.id)).map(id => (id, 1)).reduceByKey(_ + _).values
     Log.saveToFile(statsToPretty(mentionAnnotation.stats(), "Mentions per annotation"), statsFile)
-    Log.saveToList(pairs(mentionAnnotation), s"stats/${name}_mention_per_annotation.txt")
+    Log.saveToList(pairs(mentionAnnotation), Config.dataPath + s"stats/${name}_mention_per_annotation.txt")
   }
 
   def articleLabelsStatistics(rdd: RDD[Article]) = {
     val articlesIptc: RDD[Int] = rdd.map(_.iptc.size)
     Log.saveToFile(statsToPretty(articlesIptc.stats(), "IPTC"), statsFile)
-    Log.saveToList(pairs(articlesIptc), s"stats/${name}_iptc_per_article.txt")
+    Log.saveToList(pairs(articlesIptc), Config.dataPath + s"stats/${name}_iptc_per_article.txt")
   }
 
   def articleLengthsStatistics(rdd: RDD[Article]) = {
     val articleLength: RDD[Int] = rdd.map(_.wc)
     Log.saveToFile(statsToPretty(articleLength.stats(), "Article length"), statsFile)
-    Log.saveToList(pairs(articleLength), s"stats/${name}_article_length.txt")
+    Log.saveToList(pairs(articleLength), Config.dataPath + s"stats/${name}_article_length.txt")
   }
 }

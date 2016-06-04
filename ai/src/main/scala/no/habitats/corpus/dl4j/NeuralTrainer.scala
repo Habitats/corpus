@@ -3,6 +3,7 @@ package no.habitats.corpus.dl4j
 import no.habitats.corpus.common.dl4j.NeuralModelLoader
 import no.habitats.corpus.common.models.CorpusDataset
 import no.habitats.corpus.common.{Config, Log}
+import no.habitats.corpus.spark.SparkUtil
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
 
@@ -15,18 +16,14 @@ object NeuralTrainer {
   case class IteratorPrefs(label: String, training: CorpusDataset, validation: CorpusDataset)
   case class NeuralResult(evaluations: Seq[NeuralEvaluation])
 
-  def trainLabel(name: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): NeuralResult = {
+  def trainLabel(name: String, tag: String,  label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): NeuralResult = {
     //    Log.r(s"Training $label ...")
     //    Log.r2(s"Training $label ...")
     Config.init()
     val total = trainIter.totalExamples()
     val batch: Int = trainIter.batch
     val totalEpochs: Int = Config.epoch.getOrElse(neuralPrefs.epochs)
-    val resultFile = if (Config.parallelism > 1) {
-      val r = s"train/$name/$label.txt"
-      Log.toFile(Config.getArgs.toString, r)
-      r
-    } else s"train/$name.txt"
+    val resultFile = Config.trainDir(name, tag) + s"labels/${label}_$name.txt"
 
     val evals: Seq[NeuralEvaluation] = for (epoch <- 0 until totalEpochs) yield {
       var c = 1
@@ -44,15 +41,16 @@ object NeuralTrainer {
       trainIter.reset()
       neuralPrefs.listener.reset()
       testIter.reset()
-      NeuralModelLoader.save(net, label, Config.count, name)
+      NeuralModelLoader.save(model = net, label = label, name = name, tag = tag)
       evaluation
     }
     System.gc()
     NeuralResult(evals)
   }
 
-  def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], tp: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
-    val resultFile = s"train/$name.txt"
+  def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String,tag: String,  minibatchSize: Seq[Int], learningRate: Seq[Double], tp: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
+    val resultFile = Config.trainDir(name, tag) + s"$name.txt"
+    val start = System.currentTimeMillis()
     Log.toFile("", resultFile)
     Log.toFile("", resultFile)
     Log.toFile("", resultFile)
@@ -60,6 +58,8 @@ object NeuralTrainer {
     Log.toFile("", resultFile)
     if (Config.parallelism > 1) parallel(validation, training(""), name, minibatchSize, learningRate, tp, Config.parallelism)
     else sequential(validation, training, name, minibatchSize, learningRate, tp)
+
+    Log.toFile(s"Training finished in ${SparkUtil.prettyTime(System.currentTimeMillis()-start)}", resultFile)
   }
 
   private def sequential(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {

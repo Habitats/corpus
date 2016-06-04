@@ -103,11 +103,14 @@ object Config {
   val testPath            : String  = formatPath(conf.getProperty("test_path"))
   val dataPath            : String  = formatPath(conf.getProperty("data_path"))
   val cachePath           : String  = formatPath(conf.getProperty("cache_path"))
-  val modelPath           : String  = formatPath(conf.getProperty("model_path"))
   val broadMatch          : Boolean = conf.getProperty("broad_match").toBoolean
   val wikiDataOnly        : Boolean = conf.getProperty("wikidata_only").toBoolean
   val wikiDataIncludeBroad: Boolean = conf.getProperty("wikidata_include_broad").toBoolean
   val dbpediaSpotlightURL : String  = conf.getProperty("dbpedia_spotlight_url")
+
+  def modelDir(name: String, tag: String): String = formatPath(conf.getProperty("model_path")) + tag + "/" + name + "/model/"
+  def testDir(name: String, tag: String): String = formatPath(conf.getProperty("model_path")) + tag + "/" + name + "/test/"
+  def trainDir(name: String, tag: String): String = formatPath(conf.getProperty("model_path")) + tag + "/" + name + "/train/"
 
   def getArgs: Arguments = args
   def prefsName: String = args.copy(job = None).toString.replaceAll("\\s+|,", "_").replaceAll("_+", "_")

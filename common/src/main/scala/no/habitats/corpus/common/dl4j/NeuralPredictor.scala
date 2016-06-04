@@ -1,7 +1,7 @@
 package no.habitats.corpus.common.dl4j
 
 import no.habitats.corpus.common.models.{Article, CorpusDataset}
-import no.habitats.corpus.common.{Log, TFIDF}
+import no.habitats.corpus.common.{Config, Log, TFIDF}
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.nn.conf.layers.GravesLSTM
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
@@ -102,8 +102,9 @@ object NeuralPredictor {
   }
 
   def predict(article: Article, modelName: String): Set[String] = {
-    val models = loadedModes.getOrElseUpdate(modelName, NeuralModelLoader.models(modelName))
-    val tfidf = TFIDF.deserialize(modelName)
+    val tag = "_baseline"
+    val models = loadedModes.getOrElseUpdate(modelName, NeuralModelLoader.models(Config.modelDir(modelName, tag)))
+    val tfidf = TFIDF.deserialize(Config.modelDir(modelName, tag))
     val w2v = modelName.toLowerCase.contains("bow")
     val predictors: Map[String, NeuralPredictor] = models.map { case (label, model) => (label, new NeuralPredictor(model.network, Array(article), label, tfidf)) }
     val results: Set[String] = predictors.map { case (label, predictor) => s"$label: ${predictor.correct()}" }.toSet

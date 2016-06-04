@@ -15,47 +15,27 @@ case class NeuralModel(confg: String, coef: String) {
 
 object NeuralModelLoader {
 
-  def coefficientsPath(name: String, label: String, count: Int): String = s"${name}/coefficients-${name}_${label}${if (count != Int.MaxValue) s"_$count" else ""}.bin"
-  def confPath(name: String, label: String, count: Int): String = s"${name}/conf-${name}_${label}${if (count != Int.MaxValue) s"_$count" else ""}.json"
-
-  // Returns ("sport", <model>) pairs
-  def bestModels(name: String): Map[String, MultiLayerNetwork] = bestModel("conf-" + name).zip(bestModel("coefficients-" + name))
-    .map { case (conf, coeff) => {
-      val name = conf.split("[/\\\\]").last
-      val label = name.substring(name.indexOf("_") + 1, name.lastIndexOf("_")).split("_").head
-      (label, load(conf, coeff))
-    }
-    }.toMap
-
   def models(path: String): Map[String, NeuralModel] = {
-    val fileNames = new File(Config.modelPath + path).listFiles().map(_.getName).sorted
+    val fileNames = new File(path).listFiles().map(_.getName).sorted
     val pairs = fileNames.filter(_.startsWith("conf")).zip(fileNames.filter(_.startsWith("coef"))).map { case (conf, coef) => {
       val label = coef.split("_|-").last.split("\\.").head // fetch "society" from "coefficients-confidence-25_ffn_w2v_all_society.bin"
-      (label, NeuralModel(s"${Config.modelPath}$path/$conf", s"${Config.modelPath}$path/$coef"))
+      (label, NeuralModel(s"${path}/$conf", s"${path}/$coef"))
     }
     }.seq.toMap
     pairs
   }
 
-  def bestModel(prefix: String): Seq[String] = {
-    new File(Config.modelPath).listFiles
-      .filter(_.getName.startsWith(prefix))
-      .map(_.getAbsolutePath)
-      .groupBy(n => n.substring(0, n.lastIndexOf("_")))
-      .map(_._2.maxBy(n => n.substring(n.lastIndexOf("_"), n.length)))
-      .toSeq.distinct
-      .sorted
-  }
+  def save(model: MultiLayerNetwork, label: String, name: String, tag: String) = {
+    val coefficientsPath = Config.modelDir(name, tag) + s"coefficients-${name}_${label}.bin"
+    val confPath = Config.modelDir(name, tag) + s"conf-${name}_${label}.json"
 
-  def save(model: MultiLayerNetwork, label: String, count: Int, name: String) = {
     // write parameters
-    val s = Config.cachePath + coefficientsPath(name, label, count)
-    new File(s).getParentFile.mkdirs()
-    val dos = new DataOutputStream(Files.newOutputStream(Paths.get(s)))
+    new File(coefficientsPath).getParentFile.mkdirs()
+    val dos = new DataOutputStream(Files.newOutputStream(Paths.get(coefficientsPath)))
     Nd4j.write(model.params(), dos)
 
     // write config
-    FileUtils.write(new File(Config.cachePath + confPath(name, label, count)), model.getLayerWiseConfigurations.toJson)
+    FileUtils.write(new File(confPath), model.getLayerWiseConfigurations.toJson)
     dos.close()
     Log.v(s"Successfully saved model $name - $label ...")
   }

@@ -32,7 +32,6 @@ object MlLibUtils {
     predictCategories(catModelPairs, testing)
   }
 
-
   def predictCategories(catModelPairs: Map[String, ClassificationModel], testing: RDD[(Article, Vector)], threshold: Double = 1d): RDD[Article] = {
     testing.map(t => {
       val p = catModelPairs.map(c => (c._1, c._2.predict(t._2) >= threshold)).filter(_._2).keySet
@@ -42,10 +41,10 @@ object MlLibUtils {
 
   def evaluate(predicted: RDD[Article], prefs: Broadcast[Prefs], resultFile: String, resultFileLabels: String) = {
     predicted.cache()
-    val sampleResult = predicted.map(_.toResult).reduce(_ + "\n" + _)
-    Log.saveToFile(sampleResult, s"stats/sample_result_${Config.count}.txt")
-    val labelCardinalityDistribution = predicted.map(p => f"${p.iptc.size}%2d ${p.pred.size}%2d").reduce(_ + "\n" + _)
-    Log.saveToFile(labelCardinalityDistribution, s"stats/label_cardinality_distribution_${Config.count}.txt")
+//    val sampleResult = predicted.map(_.toResult).reduce(_ + "\n" + _)
+//    Log.saveToFile(sampleResult, Config.dataPath + s"stats/sample_result_${Config.count}.txt")
+//    val labelCardinalityDistribution = predicted.map(p => f"${p.iptc.size}%2d ${p.pred.size}%2d").reduce(_ + "\n" + _)
+//    Log.saveToFile(labelCardinalityDistribution, Config.dataPath + s"stats/label_cardinality_distribution_${Config.count}.txt")
 
     val cats = IPTC.topCategories.toSet
     val stats = MLStats(predicted, cats)

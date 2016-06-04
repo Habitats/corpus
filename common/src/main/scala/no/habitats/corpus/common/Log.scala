@@ -34,19 +34,13 @@ object Log extends Logging {
   }
 
   def toFile(m: String, fileName: String) = {
-    val padded = if(Config.parallelism > 1) f"$fileName%-69s" else fileName
+    val padded = if (Config.parallelism > 1) f"$fileName%-69s" else fileName
     log(s"$padded - " + m)
-    saveToFile(f(m), fileName, Config.dataPath + "res/", overwrite = false)
+    saveToFile(f(m), fileName, overwrite = false)
   }
 
-  def toList(m: Traversable[String], fileName: String) = {
-    val padded = if(Config.parallelism > 1) f"$fileName%-69s" else fileName
-    log(s"$padded - " + m)
-    saveToFile(m.map(_.toString).mkString(f("\n"), "\n", "\n"), fileName, Config.dataPath + "res/", overwrite = false)
-  }
-
-  def saveToFile(m: String, fileName: String, rootDir: String = Config.dataPath + "res/", overwrite: Boolean = true) = {
-    val resultsFile = new File(rootDir + f"/$fileName")
+  def saveToFile(m: String, fileName: String, overwrite: Boolean = true) = {
+    val resultsFile = new File(fileName)
     if (overwrite) {
       Log.i(s"${if (resultsFile.exists) "Overwriting" else "Creating "} file ${resultsFile.getAbsolutePath} ... ")
       FileUtils.deleteQuietly(resultsFile)
@@ -58,13 +52,13 @@ object Log extends Logging {
     writeLine(m, resultsFile)
   }
 
-  def saveToList(m: Traversable[String], fileName: String, rootDir: String = Config.dataPath + "res/", overwrite: Boolean = true) = {
-    saveToFile(m = m.map(_.toString).mkString("\n"), fileName = fileName, rootDir = rootDir, overwrite = overwrite)
+  def saveToList(m: Traversable[String], fileName: String, overwrite: Boolean = true) = {
+    saveToFile(m = m.map(_.toString).mkString("\n"), fileName = fileName, overwrite = overwrite)
   }
 
   def init() = {
-    Config.cats.foreach(c => saveToFile("\n", s"spam/$c.txt", overwrite = false))
-    Config.cats.foreach(c => saveToFile("Args: " + Config.getArgs.toString, s"spam/$c.txt", overwrite = false))
+    Config.cats.foreach(c => saveToFile("\n", Config.dataPath + s"spam/$c.txt", overwrite = false))
+    Config.cats.foreach(c => saveToFile("Args: " + Config.getArgs.toString, Config.dataPath + s"spam/$c.txt", overwrite = false))
   }
 
   def f(m: Any): String = LocalDateTime.now.format(DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")) + " > " + m

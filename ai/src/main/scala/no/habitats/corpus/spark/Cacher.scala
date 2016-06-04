@@ -263,7 +263,7 @@ object RelativeSplitter extends Splitter {
       (test.flatMap(_.ann.map(_._2.id)) ++ validation.flatMap(_.ann.map(_._2.id))).collect().toSet
 
     }).reduce(_ ++ _).intersect(train.flatMap(_.ann.map(_._2.id)).collect().toSet)
-    Log.saveToFile(exclusionIds.mkString("\n"), s"$name/excluded_ids_$name.txt", Config.cachePath)
+    Log.saveToFile(exclusionIds.mkString("\n"),Config.cachePath + s"$name/excluded_ids_$name.txt")
     rdd.unpersist()
   }
 }

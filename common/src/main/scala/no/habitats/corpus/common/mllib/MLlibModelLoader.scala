@@ -9,7 +9,7 @@ import org.apache.spark.mllib.classification.NaiveBayesModel
 object MLlibModelLoader {
 
   def save(model: NaiveBayesModel, name: String) = {
-    val f = new File(Config.cachePath + name)
+    val f = new File(name)
     FileUtils.deleteQuietly(f)
     f.getParentFile.mkdirs()
     val fos = new FileOutputStream(f)
@@ -18,8 +18,8 @@ object MLlibModelLoader {
     oos.close
   }
 
-  def load(name: String, label: String): NaiveBayesModel = {
-    val file = new File(Config.modelPath + name).listFiles().find(_.getName.contains(label)).get
+  def load(path: String, label: String): NaiveBayesModel = {
+    val file = new File(path).listFiles().find(_.getName.contains(label)).get
     val fos = new FileInputStream(file)
     val oos = new ObjectInputStream(fos)
     val newModel = oos.readObject().asInstanceOf[NaiveBayesModel]

@@ -55,7 +55,7 @@ object TSNE {
       Seq(c, x, y).mkString(" ")
     }).toList
 
-    Log.saveToList(values, "tsne.txt")
+    Log.saveToList(values,Config.dataPath + "tsne.txt")
   }
 
   def stackDocumentVectors(rdd: RDD[Article]): Array[(String, INDArray)] = {

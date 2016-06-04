@@ -90,9 +90,7 @@ object SparkUtil {
         case "trainConfidence" => Trainer.confidence()
 
         // Testing
-        case "verifyModels" => Log.v("Models are: " + Tester.verifyAll())
         case "testModels" => Tester.testModels()
-        case "testFFNBoW" => Tester.testFFNBow()
         case "testLengths" => Tester.testLengths()
         case "testTimeDecay" => Tester.testTimeDecay()
         case "testConfidence" => Tester.testConfidence()
