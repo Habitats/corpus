@@ -55,7 +55,10 @@ object CorpusDataset {
   }
 
   def genW2VMatrix(articles: RDD[Article], tfidf: TFIDF): CorpusDataset = {
-    CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = true), labelArray(a), 1000)).filter(_.annotations.nonEmpty).collect, (annotationId, annotationIds) => wordVector(annotationId))
+    Log.v("Generating W2V matrix ...")
+    val m = CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = true), labelArray(a), 1000)).filter(_.annotations.nonEmpty).collect, (annotationId, annotationIds) => wordVector(annotationId))
+    Log.v("Generation complete!")
+    m
   }
 
   // High level API for vector conversion
