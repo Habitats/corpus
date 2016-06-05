@@ -76,9 +76,9 @@ object Tester {
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
     testBuckets(time, tester("ffn_w2v_all", time), _.id.toInt)
-    testBuckets(time, tester("ffn_bow_all", time), _.id.toInt)
-    testBuckets(time, tester("nb_bow_all", time), _.id.toInt)
-    testBuckets(time, tester("nb_w2v_all", time), _.id.toInt)
+//    testBuckets(time, tester("ffn_bow_all", time), _.id.toInt)
+//    testBuckets(time, tester("nb_bow_all", time), _.id.toInt)
+//    testBuckets(time, tester("nb_w2v_all", time), _.id.toInt)
     testBuckets(time, tester("rnn_w2v_all", time), _.id.toInt)
   }
 
@@ -96,7 +96,7 @@ object Tester {
   def testBuckets(tag: String, tester: Testable, criterion: Article => Double) = {
     val name = tester.name
     val resFile: String = tester.testDir + s"$name.txt"
-    val resFileLabels: String = tester.testDir + s"$name.txt"
+    val resFileLabels: String = tester.testDir + s"${name}_labels.txt"
     Log.toFile("", resFile)
     Log.toFile(s"Testing $name - ${Config.getArgs}", resFile)
     Log.toFile("", resFile)
