@@ -11,8 +11,6 @@ import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.indexing.NDArrayIndex
 
-import scala.util.Try
-
 class RNNIterator(articles: CorpusDataset, label: String, batchSize: Int) extends DataSetIterator {
   W2VLoader.preload()
 
@@ -32,7 +30,7 @@ class RNNIterator(articles: CorpusDataset, label: String, batchSize: Int) extend
     val labelsMask = Nd4j.create(Array(articleBatch.length, maxNumberOfFeatures), 'f')
 
     for (i <- articleBatch.indices) {
-      val annotations: Array[INDArray] = articleBatch(i).annotations.flatMap { case (id, tfidf) => Try(articles.toVector(id, articleBatch(i).annotations)).toOption }.toArray
+      val annotations: Array[INDArray] = articleBatch(i).annotations.map { case (id, tfidf) => articles.toVector(id, articleBatch(i).annotations) }.toArray
       for (j <- annotations.indices) {
         features.put(Array(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.point(j)), annotations(j))
         featureMask.putScalar(Array(i, j), 1.0)

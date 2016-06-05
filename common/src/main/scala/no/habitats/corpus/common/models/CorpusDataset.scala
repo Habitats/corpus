@@ -29,7 +29,7 @@ object CorpusDataset {
   }
 
   def documentVector(articleId: String, annotationIds: Map[String, Float]): INDArray = {
-    val vectors: Iterable[INDArray] = annotationIds.flatMap { case (id, tfidf) => Try(wordVector(id).mul(tfidf)).toOption }
+    val vectors: Iterable[INDArray] = annotationIds.map { case (id, tfidf) => wordVector(id).mul(tfidf) }
     val combined = vectors.reduce(_.addi(_))
     combined
   }
