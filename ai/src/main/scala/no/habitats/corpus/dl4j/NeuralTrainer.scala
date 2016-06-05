@@ -16,7 +16,7 @@ object NeuralTrainer {
   case class IteratorPrefs(label: String, training: CorpusDataset, validation: CorpusDataset)
   case class NeuralResult(evaluations: Seq[NeuralEvaluation])
 
-  def trainLabel(name: String, tag: String,  label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): NeuralResult = {
+  def trainLabel(name: String, tag: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): NeuralResult = {
     //    Log.r(s"Training $label ...")
     //    Log.r2(s"Training $label ...")
     Config.init()
@@ -48,7 +48,7 @@ object NeuralTrainer {
     NeuralResult(evals)
   }
 
-  def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String,tag: String,  minibatchSize: Seq[Int], learningRate: Seq[Double], tp: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
+  def trainNetwork(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, tag: String, minibatchSize: Seq[Int], learningRate: Seq[Double], tp: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
     val resultFile = Config.trainDir(name, tag) + s"$name.txt"
     val start = System.currentTimeMillis()
     Log.toFile("", resultFile)
@@ -56,13 +56,13 @@ object NeuralTrainer {
     Log.toFile("", resultFile)
     Log.toFile("Model: " + name + " - Args: " + Config.getArgs, resultFile)
     Log.toFile("", resultFile)
-    if (Config.parallelism > 1) parallel(validation, training(""), name, minibatchSize, learningRate, tp, Config.parallelism)
-    else sequential(validation, training, name, minibatchSize, learningRate, tp)
+    if (Config.parallelism > 1) parallel(validation, training(""), name, tag, minibatchSize, learningRate, tp, Config.parallelism)
+    else sequential(validation, training, name, tag, minibatchSize, learningRate, tp)
 
-    Log.toFile(s"Training finished in ${SparkUtil.prettyTime(System.currentTimeMillis()-start)}", resultFile)
+    Log.toFile(s"Training finished in ${SparkUtil.prettyTime(System.currentTimeMillis() - start)}", resultFile)
   }
 
-  private def sequential(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
+  private def sequential(validation: CorpusDataset, training: (String) => CorpusDataset, name: String, tag: String, minibatchSize: Seq[Int], learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult) = {
     for {lr <- learningRate; mbs <- minibatchSize} {
       val prefs = NeuralPrefs(learningRate = lr, epochs = 1, minibatchSize = mbs)
       val allRes: Seq[Seq[NeuralEvaluation]] = Config.cats.map(c => {
@@ -70,11 +70,11 @@ object NeuralTrainer {
         val res: NeuralResult = trainer(prefs, trainingPrefs)
         res.evaluations
       })
-      printResults(allRes, name)
+      printResults(allRes, name, tag)
     }
   }
 
-  private def parallel(validation: CorpusDataset, train: CorpusDataset, name: String, minibatchSize: Seq[Int], learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult, parallelism: Int) = {
+  private def parallel(validation: CorpusDataset, train: CorpusDataset, name: String, tag: String, minibatchSize: Seq[Int], learningRate: Seq[Double], trainer: (NeuralPrefs, IteratorPrefs) => NeuralResult, parallelism: Int) = {
     // Force pre-generation of document vectors before entering Spark to avoid passing W2V references between executors
     Log.v("Broadcasting dataset ...")
     Log.v("Starting distributed training ...")
@@ -88,7 +88,7 @@ object NeuralTrainer {
         val res: NeuralResult = trainer(prefs, trainingPrefs)
         res.evaluations
       }).seq
-      printResults(allRes, name)
+      printResults(allRes, name, tag)
     }
   }
 
@@ -111,10 +111,10 @@ object NeuralTrainer {
     remainingTime.toInt
   }
 
-  private def printResults(allRes: Seq[Seq[NeuralEvaluation]], name: String) = {
+  private def printResults(allRes: Seq[Seq[NeuralEvaluation]], name: String, tag: String) = {
     val epochs = allRes.head.size
     Log.v("Accumulating results ...")
-    val resultFile = s"train/$name.txt"
+    val resultFile = Config.trainDir(name, tag) + s"$name.txt"
     Log.toFile("", resultFile)
     Log.toFile("Model: " + name + " - Args: " + Config.getArgs, resultFile)
     for (i <- 0 until epochs) {
