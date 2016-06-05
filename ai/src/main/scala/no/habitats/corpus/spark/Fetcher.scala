@@ -86,7 +86,7 @@ object Fetcher extends RddSerializer {
 
   def shuffled: (RDD[Article], RDD[Article]) = (annotatedTrainShuffled, annotatedValidationShuffled)
 
-  def by(name: String): RDD[Article] = fetch("nyt/" + name)
+  def by(name: String, fraction: Double = 1): RDD[Article] = fetch("nyt/" + name, fraction)
 
   def jsonToTxt(name: String) = saveAsText(fetchJson("nyt/" + name).map(Article.serialize), name)
 

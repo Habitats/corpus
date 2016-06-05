@@ -77,11 +77,11 @@ object Tester {
 
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
-    testBuckets(time, tester("ffn_w2v_all", time), _.id.toInt)
+//    testBuckets(time, tester("ffn_w2v_all", time), _.id.toInt)
     //    testBuckets(time, tester("ffn_bow_all", time), _.id.toInt)
     //    testBuckets(time, tester("nb_bow_all", time), _.id.toInt)
     //    testBuckets(time, tester("nb_w2v_all", time), _.id.toInt)
-//    testBuckets(time, tester("rnn_w2v_all", time), _.id.toInt)
+    testBuckets(time, tester("rnn_w2v_all", time), _.id.toInt)
   }
 
   def testConfidence() = {
@@ -96,6 +96,7 @@ object Tester {
 
   /** Test model on every test set matching name */
   def testBuckets(tag: String, tester: Testable, criterion: Article => Double) = {
+    val start = System.currentTimeMillis()
     val name = tester.name
     val resFile: String = tester.testDir + s"$name.txt"
     val resFileLabels: String = tester.testDir + s"${name}_labels.txt"
@@ -110,13 +111,14 @@ object Tester {
     val rdds: Array[(Int, RDD[Article])] = testFiles
       .map(_.getName).filter(_.contains(s"test"))
       .map(n => (n.split("_|-|\\.").filter(s => Try(s.toInt).isSuccess).last.toInt, n))
-      .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$tag/$n")) }
+      .map { case (index, n) => (index, Fetcher.fetch(s"nyt/$tag/$n", 0.2)) }
       .sortBy(_._1)
     rdds.foreach { case (index, n) => {
       Log.toFile(s"$tag group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", resFileLabels)
       tester.test(n, iteration = index)
     }
     }
+    Log.toFile(s"Testing finished in ${SparkUtil.prettyTime(System.currentTimeMillis() - start)}", resFile)
   }
 }
 
@@ -160,7 +162,11 @@ sealed trait Testable {
 
   def dataset(test: RDD[Article]): CorpusDataset = {
     val tfidf = TFIDF.deserialize(modelDir)
-    if (name.contains("bow")) CorpusDataset.genBoWDataset(test, tfidf) else CorpusDataset.genW2VDataset(test, tfidf)
+    name match {
+      case e: String if e.contains("rnn") => CorpusDataset.genW2VMatrix(test, tfidf)
+      case e: String if e.contains("bow") => CorpusDataset.genBoWDataset(test, tfidf)
+      case e: String if e.contains("w2v") => CorpusDataset.genW2VDataset(test, tfidf)
+    }
   }
 
   def predictAll(test: RDD[Article]): RDD[Article] = {
@@ -185,14 +191,14 @@ sealed trait Testable {
 case class FeedforwardTester(name: String, tag: String) extends Testable {
   lazy val ffa: Map[String, NeuralModel] = NeuralModelLoader.models(modelDir)
 
-  override def iter(test: CorpusDataset, label: String): DataSetIterator = new FeedForwardIterator(test, IPTC.topCategories.indexOf(label), 500)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator = new FeedForwardIterator(test, IPTC.topCategories.indexOf(label), 10000)
   override def models(modelName: String): Map[String, NeuralModel] = ffa
 }
 
 case class RecurrentTester(name: String, tag: String) extends Testable {
   lazy val rnn: Map[String, NeuralModel] = NeuralModelLoader.models(modelDir)
 
-  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test, label, 50)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test, label, 1000)
   override def models(modelName: String): Map[String, NeuralModel] = rnn
 }
 

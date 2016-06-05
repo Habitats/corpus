@@ -1,5 +1,7 @@
 package no.habitats.corpus.dl4j
 
+import java.util.concurrent.atomic.AtomicInteger
+
 import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common.{IPTC, Log}
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
@@ -72,6 +74,9 @@ object NeuralEvaluation {
 
   def eval(testIter: Traversable[DataSet], net: MultiLayerNetwork): Evaluation = {
     val e = new Evaluation()
+    val count = new AtomicInteger(0)
+    val batchSize: Int = testIter.headOption.map(_.numExamples()).getOrElse(0)
+    val total = testIter.size * batchSize
     testIter.foreach(t => {
       val features = t.getFeatureMatrix
       val labels = t.getLabels
@@ -86,6 +91,7 @@ object NeuralEvaluation {
         val predicted = net.output(features, false)
         e.eval(labels, predicted)
       }
+      Log.v(s"Testing batch ${count.get} ${count.getAndIncrement() * batchSize}/$total ...")
     })
     e
   }
