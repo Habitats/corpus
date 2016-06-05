@@ -23,7 +23,7 @@ object Cacher extends RddSerializer {
   def annotateAndCacheArticles() = {
     Seq(0.25, 0.50, 0.75, 1.0).foreach(confidence => {
       val db = DBpediaFetcher.dbpediaAnnotations(confidence)
-      val rdd = Fetcher.miniCorpus.map(a => Spotlight.toDBPediaAnnotated(a, db)).map(_.toMinimal).filter(_.ann.nonEmpty)
+      val rdd = Fetcher.miniCorpus.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)).map(_.toMinimal).filter(_.ann.nonEmpty)
       saveAsText(rdd.map(Article.serialize), s"nyt_mini_train_annotated_$confidence")
     })
   }
@@ -58,10 +58,12 @@ object Cacher extends RddSerializer {
 
   def annotateAndCacheArticlesWithTypes(confidence: Double = 0.5) = {
     val db = DBpediaFetcher.dbpediaAnnotations(confidence, types = true)
-    val rdd2 = Fetcher.annotatedTestOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db))
-    saveAsText(rdd2.map(Article.serialize), "nyt_test_ordered_types")
-    val rdd = Fetcher.annotatedValidationOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db))
-    saveAsText(rdd.map(Article.serialize), "nyt_validation_ordered_types")
+    var rdd = Fetcher.annotatedTestOrderedTypes.collect.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
+    saveAsText(sc.parallelize(rdd.map(Article.serialize)), "nyt_test_ordered_types")
+    rdd = Fetcher.annotatedTrainOrderedTypes.collect.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
+    saveAsText(sc.parallelize(rdd.map(Article.serialize)), "nyt_train_ordered_types")
+    rdd = Fetcher.annotatedValidationOrderedTypes.collect.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
+    saveAsText(sc.parallelize(rdd.map(Article.serialize)), "nyt_validation_ordered_types")
   }
 
   def cacheMinimalArticles(rdd: RDD[Article], name: String) = {
@@ -156,7 +158,7 @@ object Cacher extends RddSerializer {
     val rdd = Fetcher.annotatedTypes
     rdd.cache()
     splitOrdered(rdd)
-//    splitShuffled(rdd)
+    //    splitShuffled(rdd)
     rdd.unpersist()
   }
 
@@ -263,7 +265,7 @@ object RelativeSplitter extends Splitter {
       (test.flatMap(_.ann.map(_._2.id)) ++ validation.flatMap(_.ann.map(_._2.id))).collect().toSet
 
     }).reduce(_ ++ _).intersect(train.flatMap(_.ann.map(_._2.id)).collect().toSet)
-    Log.saveToFile(exclusionIds.mkString("\n"),Config.cachePath + s"$name/excluded_ids_$name.txt")
+    Log.saveToFile(exclusionIds.mkString("\n"), Config.cachePath + s"$name/excluded_ids_$name.txt")
     rdd.unpersist()
   }
 }

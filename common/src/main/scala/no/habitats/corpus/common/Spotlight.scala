@@ -68,13 +68,12 @@ object Spotlight extends RddSerializer {
     }).groupBy(_._1).map { case (k, v) => (k, v.map(_._2).toSet) }.collect.toMap
   }
 
-  def toDBPediaAnnotated(a: Article, db: Map[String, Seq[Annotation]]): Article = {
+  def toDBPediaAnnotated(a: Article, db: Map[String, Seq[Annotation]]): Option[Article] = {
     db.get(a.id) match {
-      case Some(ann) => a.copy(ann = a.ann ++ ann.map(a => (a.id, a)).toMap)
-      case None =>
+      case Some(ann) => Some(a.copy(ann = (a.ann ++ ann.map(a => (a.id, a))).filter(a => W2VLoader.contains(a._1))))
+      case _ => None
 
         /** Log.v("NO DBPEDIA: " + a.id); */
-        a
     }
   }
 

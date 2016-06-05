@@ -9,6 +9,7 @@ import org.nd4j.linalg.factory.Nd4j
 
 import scala.collection.Map
 import scala.collection.immutable.ListMap
+import scala.util.Try
 
 case class SimpleArticle(id: String, annotations: Map[String, Float], labels: Array[Int], featureSize: Int)
 
@@ -28,12 +29,12 @@ object CorpusDataset {
   }
 
   def documentVector(articleId: String, annotationIds: Map[String, Float]): INDArray = {
-    val vectors: Iterable[INDArray] = annotationIds.map { case (id, tfidf) => wordVector(id, tfidf).mul(tfidf) }
+    val vectors: Iterable[INDArray] = annotationIds.flatMap { case (id, tfidf) => Try(wordVector(id).mul(tfidf)).toOption }
     val combined = vectors.reduce(_.addi(_))
     combined
   }
 
-  def wordVector(annotationId: String, tfidf: Float): INDArray = {
+  def wordVector(annotationId: String): INDArray = {
     W2VLoader.fromId(annotationId).getOrElse(throw new IllegalStateException(s"Missing word vector for $annotationId!"))
   }
 
@@ -54,7 +55,7 @@ object CorpusDataset {
   }
 
   def genW2VMatrix(articles: RDD[Article], tfidf: TFIDF): CorpusDataset = {
-    CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = true), labelArray(a), 1000)).filter(_.annotations.nonEmpty).collect, (annotationId, annotationIds) => wordVector(annotationId, annotationIds(annotationId)))
+    CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = true), labelArray(a), 1000)).filter(_.annotations.nonEmpty).collect, (annotationId, annotationIds) => wordVector(annotationId))
   }
 
   // High level API for vector conversion

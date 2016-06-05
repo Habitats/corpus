@@ -57,7 +57,7 @@ case class NeuralPredictor(net: MultiLayerNetwork, articles: Array[Article], lab
         .toList
       for (j <- tokens.indices) {
         val (tfidf, id) = tokens(j)
-        val vector: INDArray = CorpusDataset.wordVector(id, tfidf.toFloat)
+        val vector: INDArray = CorpusDataset.wordVector(id)
         features.put(Array(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.point(j)), vector)
         featureMask.putScalar(Array(i, j), 1.0)
       }

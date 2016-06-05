@@ -14,6 +14,8 @@ import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 
+import scala.collection.parallel.ForkJoinTaskSupport
+import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.Try
 
 object Tester {
@@ -76,10 +78,10 @@ object Tester {
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
     testBuckets(time, tester("ffn_w2v_all", time), _.id.toInt)
-//    testBuckets(time, tester("ffn_bow_all", time), _.id.toInt)
-//    testBuckets(time, tester("nb_bow_all", time), _.id.toInt)
-//    testBuckets(time, tester("nb_w2v_all", time), _.id.toInt)
-    testBuckets(time, tester("rnn_w2v_all", time), _.id.toInt)
+    //    testBuckets(time, tester("ffn_bow_all", time), _.id.toInt)
+    //    testBuckets(time, tester("nb_bow_all", time), _.id.toInt)
+    //    testBuckets(time, tester("nb_w2v_all", time), _.id.toInt)
+//    testBuckets(time, tester("rnn_w2v_all", time), _.id.toInt)
   }
 
   def testConfidence() = {
@@ -169,12 +171,14 @@ sealed trait Testable {
   def labelBased(test: RDD[Article], iteration: Int): Seq[NeuralEvaluation] = {
     if (iteration == 0) Log.toFile(s"Testing $name ...", testDir + s"$name.txt")
     val testDataset: CorpusDataset = dataset(test)
-    models(name).par.toSeq.zipWithIndex.map { case (models, i) => {
+    val m = models(name) //.par
+//    m.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(Config.parallelism))
+    m.zipWithIndex.map { case (models, i) => {
       val test = iter(testDataset, models._1).asScala.toTraversable
       val eval = NeuralEvaluation(test, models._2.network, i, models._1)
       (i, eval)
     }
-    }.seq.sortBy(_._1).map(_._2)
+    }.seq.toSeq.sortBy(_._1).map(_._2)
   }
 }
 

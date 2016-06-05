@@ -21,7 +21,7 @@ object NeuralModelLoader {
       val label = coef.split("_|-").last.split("\\.").head // fetch "society" from "coefficients-confidence-25_ffn_w2v_all_society.bin"
       (label, NeuralModel(s"${path}/$conf", s"${path}/$coef"))
     }
-    }.seq.toMap
+    }.toMap
     pairs
   }
 
@@ -56,6 +56,7 @@ object NeuralModelLoader {
     model.init()
     model.setParameters(params)
 
+    Log.v("Successfully loaded model.")
     model
   }
 }

@@ -43,9 +43,12 @@ object Fetcher extends RddSerializer {
   lazy val annotatedTrainOrdered          : RDD[Article] = fetch("nyt/nyt_train_ordered.txt", 0.6)
   lazy val annotatedValidationOrdered     : RDD[Article] = fetch("nyt/nyt_validation_ordered.txt", 0.2)
   // Articles with DBpedia types
-  lazy val annotatedTestOrderedTypes      : RDD[Article] = fetch("nyt/nyt_test_ordered_types.txt", 0.2)
-  lazy val annotatedTrainOrderedTypes     : RDD[Article] = fetch("nyt/nyt_train_ordered_types.txt", 0.6)
-  lazy val annotatedValidationOrderedTypes: RDD[Article] = fetch("nyt/nyt_validation_ordered_types.txt", 0.2)
+  //  lazy val annotatedTestOrderedTypes      : RDD[Article] = fetch("nyt/nyt_test_ordered_types.txt", 0.2)
+  //  lazy val annotatedTrainOrderedTypes     : RDD[Article] = fetch("nyt/nyt_train_ordered_types.txt", 0.6)
+  //  lazy val annotatedValidationOrderedTypes: RDD[Article] = fetch("nyt/nyt_validation_ordered_types.txt", 0.2)
+  lazy val annotatedTestOrderedTypes      : RDD[Article] = fetch("nyt/types/nyt_test_ordered_types.txt", 0.2)
+  lazy val annotatedTrainOrderedTypes     : RDD[Article] = fetch("nyt/types/nyt_train_ordered_types.txt", 0.6)
+  lazy val annotatedValidationOrderedTypes: RDD[Article] = fetch("nyt/types/nyt_validation_ordered_types.txt", 0.2)
   // Articles split randomly
   lazy val annotatedTestShuffled          : RDD[Article] = fetch("nyt/nyt_test_shuffled.txt", 0.2)
   lazy val annotatedTrainShuffled         : RDD[Article] = fetch("nyt/nyt_train_shuffled.txt", 0.6)
@@ -75,7 +78,7 @@ object Fetcher extends RddSerializer {
       // Otherwise compute dataset
       Log.v("Dataset not cached. Generating ...")
       val db = DBpediaFetcher.dbpediaAnnotations(confidence, types)
-      (annotatedTrainOrdered.map(a => Spotlight.toDBPediaAnnotated(a, db)), annotatedValidationOrdered)
+      (annotatedTrainOrdered.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)), annotatedValidationOrdered)
     }
   }
 
