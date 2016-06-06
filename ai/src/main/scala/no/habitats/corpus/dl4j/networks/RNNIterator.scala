@@ -12,9 +12,6 @@ import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.indexing.NDArrayIndex
 
 class RNNIterator(articles: CorpusDataset, label: String, batchSize: Int) extends DataSetIterator {
-  W2VLoader.preload()
-
-  // 32 may be a good starting point,
   var counter    = 0
   val labelIndex = IPTC.topCategories.indexOf(label)
 
@@ -55,6 +52,6 @@ class RNNIterator(articles: CorpusDataset, label: String, batchSize: Int) extend
   override def totalOutcomes(): Int = 2
   override def reset(): Unit = counter = 0
   override def numExamples(): Int = totalExamples()
-  override def next(): DataSet = next(batch)
+  override def next(): DataSet = next(batch())
   override def hasNext: Boolean = counter < totalExamples()
 }
