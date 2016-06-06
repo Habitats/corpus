@@ -37,8 +37,8 @@ object SparkUtil {
         case "testSpark" => Log.v(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
         case "printArticles" => printArticles(Config.count)
         case "misc" =>
-//          Trainer.types()
-          Trainer.confidence()
+          Tester.testTimeDecay()
+          Tester.testLengths()
 
         // Generate datasets
         case "cacheNYT" => JsonSingle.cacheRawNYTtoJson()

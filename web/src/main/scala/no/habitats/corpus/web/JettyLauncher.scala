@@ -1,5 +1,7 @@
 package no.habitats.corpus.web
 
+import java.util.EventListener
+
 import no.habitats.corpus.common.Config
 import org.eclipse.jetty.server.Server
 import org.eclipse.jetty.webapp.WebAppContext
@@ -18,7 +20,8 @@ object JettyLauncher {
     context.setContextPath("/")
     context.setResourceBase("src/main/webapp")
     context.setInitParameter(ScalatraListener.LifeCycleKey, "ScalatraBootstrap")
-    context.addEventListener(new ScalatraListener)
+    val listener: EventListener = new ScalatraListener
+    context.addEventListener(listener)
 
     server.setHandler(context)
 

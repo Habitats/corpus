@@ -1,10 +1,13 @@
 configurations.all {
     exclude group: 'org.mortbay.jetty'
+    // Conflicts with Spark Logger
     exclude group: 'org.slf4j', module: 'slf4j-log4j12'
     exclude group: 'log4j', module: 'log4j'
+    // Conflicts with DL4J UI
     exclude group: 'com.sun.jersey.jersey-test-framework', module: 'jersey-test-framework-grizzly2'
     exclude group: 'com.sun.jersey', module: 'jersey-json'
     exclude group: 'com.sun.jersey', module: 'jersey-core'
+    exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'         // yields security error due to differing versions
     exclude group: 'org.bytedeco', module: 'javacpp-presets' // https://github.com/bytedeco/javacv/issues/395#issuecomment-220213783
 
 //    resolutionStrategy {
@@ -15,13 +18,17 @@ configurations.all {
 
 dependencies {
     // Spark
-    compile 'org.apache.spark:spark-mllib_' + project.scalaBinary + ':1.6.1'
+    compile ('org.apache.spark:spark-mllib_' + project.scalaBinary + ':1.6.1') {
+        // yields security error due to differing versions
+//        exclude group: 'org.glassfish', module: 'javax.servlet'
+//        exclude group: 'javax.servlet', module: 'javax.servlet-api'
+    }
     compile('org.apache.spark:spark-core_' + project.scalaBinary + ':1.6.1') {
         exclude group: 'com.google.guava'
         // yields security error due to differing versions
-        exclude group: 'org.eclipse.jetty.orbit', module: 'javax.servlet'
-        exclude group: 'org.glassfish', module: 'javax.servlet'
-        exclude group: 'javax.servlet', module: 'javax.servlet-api'
+//        exclude group: 'org.glassfish', module: 'javax.servlet'
+//        exclude group: 'javax.servlet', module: 'javax.servlet-api'
+        // Conflicts with DL4J UI
         exclude group: 'com.sun.jersey.jersey-test-framework', module: 'jersey-test-framework-grizzly2'
         exclude group: 'com.sun.jersey', module: 'jersey-json'
         exclude group: 'com.sun.jersey', module: 'jersey-core'

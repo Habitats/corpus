@@ -70,18 +70,20 @@ object Tester {
   def testLengths() = {
     Log.v("Testing Lengths")
     //    testBuckets("_length", tester("_baseline/nb_bow_all"), _.wc)
-    testBuckets(length, tester("nb_w2v_all", baseline), _.wc)
-    testBuckets(length, tester("ffn_w2v_all", baseline), _.wc)
-    //    testBuckets("_length", tester("_baseline/ffn_bow_all"), _.wc)
+    //    testBuckets(length, tester("nb_w2v_all", baseline), _.wc)
+    //    testBuckets(length, tester("ffn_w2v_all", baseline), _.wc)
+//    Try(testBuckets(length, tester("ffn_bow_all", baseline), _.wc))
+    Try(testBuckets(length, tester("rnn_w2v_all", baseline), _.id.toInt))
   }
 
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
-//    testBuckets(time, tester("ffn_w2v_all", time), _.id.toInt)
-    //    testBuckets(time, tester("ffn_bow_all", time), _.id.toInt)
-    //    testBuckets(time, tester("nb_bow_all", time), _.id.toInt)
+    //    testBuckets(time, tester("ffn_w2v_all", time), _.id.toInt)
+//    Try(testBuckets(time, tester("ffn_bow_all", time), _.id.toInt))
+//            testBuckets(time, tester("nb_bow_all", time), _.id.toInt)
+    //        testBuckets(time, tester("nb_w2v_all", time), _.id.toInt)
     //    testBuckets(time, tester("nb_w2v_all", time), _.id.toInt)
-    testBuckets(time, tester("rnn_w2v_all", time), _.id.toInt)
+    Try(testBuckets(time, tester("rnn_w2v_all", time), _.id.toInt))
   }
 
   def testConfidence() = {
@@ -178,7 +180,7 @@ sealed trait Testable {
     if (iteration == 0) Log.toFile(s"Testing $name ...", testDir + s"$name.txt")
     val testDataset: CorpusDataset = dataset(test)
     val m = models(name) //.par
-//    m.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(Config.parallelism))
+    //    m.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(Config.parallelism))
     m.zipWithIndex.map { case (models, i) => {
       val test = iter(testDataset, models._1).asScala.toTraversable
       val eval = NeuralEvaluation(test, models._2.network, i, models._1)
@@ -198,7 +200,7 @@ case class FeedforwardTester(name: String, tag: String) extends Testable {
 case class RecurrentTester(name: String, tag: String) extends Testable {
   lazy val rnn: Map[String, NeuralModel] = NeuralModelLoader.models(modelDir)
 
-  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test, label, 1000)
+  override def iter(test: CorpusDataset, label: String): DataSetIterator = new RNNIterator(test, label, 500)
   override def models(modelName: String): Map[String, NeuralModel] = rnn
 }
 

@@ -14,11 +14,8 @@ import scala.util.Try
 case class SimpleArticle(id: String, annotations: Map[String, Float], labels: Array[Int], featureSize: Int)
 
 case class CorpusDataset(data: Array[SimpleArticle], private val transformer: (String, Map[String, Float]) => INDArray) {
-  lazy val memo: scala.collection.mutable.LongMap[INDArray] = new scala.collection.mutable.LongMap[INDArray]
-
   def toVector(articleId: String, annotationIds: Map[String, Float]): INDArray = {
-    if (Config.memo) synchronized(memo.getOrElseUpdate(articleId.toLong, transformer(articleId, annotationIds)))
-    else transformer(articleId, annotationIds)
+  transformer(articleId, annotationIds)
   }
 }
 
