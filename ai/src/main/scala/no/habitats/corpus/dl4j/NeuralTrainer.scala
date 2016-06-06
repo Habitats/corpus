@@ -36,7 +36,7 @@ object NeuralTrainer {
         }
         if ((((c) * trainIter.batch) % (intermediateFrequency * 25)) == 0) {
           val left = timeLeft(totalTrainingSize = total, currentIteration = c, batch = batch, label = label, currentEpoch = epoch, totalEpoch = totalEpochs)
-          NeuralEvaluation(testIter.asScala.take(intermediateFrequency / batch).toTraversable, net, epoch, label, Some(neuralPrefs), Some(left)).log(resultFile, c - 1)
+          NeuralEvaluation(testIter.asScala.toTraversable, net, epoch, label, Some(neuralPrefs), Some(left)).log(resultFile, c - 1)
           testIter.reset()
         }
         c += 1
