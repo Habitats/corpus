@@ -69,6 +69,7 @@ object NeuralEvaluation {
   }
 
   def apply(iter: Traversable[DataSet], net: MultiLayerNetwork, epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None, timeLeft: Option[Int] = None): NeuralEvaluation = {
+    Log.v(s"Evaluating $label ...")
     new NeuralEvaluation(eval(iter, net), epoch, label, neuralPrefs, learningRate(net), numHidden(net), timeLeft)
   }
 
@@ -91,7 +92,6 @@ object NeuralEvaluation {
         val predicted = net.output(features, false)
         e.eval(labels, predicted)
       }
-      Log.v(s"Testing batch ${count.get} ${count.getAndIncrement() * batchSize}/$total ...")
     })
     e
   }

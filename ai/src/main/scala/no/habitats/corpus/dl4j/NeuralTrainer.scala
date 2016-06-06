@@ -17,8 +17,7 @@ object NeuralTrainer {
   case class NeuralResult(evaluations: Seq[NeuralEvaluation])
 
   def trainLabel(name: String, tag: String, label: String, neuralPrefs: NeuralPrefs, net: MultiLayerNetwork, trainIter: DataSetIterator, testIter: DataSetIterator): NeuralResult = {
-    //    Log.r(s"Training $label ...")
-    //    Log.r2(s"Training $label ...")
+    Log.v(s"Training $label ...")
     Config.init()
     val total = trainIter.totalExamples()
     val batch: Int = trainIter.batch
