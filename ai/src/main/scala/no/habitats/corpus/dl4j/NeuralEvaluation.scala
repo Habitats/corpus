@@ -1,9 +1,7 @@
 package no.habitats.corpus.dl4j
 
-import java.util.concurrent.atomic.AtomicInteger
-
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{IPTC, Log}
+import no.habitats.corpus.common.{IPTC, Log, W2VLoader}
 import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import no.habitats.corpus.mllib._
 import no.habitats.corpus.spark.SparkUtil
@@ -12,7 +10,6 @@ import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, GravesLSTM}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
-import org.nd4j.linalg.dataset.DataSet
 
 import scala.util.Try
 
@@ -74,11 +71,14 @@ object NeuralEvaluation {
     new NeuralEvaluation(eval(iter, net, batchesToEval), epoch, label, neuralPrefs, learningRate(net), numHidden(net), timeLeft)
   }
 
-  def eval(testIter: DataSetIterator, net: MultiLayerNetwork, batchesToEval: Option[Int] = None): Evaluation = {
+  def eval(testIter: DataSetIterator, net: MultiLayerNetwork, batchesToEval: Option[Int]): Evaluation = {
     val e = new Evaluation()
     var count = 0
-    while (testIter.hasNext && batchesToEval.forall(count < _)) {
-      val t = testIter.next()
+    val batch = 1000
+    W2VLoader.preload()
+    val start = System.currentTimeMillis()
+    while (testIter.hasNext && batchesToEval.forall((count * batch) < _)) {
+      val t = testIter.next(batch)
       val features = t.getFeatureMatrix
       val labels = t.getLabels
       if (t.getFeaturesMaskArray != null) {
@@ -93,6 +93,7 @@ object NeuralEvaluation {
         e.eval(labels, predicted)
       }
       count += 1
+      Log.v(s"Eval batch $count - Delta: ${(System.currentTimeMillis() - start).toDouble / (count * batch)} ... ")
     }
     e
   }

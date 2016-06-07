@@ -29,15 +29,15 @@ object NeuralTrainer {
       var c = 1
       while (trainIter.hasNext) {
         net.fit(trainIter.next())
-        val intermediateFrequency: Int = 5000
+        val intermediateFrequency: Int = 50
         if ((((c - 1) * trainIter.batch) % intermediateFrequency) == 0) {
           val left = timeLeft(totalTrainingSize = total, currentIteration = c, batch = batch, label = label, currentEpoch = epoch, totalEpoch = totalEpochs)
-          NeuralEvaluation(testIter, net, epoch, label, Some(neuralPrefs), Some(left), Some(intermediateFrequency / batch)).log(resultFile, c - 1)
+          NeuralEvaluation(testIter, net, epoch, label, Some(neuralPrefs), Some(left), Some(2000)).log(resultFile, c - 1)
           testIter.reset()
         }
         if (((c * trainIter.batch) % (intermediateFrequency * 25)) == 0) {
           val left = timeLeft(totalTrainingSize = total, currentIteration = c, batch = batch, label = label, currentEpoch = epoch, totalEpoch = totalEpochs)
-          Try(NeuralEvaluation(testIter, net, epoch, label, Some(neuralPrefs), Some(left)).log(resultFile, c - 1)).getOrElse(Log.v("OOM on evaluation!"))
+          Try(NeuralEvaluation(testIter, net, epoch, label, Some(neuralPrefs), Some(left), Some(50000)).log(resultFile, c - 1)).getOrElse(Log.v("OOM on evaluation!"))
           testIter.reset()
         }
         c += 1
