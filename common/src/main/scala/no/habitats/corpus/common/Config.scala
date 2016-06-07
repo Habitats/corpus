@@ -146,7 +146,8 @@ object Config {
       iterations = props.remove("iter").map(_.toInt),
       tag = props.remove("tag"),
       epoch = props.remove("epoch").map(_.toInt),
-      logResults = props.remove("logres").map(_.toBoolean)
+      logResults = props.remove("logres").map(_.toBoolean),
+      pretrained = props.remove("pretrained").map(_.toBoolean)
     )
     if (props.nonEmpty) {Log.v("Illegal props: " + props.mkString(", ")); System.exit(0)}
     Log.v("Categories: " + cats.mkString(", "))
@@ -164,6 +165,7 @@ object Config {
   lazy val useApi                : Boolean         = args.useApi.getOrElse(false)
   lazy val memo                  : Boolean         = args.memo.getOrElse(false)
   lazy val time                  : Boolean         = args.time.getOrElse(false)
+  lazy val pretrained            : Boolean         = args.pretrained.getOrElse(false)
   lazy val category              : Option[String]  = args.category
   lazy val tag                   : Option[String]  = args.tag
   lazy val activation            : Option[String]  = args.activation
@@ -208,6 +210,7 @@ object Config {
                         iterations: Option[Int] = None,
                         epoch: Option[Int] = None,
                         memo: Option[Boolean] = None,
+                        pretrained: Option[Boolean] = None,
                         superSample: Option[Boolean] = None
                       ) {
     override def toString = {

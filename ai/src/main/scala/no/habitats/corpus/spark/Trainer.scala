@@ -1,6 +1,7 @@
 package no.habitats.corpus.spark
 
 import no.habitats.corpus.common.CorpusContext._
+import no.habitats.corpus.common.dl4j.NeuralModelLoader
 import no.habitats.corpus.common.mllib.MLlibModelLoader
 import no.habitats.corpus.common.models.{Article, CorpusDataset}
 import no.habitats.corpus.common.{Config, _}
@@ -216,7 +217,7 @@ sealed case class RecurrentTrainer(tag: String,
   // Binary trainers
   private def binaryRNNTrainer(neuralPrefs: NeuralPrefs, tw: IteratorPrefs): NeuralResult = {
     val realPrefs: NeuralPrefs = neuralPrefs.copy(hiddenNodes = hiddenNodes)
-    val net = RNN.createBinary(realPrefs)
+    val net = if (Config.pretrained) RNN.create(realPrefs, NeuralModelLoader.model(name, tag, tw.label)) else RNN.create(realPrefs)
     val trainIter = new RNNIterator(tw.training, tw.label, batchSize = neuralPrefs.minibatchSize)
     val testIter = new RNNIterator(tw.validation, tw.label, batchSize = neuralPrefs.minibatchSize)
     NeuralTrainer.trainLabel(name, tag, tw.label, realPrefs, net, trainIter, testIter)
