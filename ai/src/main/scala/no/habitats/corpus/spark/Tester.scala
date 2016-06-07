@@ -14,8 +14,6 @@ import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 
-import scala.collection.parallel.ForkJoinTaskSupport
-import scala.concurrent.forkjoin.ForkJoinPool
 import scala.util.Try
 
 object Tester {
@@ -72,15 +70,15 @@ object Tester {
     //    testBuckets("_length", tester("_baseline/nb_bow_all"), _.wc)
     //    testBuckets(length, tester("nb_w2v_all", baseline), _.wc)
     //    testBuckets(length, tester("ffn_w2v_all", baseline), _.wc)
-//    Try(testBuckets(length, tester("ffn_bow_all", baseline), _.wc))
+    //    Try(testBuckets(length, tester("ffn_bow_all", baseline), _.wc))
     Try(testBuckets(length, tester("rnn_w2v_all", baseline), _.id.toInt))
   }
 
   def testTimeDecay() = {
     Log.v("Testing Time Decay")
     //    testBuckets(time, tester("ffn_w2v_all", time), _.id.toInt)
-//    Try(testBuckets(time, tester("ffn_bow_all", time), _.id.toInt))
-//            testBuckets(time, tester("nb_bow_all", time), _.id.toInt)
+    //    Try(testBuckets(time, tester("ffn_bow_all", time), _.id.toInt))
+    //            testBuckets(time, tester("nb_bow_all", time), _.id.toInt)
     //        testBuckets(time, tester("nb_w2v_all", time), _.id.toInt)
     //    testBuckets(time, tester("nb_w2v_all", time), _.id.toInt)
     Try(testBuckets(time, tester("rnn_w2v_all", time), _.id.toInt))

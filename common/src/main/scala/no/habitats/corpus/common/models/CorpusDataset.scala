@@ -9,13 +9,12 @@ import org.nd4j.linalg.factory.Nd4j
 
 import scala.collection.Map
 import scala.collection.immutable.ListMap
-import scala.util.Try
 
 case class SimpleArticle(id: String, annotations: Map[String, Float], labels: Array[Int], featureSize: Int)
 
 case class CorpusDataset(data: Array[SimpleArticle], private val transformer: (String, Map[String, Float]) => INDArray) {
   def toVector(articleId: String, annotationIds: Map[String, Float]): INDArray = {
-  transformer(articleId, annotationIds)
+    transformer(articleId, annotationIds)
   }
 }
 
@@ -53,7 +52,10 @@ object CorpusDataset {
 
   def genW2VMatrix(articles: RDD[Article], tfidf: TFIDF): CorpusDataset = {
     Log.v("Generating W2V matrix ...")
-    val m = CorpusDataset(articles.map(a => SimpleArticle(a.id, annotationSet(a, tfidf, ordered = true), labelArray(a), 1000)).filter(_.annotations.nonEmpty).collect, (annotationId, annotationIds) => wordVector(annotationId))
+    val cutoff = 100 // avoid RNN going crazy
+    val m = CorpusDataset(articles.map(a => {
+      SimpleArticle(a.id, annotationSet(a, tfidf, ordered = true).take(cutoff), labelArray(a), 1000)
+    }).filter(_.annotations.nonEmpty).collect, (annotationId, annotationIds) => wordVector(annotationId))
     Log.v("Generation complete!")
     m
   }
@@ -78,12 +80,12 @@ object CorpusDataset {
   }
 
   def toVector(tfidf: TFIDF, a: Article): Vector = {
-    if (tfidf.contains("w2v")) CorpusDataset.documentVectorMlLib(a, tfidf, ordered = false)
+    if (tfidf.name.contains("w2v")) CorpusDataset.documentVectorMlLib(a, tfidf, ordered = false)
     else CorpusDataset.bowVectorMlLib(a, tfidf)
   }
 
   def toINDArray(tfidf: TFIDF, a: Article): INDArray = {
-    if (tfidf.contains("w2v")) CorpusDataset.documentVector(a, tfidf, ordered = false)
+    if (tfidf.name.contains("w2v")) CorpusDataset.documentVector(a, tfidf, ordered = false)
     else CorpusDataset.bowVector(a, tfidf)
   }
 }

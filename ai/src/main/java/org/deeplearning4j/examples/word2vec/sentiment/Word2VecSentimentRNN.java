@@ -86,9 +86,9 @@ public class Word2VecSentimentRNN {
 
     //DataSetIterators for training and testing respectively
     //Using AsyncDataSetIterator to do data loading in a separate thread; this may improve performance vs. waiting for data to load
-    WordVectors wordVectors = WordVectorSerializer.loadGoogleModel(new File(WORD_VECTORS_PATH), true, false);
-    DataSetIterator train = new AsyncDataSetIterator(new SentimentExampleIterator(DATA_PATH, wordVectors, batchSize, truncateReviewsToLength, true), 1);
-    DataSetIterator test = new AsyncDataSetIterator(new SentimentExampleIterator(DATA_PATH, wordVectors, 100, truncateReviewsToLength, false), 1);
+    WordVectors     wordVectors = WordVectorSerializer.loadGoogleModel(new File(WORD_VECTORS_PATH), true, false);
+    DataSetIterator train       = new AsyncDataSetIterator(new SentimentExampleIterator(DATA_PATH, wordVectors, batchSize, truncateReviewsToLength, true), 1);
+    DataSetIterator test        = new AsyncDataSetIterator(new SentimentExampleIterator(DATA_PATH, wordVectors, 100, truncateReviewsToLength, false), 1);
 
     System.out.println("Starting training");
     for (int i = 0; i < nEpochs; i++) {

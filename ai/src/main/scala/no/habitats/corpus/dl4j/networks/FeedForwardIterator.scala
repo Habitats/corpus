@@ -2,8 +2,8 @@ package no.habitats.corpus.dl4j.networks
 
 import java.util
 
+import no.habitats.corpus.common.Config
 import no.habitats.corpus.common.models.CorpusDataset
-import no.habitats.corpus.common.{Config, Log}
 import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.dataset.DataSet
@@ -11,7 +11,6 @@ import org.nd4j.linalg.dataset.api.DataSetPreProcessor
 import org.nd4j.linalg.factory.Nd4j
 
 import scala.collection.Map
-import scala.util.{Failure, Success, Try}
 
 class FeedForwardIterator(training: CorpusDataset, labelIndex: Int, batchSize: Int) extends DataSetIterator {
   // 32 may be a good starting point,

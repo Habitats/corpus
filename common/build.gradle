@@ -18,7 +18,7 @@ configurations.all {
 
 dependencies {
     // Spark
-    compile ('org.apache.spark:spark-mllib_' + project.scalaBinary + ':1.6.1') {
+    compile('org.apache.spark:spark-mllib_' + project.scalaBinary + ':1.6.1') {
         // yields security error due to differing versions
 //        exclude group: 'org.glassfish', module: 'javax.servlet'
 //        exclude group: 'javax.servlet', module: 'javax.servlet-api'

@@ -12,7 +12,7 @@ import org.nd4j.linalg.indexing.NDArrayIndex
 import scala.collection.mutable
 
 case class NeuralPredictor(net: MultiLayerNetwork, articles: Array[Article], label: String, tfidf: TFIDF) {
-  val featureDimensions: Int     = tfidf.phrases.size
+  val featureDimensions: Int     = if(tfidf.name.contains("bow")) tfidf.phrases.size else 1000
   val isRecurrent      : Boolean = net.getLayerWiseConfigurations.getConf(0).getLayer.isInstanceOf[GravesLSTM]
 
   def correct(log: Boolean = false): Array[Boolean] = {
@@ -102,12 +102,11 @@ object NeuralPredictor {
   }
 
   def predict(article: Article, modelName: String): Set[String] = {
-    val tag = "_baseline"
+    val tag = "baseline"
     val models = loadedModes.getOrElseUpdate(modelName, NeuralModelLoader.models(Config.modelDir(modelName, tag)))
     val tfidf = TFIDF.deserialize(Config.modelDir(modelName, tag))
-    val w2v = modelName.toLowerCase.contains("bow")
     val predictors: Map[String, NeuralPredictor] = models.map { case (label, model) => (label, new NeuralPredictor(model.network, Array(article), label, tfidf)) }
-    val results: Set[String] = predictors.map { case (label, predictor) => s"$label: ${predictor.correct()}" }.toSet
+    val results: Set[String] = predictors.map { case (label, predictor) => f"$label%-44s: ${predictor.correct().head}" }.toSet
     results
   }
 }

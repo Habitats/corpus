@@ -73,7 +73,7 @@ object Spotlight extends RddSerializer {
       case Some(ann) => Some(a.copy(ann = (a.ann ++ ann.map(a => (a.id, a))).filter(a => W2VLoader.contains(a._1))))
       case _ => None
 
-        /** Log.v("NO DBPEDIA: " + a.id); */
+      /** Log.v("NO DBPEDIA: " + a.id); */
     }
   }
 

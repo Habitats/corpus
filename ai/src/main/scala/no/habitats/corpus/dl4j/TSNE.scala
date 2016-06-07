@@ -3,7 +3,7 @@ package no.habitats.corpus.dl4j
 import java.io.File
 import java.util
 
-import no.habitats.corpus.common.models.{Article, CorpusDataset}
+import no.habitats.corpus.common.models.Article
 import no.habitats.corpus.common.{Config, IPTC, Log, W2VLoader}
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.plot.Tsne
@@ -55,11 +55,11 @@ object TSNE {
       Seq(c, x, y).mkString(" ")
     }).toList
 
-    Log.saveToList(values,Config.dataPath + "tsne.txt")
+    Log.saveToList(values, Config.dataPath + "tsne.txt")
   }
 
   def stackDocumentVectors(rdd: RDD[Article]): Array[(String, INDArray)] = {
-//    rdd.map(a => (a.iptc, CorpusDataset.documentVector(a,))).flatMap { case (iptc, v) => iptc.map(c => (c, v)) }.collect()
+    //    rdd.map(a => (a.iptc, CorpusDataset.documentVector(a,))).flatMap { case (iptc, v) => iptc.map(c => (c, v)) }.collect()
     null
   }
 

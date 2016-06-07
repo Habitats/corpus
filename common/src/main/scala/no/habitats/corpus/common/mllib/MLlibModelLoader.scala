@@ -2,7 +2,6 @@ package no.habitats.corpus.common.mllib
 
 import java.io._
 
-import no.habitats.corpus.common.Config
 import org.apache.commons.io.FileUtils
 import org.apache.spark.mllib.classification.NaiveBayesModel
 

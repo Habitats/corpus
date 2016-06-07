@@ -16,7 +16,7 @@ trait CorpusAPI {
     val annotations: Seq[Annotation] = annotate(text, confidence)
     val article = new Article(id = "NO_ID", body = text, ann = annotations.map(v => (v.id, v)).toMap)
 
-    NeuralPredictor.predict(article, "all-ffn-w2v")
+    NeuralPredictor.predict(article, "ffn_w2v_all")
   }
 
   /**

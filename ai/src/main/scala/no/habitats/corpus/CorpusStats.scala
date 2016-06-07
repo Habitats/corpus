@@ -51,7 +51,7 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
         filtered = Preprocess.frequencyFilter(filtered, phrases.toSet).filter(_.ann.nonEmpty)
         val annotationsIptc: RDD[Int] = filtered.map(_.ann.size)
         val stats = f"$i%5d ${filtered.count()}%7d ${phrases.size}%7d ${statsToPretty(annotationsIptc.stats(), "Annotations per article")}"
-        Log.saveToFile(stats,Config.dataPath + s"stats/term_frequency_${name}.txt")
+        Log.saveToFile(stats, Config.dataPath + s"stats/term_frequency_${name}.txt")
       }
     }
   }

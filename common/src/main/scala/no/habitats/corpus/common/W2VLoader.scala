@@ -4,14 +4,12 @@ import java.io.{File, FileNotFoundException}
 
 import no.habitats.corpus.common.CorpusContext.sc
 import no.habitats.corpus.common.dl4j.FreebaseW2V
-import no.habitats.corpus.common.models.{Annotation, Article}
-import org.apache.spark.rdd.RDD
 import org.json4s.NoTypeHints
 import org.json4s.jackson.Serialization
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 
-import scala.collection.{Map, Set, mutable}
+import scala.collection.{Map, Set}
 
 sealed trait VectorLoader {
 
@@ -50,8 +48,8 @@ private class BinaryVectorLoader extends VectorLoader {
 }
 
 private class TextVectorLoader extends VectorLoader {
-  lazy val ids            : Set[String]                                    = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
-  lazy val vectors        : Map[String, INDArray]                          = loadVectors(Config.freebaseToWord2Vec())
+  lazy val ids    : Set[String]           = Config.dataFile(Config.freebaseToWord2VecIDs).getLines().toSet
+  lazy val vectors: Map[String, INDArray] = loadVectors(Config.freebaseToWord2Vec())
 
   override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
   override def contains(fb: String): Boolean = ids.contains(fb)
@@ -60,8 +58,8 @@ private class TextVectorLoader extends VectorLoader {
 
 object W2VLoader extends RddSerializer with VectorLoader {
 
-  implicit val formats                            = Serialization.formats(NoTypeHints)
-  lazy     val loader : VectorLoader              = new TextVectorLoader()
+  implicit val formats              = Serialization.formats(NoTypeHints)
+  lazy     val loader: VectorLoader = new TextVectorLoader()
 
   def preload(): Unit = loader.preload()
 

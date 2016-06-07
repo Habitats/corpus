@@ -1,9 +1,6 @@
 package no.habitats.corpus.common.models
 
-import no.habitats.corpus.common.{IPTC, W2VLoader}
-import org.apache.spark.mllib.linalg.Vector
-import org.deeplearning4j.spark.util.MLLibUtil
-import org.nd4j.linalg.api.ndarray.INDArray
+import no.habitats.corpus.common.IPTC
 
 case class Article(id: String,
                    hl: String = "",
