@@ -180,7 +180,7 @@ sealed trait Testable {
     val m = models(name) //.par
     //    m.tasksupport = new ForkJoinTaskSupport(new ForkJoinPool(Config.parallelism))
     m.zipWithIndex.map { case (models, i) => {
-      val test = iter(testDataset, models._1).asScala.toTraversable
+      val test = iter(testDataset, models._1)
       val eval = NeuralEvaluation(test, models._2.network, i, models._1)
       (i, eval)
     }

@@ -8,6 +8,7 @@ import no.habitats.corpus.dl4j.NeuralEvaluation.columnWidth
 import no.habitats.corpus.mllib._
 import no.habitats.corpus.spark.SparkUtil
 import org.apache.spark.rdd.RDD
+import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, GravesLSTM}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
@@ -68,17 +69,16 @@ object NeuralEvaluation {
     labelEvals.sortBy(_.label).zipWithIndex.foreach { case (e, i) => e.log(resultFile, i) }
   }
 
-  def apply(iter: Traversable[DataSet], net: MultiLayerNetwork, epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None, timeLeft: Option[Int] = None): NeuralEvaluation = {
+  def apply(iter: DataSetIterator, net: MultiLayerNetwork, epoch: Int, label: String, neuralPrefs: Option[NeuralPrefs] = None, timeLeft: Option[Int] = None, batchesToEval: Option[Int] = None): NeuralEvaluation = {
     Log.v(s"Evaluating $label ...")
-    new NeuralEvaluation(eval(iter, net), epoch, label, neuralPrefs, learningRate(net), numHidden(net), timeLeft)
+    new NeuralEvaluation(eval(iter, net, batchesToEval), epoch, label, neuralPrefs, learningRate(net), numHidden(net), timeLeft)
   }
 
-  def eval(testIter: Traversable[DataSet], net: MultiLayerNetwork): Evaluation = {
+  def eval(testIter: DataSetIterator, net: MultiLayerNetwork, batchesToEval: Option[Int] = None): Evaluation = {
     val e = new Evaluation()
-    val count = new AtomicInteger(0)
-    val batchSize: Int = testIter.headOption.map(_.numExamples()).getOrElse(0)
-    val total = testIter.size * batchSize
-    testIter.foreach(t => {
+    var count = 0
+    while (testIter.hasNext && batchesToEval.forall(count < _)) {
+      val t = testIter.next()
       val features = t.getFeatureMatrix
       val labels = t.getLabels
       if (t.getFeaturesMaskArray != null) {
@@ -92,7 +92,8 @@ object NeuralEvaluation {
         val predicted = net.output(features, false)
         e.eval(labels, predicted)
       }
-    })
+      count += 1
+    }
     e
   }
 
