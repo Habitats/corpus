@@ -76,13 +76,13 @@ object Trainer extends Serializable {
     def tag(confidence: Int): String = s"confidence-$confidence"
 
     val learningRates = Seq(0.5)
-    var confidence = 50
+    var confidence = 100
     val termFrequencyThreshold: Int = 10
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+    //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainW2V(train = train(confidence), validation = validation(confidence))
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
-    //    RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train =  train(confidence), validation = validation(confidence))
+    RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 25
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
@@ -98,7 +98,7 @@ object Trainer extends Serializable {
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train = train(confidence), validation = validation(confidence))
 
-    confidence = 100
+    confidence = 50
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainW2V(train = train(confidence), validation = validation(confidence))
@@ -143,7 +143,7 @@ sealed trait ModelTrainer {
   val superSample: Boolean
   var feat: String = "UNINITIALIZED"
 
-  lazy val name    : String = s"${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue) "_all" else "_" + Config.count}"
+  lazy val name    : String = s"${prefix}_$feat${if (superSample) "_super" else ""}${if (Config.count == Int.MaxValue || Config.pretrained) "_all" else "_" + Config.count}"
   lazy val modelDir: String = Config.modelDir(name, tag)
   lazy val trainDir: String = Config.trainDir(name, tag)
 

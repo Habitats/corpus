@@ -88,9 +88,10 @@ object Tester {
     Log.v("Testing Confidence Levels")
     for (conf <- Seq(25, 50, 75, 100)) {
       //      tester(s"confidence-${confidence}_ffn_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
-      tester(s"confidence-${conf}_ffn_w2v_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"), predict = true)
-      tester(s"confidence-${conf}_nb_w2v_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"))
-      tester(s"confidence-${conf}_nb_bow_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"))
+//      tester(s"confidence-${conf}_ffn_w2v_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"), predict = true)
+//      tester(s"confidence-${conf}_nb_w2v_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"))
+//      tester(s"confidence-${conf}_nb_bow_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"))
+      tester("rnn_w2v_all", confidence + s"-${conf}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"))
     }
   }
 
