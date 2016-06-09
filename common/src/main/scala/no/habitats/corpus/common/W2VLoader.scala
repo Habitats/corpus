@@ -23,11 +23,8 @@ sealed trait VectorLoader {
       .map(arr => (arr(0), arr.toSeq.slice(1, arr.length).map(_.toFloat).toArray))
       .map(arr => {
         val vector = Nd4j.create(arr._2)
-        val max = vector.max(1).getDouble(0)
-        val min = vector.min(1).getDouble(0)
-        val normalized = vector.subi(min).divi(max - min)
         val id = arr._1.trim
-        (id, normalized)
+        (id, vector)
       }).collect.toMap
 
     // SHOULD ALWAYS BE EQUAL!

@@ -11,7 +11,7 @@ import org.apache.spark.rdd.RDD
 object MlLibUtils {
 
   def multiLabelClassification(c: String, train: RDD[Article], test: RDD[Article], tfidf: TFIDF): NaiveBayesModel = {
-    val training: RDD[(Set[String], Vector)] = train.map(a => (a.iptc, CorpusDataset.toVector(tfidf, a)))
+    val training: RDD[(Set[String], Vector)] = train.filter(_.ann.exists(an => tfidf.contains(an._2.id))).map(a => (a.iptc, CorpusDataset.toVector(tfidf, a)))
     trainModelsNaiveBayedMultiNominal(training, c)
   }
 
@@ -26,7 +26,7 @@ object MlLibUtils {
 
   def testMLlibModels(test: RDD[Article], catModelPairs: Map[String, NaiveBayesModel], tfidf: TFIDF): RDD[Article] = {
     if (tfidf.name.contains("w2v")) W2VLoader.preload()
-    val testing: RDD[(Article, Vector)] = test.map(a => (a, CorpusDataset.toVector(tfidf, a)))
+    val testing: RDD[(Article, Vector)] = test.filter(_.ann.exists(an => tfidf.contains(an._2.id))).map(a => (a, CorpusDataset.toVector(tfidf, a)))
     //    Log.v("Max:" + testing.map(_._2.toArray.max).max)
     //    Log.v("Min: " + testing.map(_._2.toArray.min).min)
     predictCategories(catModelPairs, testing)
