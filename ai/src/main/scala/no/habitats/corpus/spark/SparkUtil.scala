@@ -37,7 +37,7 @@ object SparkUtil {
         case "testSpark" => Log.v(s"Running simple test job ... ${sc.parallelize(1 to 1000).count}")
         case "printArticles" => printArticles(Config.count)
         case "misc" =>
-//          Tester.testTimeDecay()
+          //          Tester.testTimeDecay()
           Tester.testLengths()
 
         // Generate datasets
@@ -75,7 +75,12 @@ object SparkUtil {
         case "tnesDocumentVectors" => tnesDocumentVectors()
         case "tnesWordVectors" => tnesWordVectors()
         case "stats" =>
-          CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").commonAnnotations()
+          //          CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").commonAnnotations()
+          val train = Fetcher.by("time/nyt_time_10_train.txt")
+          val tfidf = TFIDF(train, 0, "time/")
+          new File(Config.dataPath + "nyt/time").listFiles().filter(_.isFile).map(_.getName).filter(_.contains("test")).map(f => (Fetcher.by("time/" + f), f)).map(a => (a._1.map(_.filterAnnotation(an => tfidf.contains(an.id))), a._2)).foreach(rdd => CorpusStats(rdd._1, rdd._2).annotationStatistics())
+        //          CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").compute()
+        //          CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").annotationStatistics()
 
         // Modelling
         case "trainRNNW2V" => Trainer.trainRNNW2V()
@@ -96,6 +101,7 @@ object SparkUtil {
         case "testTimeDecay" => Tester.testTimeDecay()
         case "testConfidence" => Tester.testConfidence()
         case "testW2VvsBoW" => Tester.testEmbeddedVsBoW()
+        case "testPretrained" => Tester.testPretrained()
         case "testSub" =>
         //          Tester.sub
         case "test" =>

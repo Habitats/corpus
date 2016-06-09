@@ -22,8 +22,9 @@ object DBpediaFetcher {
   }
 
   private def fetchDbpediaAnnotations(confidence: Double, json: Boolean, types: Boolean): Map[String, Seq[Annotation]] = {
+    W2VLoader.preload()
     dbpedia(confidence, json)
-      .flatMap(ann => if (types) Seq(AnnotationUtils.fromDbpedia(ann)) else Nil ++ AnnotationUtils.fromDBpediaType(ann))
+      .flatMap(ann => Seq(AnnotationUtils.fromDbpedia(ann)) ++ (if (types) AnnotationUtils.fromDBpediaType(ann) else Nil))
       .filter(an => an.fb != Config.NONE && W2VLoader.contains(an.fb))
       .map(a => (a.articleId, Seq(a)))
       .reduceByKey(_ ++ _)

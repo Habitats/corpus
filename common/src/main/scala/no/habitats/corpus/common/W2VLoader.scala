@@ -52,7 +52,7 @@ private class TextVectorLoader extends VectorLoader {
   lazy val vectors: Map[String, INDArray] = loadVectors(Config.freebaseToWord2Vec())
 
   override def fromId(fb: String): Option[INDArray] = vectors.get(fb)
-  override def contains(fb: String): Boolean = ids.contains(fb)
+  override def contains(fb: String): Boolean = vectors.contains(fb)
   override def preload() = vectors
 }
 

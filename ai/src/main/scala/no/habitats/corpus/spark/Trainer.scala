@@ -49,11 +49,11 @@ object Trainer extends Serializable {
     val tag = Tester.types
     val learningRate = 0.5
     val termFrequencyThreshold = 10
-    //    FeedforwardTrainer(tag, learningRate, 250).trainW2V(train, validation)
-    //    FeedforwardTrainer(tag, learningRate, 250).trainBoW(train, validation, termFrequencyThreshold)
+//    FeedforwardTrainer(tag, learningRate, 250).trainW2V(train, validation)
     NaiveBayesTrainer(tag).trainW2V(train, validation)
-    //    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold)
-    //    RecurrentTrainer(tag, learningRate, 50).trainW2V(train, validation)
+    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold)
+    FeedforwardTrainer(tag, learningRate, 250).trainBoW(train, validation, termFrequencyThreshold)
+    RecurrentTrainer(tag, learningRate, 50).trainW2V(train, validation)
   }
 
   // Ex5 - Time

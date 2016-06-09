@@ -35,11 +35,17 @@ object Tester {
   def testModels() = {
     Log.v("Testing models")
     val test = Fetcher.annotatedTestOrdered.map(_.toMinimal)
-    tester("all-ffn-bow", baseline).test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
-    tester("all-ffn-w2v", baseline).test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
-    tester("all-rnn-w2v", baseline).test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
-    tester("all-nb-bow", baseline).test(test)
-    tester("all-nb-w2v", baseline).test(test)
+    tester("ffn_bow_all", baseline).test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
+    tester("ffn_w2v_all", baseline).test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
+    tester("rnn_w2v_all", baseline).test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
+    tester("nb_bow_all", baseline).test(test)
+    tester("nb_w2v_all", baseline).test(test)
+  }
+
+  def testPretrained() = {
+    Log.v("Testing models")
+    val test = Fetcher.annotatedValidationOrdered.map(_.toMinimal)
+    tester("rnn_w2v_all", "pretrained").test(test, shouldLogResults = Config.logResults.getOrElse(false))
   }
 
   def testEmbeddedVsBoW() = {
@@ -88,9 +94,9 @@ object Tester {
     Log.v("Testing Confidence Levels")
     for (conf <- Seq(25, 50, 75, 100)) {
       //      tester(s"confidence-${confidence}_ffn_bow_all").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_${confidence}.txt"), predict = true)
-//      tester(s"confidence-${conf}_ffn_w2v_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"), predict = true)
-//      tester(s"confidence-${conf}_nb_w2v_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"))
-//      tester(s"confidence-${conf}_nb_bow_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"))
+      //      tester(s"confidence-${conf}_ffn_w2v_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"), predict = true)
+      //      tester(s"confidence-${conf}_nb_w2v_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"))
+      //      tester(s"confidence-${conf}_nb_bow_all", confidence).test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"))
       tester("rnn_w2v_all", confidence + s"-${conf}").test(Fetcher.by(s"confidence/nyt_mini_test_ordered_$conf.txt"))
     }
   }
@@ -124,8 +130,6 @@ object Tester {
 }
 
 sealed trait Testable {
-
-  import scala.collection.JavaConverters._
 
   val name: String
   val tag : String
