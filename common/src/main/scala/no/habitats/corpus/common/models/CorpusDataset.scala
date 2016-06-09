@@ -6,6 +6,7 @@ import org.apache.spark.rdd.RDD
 import org.deeplearning4j.spark.util.MLLibUtil
 import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
+import org.nd4j.linalg.ops.transforms.Transforms
 
 import scala.collection.Map
 import scala.collection.immutable.ListMap
@@ -70,7 +71,9 @@ object CorpusDataset {
   }
 
   def documentVectorMlLib(article: Article, tfidf: TFIDF, ordered: Boolean): Vector = {
-    MLLibUtil.toVector(documentVector(article.id, annotationSet(article, tfidf, ordered)))
+    val annotationIds: Map[String, Float] = annotationSet(article, tfidf, ordered)
+    val vectors: Iterable[INDArray] = annotationIds.map { case (id, tfidfVal) => Transforms.abs(W2VLoader.normalize(wordVector(id).mul(tfidfVal))) }
+    MLLibUtil.toVector(vectors.reduce(_.addi(_)))
   }
 
   def bowVectorMlLib(article: Article, tfidf: TFIDF): Vector = {
