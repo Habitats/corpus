@@ -87,8 +87,8 @@ object SparkUtil {
         //          val train = Fetcher.by("time/nyt_time_10_train.txt")
         //          val tfidf = TFIDF(train, 0, "time/")
         //          new File(Config.dataPath + "nyt/time").listFiles().filter(_.isFile).map(_.getName).filter(_.contains("test")).map(f => (Fetcher.by("time/" + f), f)).map(a => (a._1.map(_.filterAnnotation(an => tfidf.contains(an.id))), a._2)).foreach(rdd => CorpusStats(rdd._1, rdd._2).annotationStatistics())
-        //          CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").compute()
         //          CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").annotationStatistics()
+        //          CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").compute()
 
         // Modelling
         case "trainRNNW2V" => Trainer.trainRNNW2V()

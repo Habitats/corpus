@@ -45,14 +45,14 @@ object Trainer extends Serializable {
 
   // Ex3 - Types
   def types() = {
-    val (train, validation) = Fetcher.ordered(types = true)
     val tag = Tester.types
+    val (train, validation) = Fetcher.ordered(types = true)
     val learningRate = 0.05
     val termFrequencyThreshold = 100
-    FeedforwardTrainer(tag, learningRate, 250).trainW2V(train, validation)
-    NaiveBayesTrainer(tag).trainW2V(train, validation)
-    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold)
-//    FeedforwardTrainer(tag, learningRate, 250).trainBoW(train, validation, termFrequencyThreshold)
+//    FeedforwardTrainer(tag, learningRate, 250).trainW2V(train, validation)
+//    NaiveBayesTrainer(tag).trainW2V(train, validation)
+//    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold)
+    FeedforwardTrainer(tag, learningRate, 250).trainBoW(train, validation, termFrequencyThreshold)
 //    RecurrentTrainer(tag, learningRate, 50).trainW2V(train, validation)
   }
 
