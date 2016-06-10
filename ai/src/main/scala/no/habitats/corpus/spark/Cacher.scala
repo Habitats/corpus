@@ -58,11 +58,11 @@ object Cacher extends RddSerializer {
 
   def annotateAndCacheArticlesWithTypes(confidence: Double = 0.5) = {
     val db = DBpediaFetcher.dbpediaAnnotations(confidence, types = true)
-    var rdd = Fetcher.annotatedTestOrderedTypes.collect.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
+    var rdd = Fetcher.annotatedTestOrdered.collect.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
     saveAsText(sc.parallelize(rdd.map(Article.serialize)), "nyt_test_ordered_types")
-    rdd = Fetcher.annotatedTrainOrderedTypes.collect.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
+    rdd = Fetcher.annotatedTrainOrdered.collect.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
     saveAsText(sc.parallelize(rdd.map(Article.serialize)), "nyt_train_ordered_types")
-    rdd = Fetcher.annotatedValidationOrderedTypes.collect.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
+    rdd = Fetcher.annotatedValidationOrdered.collect.flatMap(a => Spotlight.toDBPediaAnnotated(a, db)).filter(_.ann.nonEmpty).map(_.toMinimal)
     saveAsText(sc.parallelize(rdd.map(Article.serialize)), "nyt_validation_ordered_types")
   }
 

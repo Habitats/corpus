@@ -75,10 +75,18 @@ object SparkUtil {
         case "tnesDocumentVectors" => tnesDocumentVectors()
         case "tnesWordVectors" => tnesWordVectors()
         case "stats" =>
-          //          CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").commonAnnotations()
-          val train = Fetcher.by("time/nyt_time_10_train.txt")
-          val tfidf = TFIDF(train, 0, "time/")
-          new File(Config.dataPath + "nyt/time").listFiles().filter(_.isFile).map(_.getName).filter(_.contains("test")).map(f => (Fetcher.by("time/" + f), f)).map(a => (a._1.map(_.filterAnnotation(an => tfidf.contains(an.id))), a._2)).foreach(rdd => CorpusStats(rdd._1, rdd._2).annotationStatistics())
+          CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").compute()
+          CorpusStats(Fetcher.annotatedTrainOrderedTypes, "filtered-types").compute()
+          CorpusStats(Fetcher.annotatedTestOrdered, "filtered-test").compute()
+          CorpusStats(Fetcher.annotatedTestOrderedTypes, "filtered-types-test").compute()
+          CorpusStats(Fetcher.annotatedValidationOrdered, "filtered-valid").compute()
+          CorpusStats(Fetcher.annotatedValidationOrderedTypes, "filtered-types-valid").compute()
+
+
+
+        //          val train = Fetcher.by("time/nyt_time_10_train.txt")
+        //          val tfidf = TFIDF(train, 0, "time/")
+        //          new File(Config.dataPath + "nyt/time").listFiles().filter(_.isFile).map(_.getName).filter(_.contains("test")).map(f => (Fetcher.by("time/" + f), f)).map(a => (a._1.map(_.filterAnnotation(an => tfidf.contains(an.id))), a._2)).foreach(rdd => CorpusStats(rdd._1, rdd._2).annotationStatistics())
         //          CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").compute()
         //          CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").annotationStatistics()
 
