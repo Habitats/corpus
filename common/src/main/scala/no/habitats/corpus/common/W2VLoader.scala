@@ -70,12 +70,12 @@ object W2VLoader extends RddSerializer with VectorLoader {
 
   def contains(fb: String): Boolean = loader.contains(fb)
 
-  def normalize(combined: INDArray): INDArray = {
+  def normalize(vector: INDArray): INDArray = {
     // Min: -0.15568943321704865
     // Max:  0.15866121649742126
-    val max = combined.max(1).getDouble(0)
-    val min = combined.min(1).getDouble(0)
-    combined.dup().subi(min).divi(max - min).subi(0.5)
+    val max = vector.max(1).getDouble(0)
+    val min = vector.min(1).getDouble(0)
+    vector.dup().subi(min).divi(max - min).subi(0.5)
   }
 
   def squash(vectors: Iterable[INDArray]): INDArray = vectors.map(_.dup).reduce(_.addi(_)).divi(vectors.size)
