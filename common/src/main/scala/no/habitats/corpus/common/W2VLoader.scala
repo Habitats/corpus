@@ -22,7 +22,10 @@ sealed trait VectorLoader {
       .filter(arr => filter.isEmpty || filter.contains(arr(0)))
       .map(arr => (arr(0), arr.toSeq.slice(1, arr.length).map(_.toFloat).toArray))
       .map(arr => {
-        val vector = Nd4j.create(arr._2)
+        var vector = Nd4j.create(arr._2)
+        if(Config.normalize) {
+          vector = W2VLoader.normalize(vector)
+        }
         val id = arr._1.trim
         (id, vector)
       }).collect.toMap
@@ -72,7 +75,7 @@ object W2VLoader extends RddSerializer with VectorLoader {
     // Max:  0.15866121649742126
     val max = combined.max(1).getDouble(0)
     val min = combined.min(1).getDouble(0)
-    combined.dup().subi(min).divi(max - min)
+    combined.dup().subi(min).divi(max - min).subi(0.5)
   }
 
   def squash(vectors: Iterable[INDArray]): INDArray = vectors.map(_.dup).reduce(_.addi(_)).divi(vectors.size)
