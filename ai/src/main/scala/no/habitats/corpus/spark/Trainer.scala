@@ -49,11 +49,11 @@ object Trainer extends Serializable {
     val (train, validation) = Fetcher.ordered(types = true)
     val learningRate = 0.05
     val termFrequencyThreshold = 100
-//    FeedforwardTrainer(tag, learningRate, 250).trainW2V(train, validation)
-//    NaiveBayesTrainer(tag).trainW2V(train, validation)
-//    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold)
-//    FeedforwardTrainer(tag, learningRate, 250).trainBoW(train, validation, termFrequencyThreshold)
-    RecurrentTrainer(tag, learningRate, 50).trainW2V(train, validation)
+    //    FeedforwardTrainer(tag, learningRate, 250).trainW2V(train, validation)
+        NaiveBayesTrainer(tag).trainW2V(train, validation)
+        NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold)
+    //    FeedforwardTrainer(tag, learningRate, 250).trainBoW(train, validation, termFrequencyThreshold)
+//    RecurrentTrainer(tag, learningRate, 50).trainW2V(train, validation)
   }
 
   // Ex5 - Time
@@ -82,13 +82,13 @@ object Trainer extends Serializable {
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainW2V(train = train(confidence), validation = validation(confidence))
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
-//    RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 50
-        NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
-        NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
-        FeedforwardTrainer(tag(confidence), learningRates, 250).trainW2V(train = train(confidence), validation = validation(confidence))
-        FeedforwardTrainer(tag(confidence), learningRates, 250).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
+    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
+    FeedforwardTrainer(tag(confidence), learningRates, 250).trainW2V(train = train(confidence), validation = validation(confidence))
+    FeedforwardTrainer(tag(confidence), learningRates, 250).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 75
@@ -96,14 +96,14 @@ object Trainer extends Serializable {
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainW2V(train = train(confidence), validation = validation(confidence))
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
-//    RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train = train(confidence), validation = validation(confidence))
 
     confidence = 100
     //    NaiveBayesTrainer(tag(confidence)).trainW2V(train = train(confidence), validation = validation(confidence))
     //    NaiveBayesTrainer(tag(confidence)).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainW2V(train = train(confidence), validation = validation(confidence))
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
-//    RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train = train(confidence), validation = validation(confidence))
+    //    RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train = train(confidence), validation = validation(confidence))
   }
 
   // ### Best models
@@ -243,11 +243,18 @@ sealed case class NaiveBayesTrainer(tag: String, superSample: Boolean = false) e
 
   private def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], tfidf: TFIDF, superSample: Boolean) = {
     val start = System.currentTimeMillis()
-    val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(train, superSample)(c), validation, tfidf))).toMap
-    val predicted = MlLibUtils.testMLlibModels(validation, models, tfidf)
     val resultsFile: String = trainDir + s"$name.txt"
-    MlLibUtils.evaluate(predicted, sc.broadcast(Prefs(iteration = 0)), resultsFile, resultsFile)
-    models.foreach { case (c, model) => MLlibModelLoader.save(model, modelDir + s"${name}_${IPTC.trim(c)}.bin") }
+    val decay = true
+    for {
+      i <- if (decay) 1 until 10 else Seq(10)
+      v = if (decay) sc.parallelize(validation.take(2000)) else validation
+      t = train.sample(withReplacement = false, i / 10, Config.seed)
+    } yield {
+      val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(t, superSample)(c), v, tfidf))).toMap
+      val predicted = MlLibUtils.testMLlibModels(v, models, tfidf)
+      MlLibUtils.evaluate(predicted, sc.broadcast(Prefs(iteration = 0)), resultsFile, resultsFile)
+      models.foreach { case (c, model) => MLlibModelLoader.save(model, modelDir + s"${name}_${IPTC.trim(c)}.bin") }
+    }
     Log.toFile(s"Training finished in ${SparkUtil.prettyTime(System.currentTimeMillis() - start)}", resultsFile)
   }
 }
