@@ -244,11 +244,11 @@ sealed case class NaiveBayesTrainer(tag: String, superSample: Boolean = false) e
   private def trainNaiveBayes(train: RDD[Article], validation: RDD[Article], tfidf: TFIDF, superSample: Boolean) = {
     val start = System.currentTimeMillis()
     val resultsFile: String = trainDir + s"$name.txt"
-    val decay = true
+    val decay = Config.decay
     for {
-      i <- if (decay) 1 until 10 else Seq(10)
-      v = if (decay) sc.parallelize(validation.take(2000)) else validation
-      t = train.sample(withReplacement = false, i / 10, Config.seed)
+      i <- if (decay) 1 until 100 else Seq(100)
+      v = if (decay) sc.parallelize(validation.take(3000)) else validation
+      t = train.sample(withReplacement = false, i / 100, Config.seed)
     } yield {
       val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(t, superSample)(c), v, tfidf))).toMap
       val predicted = MlLibUtils.testMLlibModels(v, models, tfidf)

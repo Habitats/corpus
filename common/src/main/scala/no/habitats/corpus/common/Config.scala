@@ -148,6 +148,7 @@ object Config {
       epoch = props.remove("epoch").map(_.toInt),
       logResults = props.remove("logres").map(_.toBoolean),
       pretrained = props.remove("pretrained").map(_.toBoolean),
+      decay = props.remove("decay").map(_.toBoolean),
       normalize = props.remove("normalize").map(_.toBoolean)
     )
     if (props.nonEmpty) {Log.v("Illegal props: " + props.mkString(", ")); System.exit(0)}
@@ -168,6 +169,7 @@ object Config {
   lazy val time                  : Boolean         = args.time.getOrElse(false)
   lazy val pretrained            : Boolean         = args.pretrained.getOrElse(false)
   lazy val normalize             : Boolean         = args.normalize.getOrElse(false)
+  lazy val decay                 : Boolean         = args.decay.getOrElse(false)
   lazy val category              : Option[String]  = args.category
   lazy val tag                   : Option[String]  = args.tag
   lazy val activation            : Option[String]  = args.activation
@@ -213,6 +215,7 @@ object Config {
                         epoch: Option[Int] = None,
                         memo: Option[Boolean] = None,
                         pretrained: Option[Boolean] = None,
+                        decay: Option[Boolean] = None,
                         normalize: Option[Boolean] = None,
                         superSample: Option[Boolean] = None
                       ) {
