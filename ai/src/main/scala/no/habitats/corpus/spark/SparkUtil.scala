@@ -82,10 +82,13 @@ object SparkUtil {
           //          CorpusStats(Fetcher.annotatedTestOrderedTypes, "filtered-types-test").compute()
           //          CorpusStats(Fetcher.annotatedValidationOrdered, "filtered-valid").compute()
           //          CorpusStats(Fetcher.annotatedValidationOrderedTypes, "filtered-types-valid").compute()
+          val train = Fetcher.annotatedTrainOrdered
+          val tfidf = TFIDF(train, 0, "length/")
+          new File(Config.dataPath + "nyt/length").listFiles().filter(_.isFile).map(_.getName).filter(_.contains("test")).map(f => (Fetcher.by("length/" + f), f)).map(a => (a._1.map(_.filterAnnotation(an => tfidf.contains(an.id))), a._2)).foreach(rdd => CorpusStats(rdd._1, "length/" + rdd._2).compute())
 
-          val train = Fetcher.by("time/nyt_time_10_train.txt")
-          val tfidf = TFIDF(train, 0, "time/")
-          new File(Config.dataPath + "nyt/time").listFiles().filter(_.isFile).map(_.getName).filter(_.contains("test")).map(f => (Fetcher.by("time/" + f), f)).map(a => (a._1.map(_.filterAnnotation(an => tfidf.contains(an.id))), a._2)).foreach(rdd => CorpusStats(rdd._1, "time/" + rdd._2).compute())
+//          val train = Fetcher.by("time/nyt_time_10_train.txt")
+//          val tfidf = TFIDF(train, 0, "time/")
+//          new File(Config.dataPath + "nyt/time").listFiles().filter(_.isFile).map(_.getName).filter(_.contains("test")).map(f => (Fetcher.by("time/" + f), f)).map(a => (a._1.map(_.filterAnnotation(an => tfidf.contains(an.id))), a._2)).foreach(rdd => CorpusStats(rdd._1, "time/" + rdd._2).compute())
         //          CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").annotationStatistics()
 //                  CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").compute()
 

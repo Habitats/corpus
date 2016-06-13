@@ -148,13 +148,13 @@ object NeuralEvaluation {
         //        "Ex.Accuracy" -> f"${exampleBased.accuracy}%.3f",
         //        "Ex.F-score" -> f"${exampleBased.fscore}%.3f",
         "H-Loss" -> f"${exampleBased.hloss}%.3f",
-        "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f"
+        "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f",
 
         // Label stats
-        //        "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
-        //        "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
-        //        "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
-        //        "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
+        "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
+        "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
+        "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
+        "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
       )
     }).getOrElse(Nil)
 
