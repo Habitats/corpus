@@ -172,6 +172,16 @@ object Cacher extends RddSerializer {
     saveAsText(r75.map(Article.serialize), "nyt_mini_train_annotated_75")
   }
 
+  def splitCustom() = {
+    val trainId: Set[String] = Fetcher.annotatedTrainOrdered.map(_.id).collect.toSet
+    val testId: Set[String] = Fetcher.annotatedTestOrdered.map(_.id).collect.toSet
+    val validationId: Set[String] = Fetcher.annotatedValidationOrdered.map(_.id).collect.toSet
+    val rdd = Fetcher.rdd
+    saveAsText(rdd.filter(a => trainId.contains(a.id)).map(Article.serialize), "nyt_train_ordered_full")
+    saveAsText(rdd.filter(a => testId.contains(a.id)).map(Article.serialize), "nyt_test_ordered_full")
+    saveAsText(rdd.filter(a => validationId.contains(a.id)).map(Article.serialize), "nyt_validation_ordered_full")
+  }
+
   def splitOrdered(rdd: RDD[Article], name: String = ""): Unit = {
     // Ordered split
     val numArticles = rdd.count()

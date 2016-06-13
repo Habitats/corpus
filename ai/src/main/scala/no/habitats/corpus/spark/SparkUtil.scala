@@ -67,6 +67,7 @@ object SparkUtil {
           Cacher.cacheSubSampledShuffled()
         case "cacheAndSplitLength" => Cacher.cacheAndSplitLength()
         case "cacheAndSplitTime" => Cacher.cacheAndSplitTime()
+        case "cacheAndSplitCorpus" => Cacher.splitCustom()
         case "cache" =>
           Seq(25, 50, 75, 100).foreach(s => Cacher.splitOrdered(Fetcher.by("confidence/nyt_mini_train_annotated_" + s + ".txt"), s.toString))
 
@@ -75,20 +76,18 @@ object SparkUtil {
         case "tnesDocumentVectors" => tnesDocumentVectors()
         case "tnesWordVectors" => tnesWordVectors()
         case "stats" =>
-          CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").compute()
-          CorpusStats(Fetcher.annotatedTrainOrderedTypes, "filtered-types").compute()
-          CorpusStats(Fetcher.annotatedTestOrdered, "filtered-test").compute()
-          CorpusStats(Fetcher.annotatedTestOrderedTypes, "filtered-types-test").compute()
-          CorpusStats(Fetcher.annotatedValidationOrdered, "filtered-valid").compute()
-          CorpusStats(Fetcher.annotatedValidationOrderedTypes, "filtered-types-valid").compute()
+          //          CorpusStats(Fetcher.annotatedTrainOrdered, "filtered").compute()
+          //          CorpusStats(Fetcher.annotatedTrainOrderedTypes, "filtered-types").compute()
+          //          CorpusStats(Fetcher.annotatedTestOrdered, "filtered-test").compute()
+          //          CorpusStats(Fetcher.annotatedTestOrderedTypes, "filtered-types-test").compute()
+          //          CorpusStats(Fetcher.annotatedValidationOrdered, "filtered-valid").compute()
+          //          CorpusStats(Fetcher.annotatedValidationOrderedTypes, "filtered-types-valid").compute()
 
-
-
-        //          val train = Fetcher.by("time/nyt_time_10_train.txt")
-        //          val tfidf = TFIDF(train, 0, "time/")
-        //          new File(Config.dataPath + "nyt/time").listFiles().filter(_.isFile).map(_.getName).filter(_.contains("test")).map(f => (Fetcher.by("time/" + f), f)).map(a => (a._1.map(_.filterAnnotation(an => tfidf.contains(an.id))), a._2)).foreach(rdd => CorpusStats(rdd._1, rdd._2).annotationStatistics())
+          val train = Fetcher.by("time/nyt_time_10_train.txt")
+          val tfidf = TFIDF(train, 0, "time/")
+          new File(Config.dataPath + "nyt/time").listFiles().filter(_.isFile).map(_.getName).filter(_.contains("test")).map(f => (Fetcher.by("time/" + f), f)).map(a => (a._1.map(_.filterAnnotation(an => tfidf.contains(an.id))), a._2)).foreach(rdd => CorpusStats(rdd._1, "time/" + rdd._2).compute())
         //          CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").annotationStatistics()
-        //          CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").compute()
+//                  CorpusStats(Fetcher.by("types/nyt_train_ordered_types.txt"), "types").compute()
 
         // Modelling
         case "trainRNNW2V" => Trainer.trainRNNW2V()
@@ -96,6 +95,7 @@ object SparkUtil {
         case "trainFFNBoW" => Trainer.trainFFNBoW()
         case "trainNaiveW2V" => Trainer.trainNaiveW2V()
         case "trainNaiveBoW" => Trainer.trainNaiveBoW()
+        case "trainNaiveTraditional" => Trainer.trainNaiveTraditional()
 
         case "trainBaseline" => Trainer.baseline()
         case "trainSuper" => Trainer.supersampled()
@@ -110,6 +110,7 @@ object SparkUtil {
         case "testConfidence" => Tester.testConfidence()
         case "testW2VvsBoW" => Tester.testEmbeddedVsBoW()
         case "testPretrained" => Tester.testPretrained()
+        case "testNaive" => Tester.testNaive()
         case "testSub" =>
         //          Tester.sub
         case "test" =>

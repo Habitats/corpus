@@ -42,7 +42,7 @@ object OpenNLP extends Extractor {
 
   def sentenceDetection(text: String): Array[String] = sentenceDetector.sentDetect(text)
 
-  def tokenize(text: String): Array[String] = tokenizer.tokenize(text)
+  def tokenize(text: String): Array[String] = tokenizer.tokenize(text).map(stemmer.stem)
 
   def nameFinder(text: String): Array[(String, String)] = {
     val models = Seq(persons, locations, money, orgs)

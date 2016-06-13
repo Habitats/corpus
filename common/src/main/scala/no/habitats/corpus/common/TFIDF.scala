@@ -34,9 +34,20 @@ object TFIDF {
   def frequencyFilter(rdd: RDD[Article], phrases: Set[String]): RDD[Article] = rdd.map(_.filterAnnotation(ann => phrases.contains(ann.id))).filter(_.ann.nonEmpty)
 
   def apply(train: RDD[Article], threshold: Int, path: String): TFIDF = {
+
+    def docsWithTerm(train: RDD[Article], threshold: Int): Map[String, Int] = {
+      val documentsWithTerm: Map[String, Int] = train.flatMap(_.ann.values).map(a => (a.id, 1)).reduceByKey(_ + _).filter(_._2 > Config.termFrequencyThreshold.getOrElse(threshold)).collect.toMap
+      // Optional low-pass filter
+      //      val totalDocumentCount = train.count
+      //      val filteredDocumentsWithTerm = documentsWithTerm.filter(_._2 < totalDocumentCount * 0.8)
+      //      filteredDocumentsWithTerm
+      documentsWithTerm
+    }
+
     val originalPhraseCount = train.flatMap(_.ann.keySet).distinct.count
-    val documentsWithTerm: Map[String, Int] = train.flatMap(_.ann.values).map(a => (a.id, 1)).reduceByKey(_ + _).filter(_._2 > Config.termFrequencyThreshold.getOrElse(threshold)).collect.toMap
+    val documentsWithTerm = docsWithTerm(train, threshold)
     val phrases = documentsWithTerm.keySet.to[SortedSet]
+
     // This didn't have much effect
     // .intersect(Config.dataFile(Config.dataPath + "nyt/time/excluded_ids_time.txt").getLines().map(_.trim).toSet)
 

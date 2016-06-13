@@ -42,6 +42,14 @@ object Tester {
     tester("nb_w2v_all", baseline).test(test)
   }
 
+  def testNaive() = {
+    val test = Fetcher.annotatedTestOrdered.map(_.toMinimal)
+    tester("nb_bow_all", baseline).test(test)
+    tester("nb_w2v_all", baseline).test(test)
+    tester("nb_bow_all", types).test(test)
+    tester("nb_w2v_all", types).test(test)
+  }
+
   def testPretrained() = {
     Log.v("Testing models")
     val test = Fetcher.annotatedValidationOrdered.map(_.toMinimal)

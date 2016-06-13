@@ -13,6 +13,7 @@ mainClassName = 'no.habitats.corpus.spark.SparkUtil'
 
 dependencies {
     compile project(':common')
+    compile project(':nlp')
     compile 'javax.mail:javax.mail-api:1.5.5'
 
     // DL4J histogram

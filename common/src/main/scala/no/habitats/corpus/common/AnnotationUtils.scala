@@ -2,7 +2,7 @@ package no.habitats.corpus.common
 
 import java.io.File
 
-import no.habitats.corpus.common.models.{Annotation, DBPediaAnnotation, Entity}
+import no.habitats.corpus.common.models.{Annotation, Article, DBPediaAnnotation, Entity}
 
 import scala.collection.mutable.ListBuffer
 import scala.io.{BufferedSource, Codec, Source}
@@ -22,6 +22,7 @@ object AnnotationUtils {
   def fromName(articleId: String, index: Int, name: String, count: Int, kind: String): Annotation = {
     new Annotation(articleId = articleId, phrase = name, mc = count)
   }
+
 
   /** Google annotations raw lines format */
   def fromGoogle(file: File = new File(Config.dataPath + "google-annotations/nyt-ann-all.txt")): Map[String, Seq[Annotation]] = {

@@ -42,6 +42,10 @@ object Fetcher extends RddSerializer {
   lazy val annotatedTestOrdered           : RDD[Article] = fetch("nyt/nyt_test_ordered.txt", 0.2)
   lazy val annotatedTrainOrdered          : RDD[Article] = fetch("nyt/nyt_train_ordered.txt", 0.6)
   lazy val annotatedValidationOrdered     : RDD[Article] = fetch("nyt/nyt_validation_ordered.txt", 0.2)
+  // Articles split in chronological order based on ID
+  lazy val corpusTestOrdered           : RDD[Article] = fetch("nyt/nyt_test_ordered_full.txt", 0.2)
+  lazy val corpusTrainOrdered          : RDD[Article] = fetch("nyt/nyt_train_ordered_full.txt", 0.6)
+  lazy val corpusValidationOrdered     : RDD[Article] = fetch("nyt/nyt_validation_ordered_full.txt", 0.2)
   // Articles with DBpedia types
   //  lazy val annotatedTestOrderedTypes      : RDD[Article] = fetch("nyt/nyt_test_ordered_types.txt", 0.2)
   //  lazy val annotatedTrainOrderedTypes     : RDD[Article] = fetch("nyt/nyt_train_ordered_types.txt", 0.6)

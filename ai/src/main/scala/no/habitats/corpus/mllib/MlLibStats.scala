@@ -51,13 +51,13 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
     "Mi.Recall" -> f"${microAverage.recall}%.3f",
     "Mi.Precision" -> f"${microAverage.precision}%.3f",
     "Mi.Accuracy" -> f"${microAverage.accuracy}%.3f",
-    "Mi.F-score" -> f"${microAverage.fscore}%.3f"
+    "Mi.F-score" -> f"${microAverage.fscore}%.3f",
 
     // Label stats
-    //    "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
-    //    "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
-    //    "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
-    //    "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
+    "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
+    "Pred LCard" -> f"${labelMetrics.labelCardinalityPred}%.3f",
+    "LDiv" -> f"${labelMetrics.labelDiversity}%.3f",
+    "Pred LDiv" -> f"${labelMetrics.labelDiversityPred}%.3f"
   )
 }
 

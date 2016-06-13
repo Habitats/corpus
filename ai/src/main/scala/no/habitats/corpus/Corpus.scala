@@ -5,6 +5,7 @@ import java.io.File
 import com.nytlabs.corpus.NYTCorpusDocumentParser
 import no.habitats.corpus.common._
 import no.habitats.corpus.common.models._
+import no.habitats.corpus.nlp.extractors.Simple
 
 object Corpus {
 
@@ -31,6 +32,17 @@ object Corpus {
   def toArticle(nyt: NYTCorpusDocument): Article = ArticleUtils.fromNYT(nyt)
 
   def toIPTC(article: Article): Article = article.addIptc(Config.broadMatch)
+
+  def fromBody(articleId: String, body: String): Map[String, Annotation] = {
+    Simple.tokenize(body.toLowerCase)
+      .zipWithIndex
+      .map(w => Annotation(articleId = articleId, phrase = w._1, mc = 1, offset = w._2))
+      .groupBy(_.id).map(group => (group._1, group._2.head.copy(mc = group._2.map(_.mc).sum, offset = group._2.map(_.offset).min)))
+  }
+
+  def toTraditional(article: Article): Article = {
+    article.copy(ann = fromBody(article.id, article.body))
+  }
 
   def toGoogleAnnotated(a: Article): Article = {
     googleAnnotations.get(a.id) match {

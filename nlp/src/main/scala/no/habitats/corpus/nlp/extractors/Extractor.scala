@@ -7,4 +7,5 @@ import no.habitats.corpus.nlp.models.Sentence
   */
 trait Extractor {
   def extract(text: String): Seq[Sentence]
+  def tokenize(text: String): Array[String]
 }

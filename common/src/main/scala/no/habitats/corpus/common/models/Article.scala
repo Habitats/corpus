@@ -23,7 +23,7 @@ case class Article(id: String,
 
   def toStringFull: String = {
     val iptcstr = iptc.mkString(", ")
-    val annstr = ann.values.toSeq.sortBy(-_.tfIdf).mkString("\n\t\t")
+    val annstr = ann.values.toSeq.sortBy(_.offset).mkString("\n\t\t")
     val dstr = desc.mkString(", ")
     val predstr = pred.mkString(", ")
     f"$id - $hl - $wc - ${date.getOrElse("")} - ${url.getOrElse("")}\n\tDescriptors: $dstr\n\tIPTC:        $iptcstr\n\tPredictions: $predstr\n\tAnnotations (${ann.size}):\n\t\t$annstr\n"

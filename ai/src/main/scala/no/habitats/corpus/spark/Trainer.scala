@@ -1,14 +1,16 @@
 package no.habitats.corpus.spark
 
+import no.habitats.corpus.{ArticleUtils, Corpus}
 import no.habitats.corpus.common.CorpusContext._
 import no.habitats.corpus.common.dl4j.NeuralModelLoader
 import no.habitats.corpus.common.mllib.MLlibModelLoader
-import no.habitats.corpus.common.models.{Article, CorpusDataset}
+import no.habitats.corpus.common.models.{Annotation, Article, CorpusDataset}
 import no.habitats.corpus.common.{Config, _}
 import no.habitats.corpus.dl4j.NeuralTrainer.{IteratorPrefs, NeuralResult}
 import no.habitats.corpus.dl4j.networks.{FeedForward, FeedForwardIterator, RNN, RNNIterator}
 import no.habitats.corpus.dl4j.{NeuralPrefs, NeuralTrainer}
 import no.habitats.corpus.mllib.{MlLibUtils, Prefs}
+import no.habitats.corpus.nlp.extractors.Simple
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
@@ -50,10 +52,10 @@ object Trainer extends Serializable {
     val learningRate = 0.05
     val termFrequencyThreshold = 100
     //    FeedforwardTrainer(tag, learningRate, 250).trainW2V(train, validation)
-        NaiveBayesTrainer(tag).trainW2V(train, validation)
-        NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold)
+    NaiveBayesTrainer(tag).trainW2V(train, validation)
+    NaiveBayesTrainer(tag).trainBoW(train, validation, termFrequencyThreshold)
     //    FeedforwardTrainer(tag, learningRate, 250).trainBoW(train, validation, termFrequencyThreshold)
-//    RecurrentTrainer(tag, learningRate, 50).trainW2V(train, validation)
+    //    RecurrentTrainer(tag, learningRate, 50).trainW2V(train, validation)
   }
 
   // Ex5 - Time
@@ -104,6 +106,12 @@ object Trainer extends Serializable {
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainW2V(train = train(confidence), validation = validation(confidence))
     //    FeedforwardTrainer(tag(confidence), learningRates, 250).trainBoW(train = train(confidence), validation = validation(confidence), termFrequencyThreshold = termFrequencyThreshold)
     //    RecurrentTrainer(tag(confidence), learningRates, 50).trainW2V(train = train(confidence), validation = validation(confidence))
+  }
+
+  def trainNaiveTraditional() = {
+    val train = Fetcher.corpusTrainOrdered.map(Corpus.toTraditional)
+    val test = Fetcher.corpusValidationOrdered.map(Corpus.toTraditional)
+    NaiveBayesTrainer("traditional").trainBoW(train, test, 10)
   }
 
   // ### Best models
@@ -245,11 +253,11 @@ sealed case class NaiveBayesTrainer(tag: String, superSample: Boolean = false) e
     val start = System.currentTimeMillis()
     val resultsFile: String = trainDir + s"$name.txt"
     val decay = Config.decay
+    val v = (if (decay) sc.parallelize(validation.take(2000)) else validation).map(_.filterAnnotation(an => tfidf.contains(an.id))).filter(_.ann.nonEmpty)
     for {
       i <- if (decay) 1 until 100 else Seq(100)
-      v = if (decay) sc.parallelize(validation.take(3000)) else validation
-      t = train.sample(withReplacement = false, i / 100, Config.seed)
     } yield {
+      val t = train.map(_.filterAnnotation(an => tfidf.contains(an.id))).filter(_.ann.nonEmpty).sample(withReplacement = false, i / 100.toDouble, Config.seed)
       val models: Map[String, NaiveBayesModel] = Config.cats.map(c => (c, MlLibUtils.multiLabelClassification(c, processTraining(t, superSample)(c), v, tfidf))).toMap
       val predicted = MlLibUtils.testMLlibModels(v, models, tfidf)
       MlLibUtils.evaluate(predicted, sc.broadcast(Prefs(iteration = 0)), resultsFile, resultsFile)
