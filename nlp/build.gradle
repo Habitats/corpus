@@ -3,6 +3,7 @@ apply plugin: 'application'
 repositories {
     flatDir(dirs: 'models') // Yes you need both. Don't ask why.
     flatDir(dirs: 'ai/models')
+    flatDir(dirs: 'nlp/models')
 }
 
 dependencies {
