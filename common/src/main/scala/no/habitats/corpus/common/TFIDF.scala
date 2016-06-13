@@ -39,8 +39,7 @@ object TFIDF {
       val documentsWithTerm: Map[String, Int] = train.flatMap(_.ann.values).map(a => (a.id, 1)).reduceByKey(_ + _).filter(_._2 > Config.termFrequencyThreshold.getOrElse(threshold)).collect.toMap
       // Optional low-pass filter
       //      val totalDocumentCount = train.count
-      //      val filteredDocumentsWithTerm = documentsWithTerm.filter(_._2 < totalDocumentCount * 0.8)
-      //      filteredDocumentsWithTerm
+      //      documentsWithTerm = documentsWithTerm.filter(_._2 < totalDocumentCount * 0.1)
       documentsWithTerm
     }
 

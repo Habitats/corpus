@@ -4,9 +4,6 @@ import no.habitats.corpus.common.Config
 import no.habitats.corpus.nlp.models.Sentence
 import opennlp.tools.stemmer.PorterStemmer
 
-/**
-  * Created by mail on 12.06.2016.
-  */
 object Simple extends Extractor {
 
   val ordinary: Set[Char] = (('a' to 'z') ++ ('A' to 'Z') ++ ('0' to '9')).toSet ++ Set('$', '€', '¥')

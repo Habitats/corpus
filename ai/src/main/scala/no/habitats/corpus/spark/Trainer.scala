@@ -111,7 +111,7 @@ object Trainer extends Serializable {
   def trainNaiveTraditional() = {
     val train = Fetcher.corpusTrainOrdered.map(Corpus.toTraditional)
     val test = Fetcher.corpusValidationOrdered.map(Corpus.toTraditional)
-    NaiveBayesTrainer("traditional").trainBoW(train, test, 10)
+    NaiveBayesTrainer("traditional").trainBoW(train, test, 200)
   }
 
   // ### Best models
