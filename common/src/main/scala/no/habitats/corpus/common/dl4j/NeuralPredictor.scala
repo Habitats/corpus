@@ -1,7 +1,8 @@
 package no.habitats.corpus.common.dl4j
 
 import no.habitats.corpus.common.models.{Article, CorpusDataset}
-import no.habitats.corpus.common.{Config, Log, TFIDF}
+import no.habitats.corpus.common.{Config, CorpusContext, Log, TFIDF}
+import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.nn.conf.layers.GravesLSTM
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
@@ -9,10 +10,11 @@ import org.nd4j.linalg.api.ndarray.INDArray
 import org.nd4j.linalg.factory.Nd4j
 import org.nd4j.linalg.indexing.NDArrayIndex
 
+import scala.collection.immutable.IndexedSeq
 import scala.collection.mutable
 
 case class NeuralPredictor(net: MultiLayerNetwork, articles: Array[Article], label: String, tfidf: TFIDF) {
-  val featureDimensions: Int     = if(tfidf.name.contains("bow")) tfidf.phrases.size else 1000
+  val featureDimensions: Int     = if (tfidf.name.contains("bow")) tfidf.phrases.size else 1000
   val isRecurrent      : Boolean = net.getLayerWiseConfigurations.getConf(0).getLayer.isInstanceOf[GravesLSTM]
 
   def correct(log: Boolean = false): Array[Boolean] = {
@@ -37,9 +39,10 @@ case class NeuralPredictor(net: MultiLayerNetwork, articles: Array[Article], lab
   }
 
   def recurrentPrediction: Array[(Double, Double)] = {
+    val cutoff = 100
 
     // Filter out all ID's with matching vectors
-    val numFeatures = articles.map(_.ann.size).max
+    val numFeatures = Math.min(articles.map(_.ann.size).max, cutoff)
 
     // [miniBatchSize, inputSize, timeSeriesLength]
     val features = Nd4j.create(articles.size, featureDimensions, numFeatures, 'f')
@@ -50,13 +53,13 @@ case class NeuralPredictor(net: MultiLayerNetwork, articles: Array[Article], lab
     for {
       i <- articles.indices
     } yield {
-      val tokens: List[(Double, String)] = articles(i).ann.values
+      val tokens: List[String] = articles(i).ann.values.take(100)
         // We want to preserve order
         .toSeq.sortBy(ann => ann.offset)
-        .map(ann => (ann.tfIdf, ann.fb))
+        .map(_.fb)
         .toList
       for (j <- tokens.indices) {
-        val (tfidf, id) = tokens(j)
+        val id = tokens(j)
         val vector: INDArray = CorpusDataset.wordVector(id)
         features.put(Array(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.point(j)), vector)
         featureMask.putScalar(Array(i, j), 1.0)
@@ -80,25 +83,23 @@ object NeuralPredictor {
 
   /** For every partition, split partition into minibatches, predict minibatches, then combine */
   def predict(articles: RDD[Article], models: Map[String, NeuralModel], tfidf: TFIDF): RDD[Article] = {
-    articles.mapPartitions(partition => predictPartition(models, partition.toArray, tfidf).iterator)
+    val bModels = CorpusContext.sc.broadcast(models)
+    articles.mapPartitions(partition => predictPartition(bModels, partition.toArray, tfidf).iterator)
   }
 
-  def predictPartition(models: Map[String, NeuralModel], partition: Array[Article], tfidf: TFIDF): Array[Article] = {
+  def predictPartition(models: Broadcast[Map[String, NeuralModel]], partition: Array[Article], tfidf: TFIDF): Array[Article] = {
     val batchSize = 5000
-    val batches = partition.size / batchSize
-    if (batches == 0) partition
-    else {
-      val predictedBatches = for {batchStart <- 0 until batches} yield {
-        val batch: Array[Article] = partition.slice(batchStart * batchSize, (batchStart + 1) * batchSize).toArray
-        val allPredictions: Map[String, Array[Boolean]] = models.map { case (label, model) => (label, NeuralPredictor(model.network, batch, label, tfidf).correct()) }
-        batch.zipWithIndex.map { case (article, articleIndex) => {
-          val predicted = allPredictions.filter { case (label, res) => res(articleIndex) }.keySet
-          article.copy(pred = predicted)
-        }
-        }
+    val batches = (partition.size.toDouble / batchSize).ceil.toInt
+    val predictedBatches: IndexedSeq[Array[Article]] = for {batchStart <- 0 until batches} yield {
+      val batch: Array[Article] = partition.slice(batchStart * batchSize, (batchStart + 1) * batchSize).toArray
+      val allPredictions: Map[String, Array[Boolean]] = models.value.map { case (label, model) => (label, NeuralPredictor(model.network, batch, label, tfidf).correct()) }
+      batch.zipWithIndex.map { case (article, articleIndex) => {
+        val predicted = allPredictions.filter { case (label, res) => res(articleIndex) }.keySet
+        article.copy(pred = predicted)
       }
-      predictedBatches.reduce(_ ++ _)
+      }
     }
+    predictedBatches.fold(Array())(_ ++ _)
   }
 
   def predict(article: Article, modelName: String): Set[String] = {
