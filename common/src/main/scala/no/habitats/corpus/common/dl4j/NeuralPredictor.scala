@@ -88,7 +88,7 @@ object NeuralPredictor {
   }
 
   def predictPartition(models: Broadcast[Map[String, NeuralModel]], partition: Array[Article], tfidf: TFIDF): Array[Article] = {
-    val batchSize = 5000
+    val batchSize = 500
     val batches = (partition.size.toDouble / batchSize).ceil.toInt
     val predictedBatches: IndexedSeq[Array[Article]] = for {batchStart <- 0 until batches} yield {
       val batch: Array[Article] = partition.slice(batchStart * batchSize, (batchStart + 1) * batchSize).toArray
