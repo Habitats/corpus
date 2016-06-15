@@ -1,14 +1,18 @@
 package no.habitats.corpus
 
+import java.io.File
+
 import no.habitats.corpus.common.models.Article
-import no.habitats.corpus.common.{Config, Log, TFIDF}
+import no.habitats.corpus.common.{Config, IPTC, Log, TFIDF}
 import no.habitats.corpus.mllib.Preprocess
+import no.habitats.corpus.spark.Fetcher
 import org.apache.spark.rdd.RDD
 import org.apache.spark.util.StatCounter
 
 case class CorpusStats(rdd: RDD[Article], name: String) {
 
-  val statsFile = Config.dataPath + s"stats/${name}_general.txt"
+  val detailedPath = "stats/details/"
+  val statsFile    = Config.dataPath + s"stats/${name}_general.txt"
 
   def compute() = {
     rdd.cache()
@@ -39,7 +43,7 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
 
     for (c <- importantAnnotations) {
       val map: Traversable[String] = c._2.map { case (phrase, tfidf, mentions) => f"$phrase%40s $tfidf%2.5f $mentions%10d" }
-      Log.saveToList(map, Config.dataPath + s"stats/important_annotations/${c._1}.txt", overwrite = true)
+      Log.saveToList(map, Config.dataPath + s"${detailedPath}important_annotations/${c._1}.txt", overwrite = true)
     }
   }
 
@@ -51,7 +55,7 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
         filtered = Preprocess.frequencyFilter(filtered, phrases.toSet).filter(_.ann.nonEmpty)
         val annotationsIptc: RDD[Int] = filtered.map(_.ann.size)
         val stats = f"$i%5d ${filtered.count()}%7d ${phrases.size}%7d ${statsToPretty(annotationsIptc.stats(), "Annotations per article")}"
-        Log.toFile(stats, Config.dataPath + s"stats/term_frequency_${name}.txt")
+        Log.toFile(stats, Config.dataPath + s"${detailedPath}term_frequency_${name}.txt")
       }
     }
   }
@@ -93,22 +97,46 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
   def annotationStatistics() = {
     val annotationsIptc: RDD[Int] = rdd.map(_.ann.size)
     Log.toFile(statsToPretty(annotationsIptc.stats(), "Annotations per article"), statsFile)
-    Log.saveToList(pairs(annotationsIptc), Config.dataPath + s"stats/${name}_annotations_per_article.txt")
+    Log.saveToList(pairs(annotationsIptc), Config.dataPath + s"$detailedPath${name}_annotations_per_article.txt")
 
     val mentionAnnotation: RDD[Int] = rdd.flatMap(_.ann.values.map(_.id)).map(id => (id, 1)).reduceByKey(_ + _).values
     Log.toFile(statsToPretty(mentionAnnotation.stats(), "Mentions per annotation"), statsFile)
-    Log.saveToList(pairs(mentionAnnotation), Config.dataPath + s"stats/${name}_mention_per_annotation.txt")
+    Log.saveToList(pairs(mentionAnnotation), Config.dataPath + s"$detailedPath${name}_mention_per_annotation.txt")
   }
 
   def articleLabelsStatistics() = {
     val articlesIptc: RDD[Int] = rdd.map(_.iptc.size)
     Log.toFile(statsToPretty(articlesIptc.stats(), "IPTC"), statsFile)
-    Log.saveToList(pairs(articlesIptc), Config.dataPath + s"stats/${name}_iptc_per_article.txt")
+    Log.saveToList(pairs(articlesIptc), Config.dataPath + s"$detailedPath${name}_iptc_per_article.txt")
   }
 
   def articleLengthsStatistics() = {
     val articleLength: RDD[Int] = rdd.map(_.wc)
     Log.toFile(statsToPretty(articleLength.stats(), "Article length"), statsFile)
-    Log.saveToList(pairs(articleLength), Config.dataPath + s"stats/${name}_article_length.txt")
+    Log.saveToList(pairs(articleLength), Config.dataPath + s"$detailedPath${name}_article_length.txt")
+  }
+}
+
+object CorpusStats {
+
+  def labelCompute(rdd: RDD[Article]) = {
+    for (c <- IPTC.topCategories) {
+      val rddcat = rdd.filter(_.iptc.contains(c))
+      new CorpusStats(rddcat, s"labels/$c").compute()
+    }
+  }
+
+  def labelDiversity(rdd: RDD[Article]) = {
+    IPTC.topCategories.map(c => {
+      val totAnn = rdd.filter(_.iptc.contains(c)).map(_.ann.size).sum
+      val distinct = rdd.filter(_.iptc.contains(c)).flatMap(_.ann.keys).distinct().count
+      f"$c%40s ${distinct / totAnn.toDouble}"
+    }).foreach(Log.v)
+  }
+
+  def lengthCompute() = {
+    val train = Fetcher.annotatedTrainOrdered
+    val tfidf = TFIDF(train, 0, "length/")
+    new File(Config.dataPath + "nyt/length").listFiles().filter(_.isFile).map(_.getName).filter(_.contains("test")).map(f => (Fetcher.by("length/" + f), f)).map(a => (a._1.map(_.filterAnnotation(an => tfidf.contains(an.id))), a._2)).foreach(rdd => CorpusStats(rdd._1, "length/" + rdd._2).compute())
   }
 }

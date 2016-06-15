@@ -1,7 +1,7 @@
 package no.habitats.corpus.common.dl4j
 
 import no.habitats.corpus.common.models.{Article, CorpusDataset}
-import no.habitats.corpus.common.{Config, CorpusContext, Log, TFIDF}
+import no.habitats.corpus.common._
 import org.apache.spark.broadcast.Broadcast
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.nn.conf.layers.GravesLSTM
@@ -45,35 +45,33 @@ case class NeuralPredictor(net: MultiLayerNetwork, articles: Array[Article], lab
     val numFeatures = Math.min(articles.map(_.ann.size).max, cutoff)
 
     // [miniBatchSize, inputSize, timeSeriesLength]
-    val features = Nd4j.create(articles.size, featureDimensions, numFeatures, 'f')
+    val features = Nd4j.create(Array(articles.size, featureDimensions, numFeatures), 'f')
     // [miniBatchSize, timeSeriesLength]
-    val featureMask = Nd4j.zeros(articles.size, numFeatures, 'f')
-    val labelsMask = Nd4j.zeros(articles.size, numFeatures, 'f')
+    val featureMask = Nd4j.create(Array(articles.size, numFeatures), 'f')
+    val labelsMask = Nd4j.create(Array(articles.size, numFeatures), 'f')
 
-    for {
-      i <- articles.indices
-    } yield {
-      val tokens: List[String] = articles(i).ann.values.take(100)
+    for (i <- articles.indices) yield {
+      val tokens: List[String] = articles(i).ann.values
         // We want to preserve order
         .toSeq.sortBy(ann => ann.offset)
         .map(_.fb)
         .toList
+        .take(cutoff)
       for (j <- tokens.indices) {
         val id = tokens(j)
         val vector: INDArray = CorpusDataset.wordVector(id)
         features.put(Array(NDArrayIndex.point(i), NDArrayIndex.all(), NDArrayIndex.point(j)), vector)
         featureMask.putScalar(Array(i, j), 1.0)
       }
+      labelsMask.putScalar(Array(i, numFeatures - 1), 1.0)
     }
-    labelsMask.putScalar(Array(0, numFeatures - 1), 1.0)
 
     // Make the prediction, based on current features
     val predicted = net.output(features, false, featureMask, labelsMask)
-    articles.indices.map {
-      i =>
-        val falseRes = predicted.getRow(i).getScalar(numFeatures - 1).getDouble(0)
-        val trueRes = predicted.getRow(i).getScalar(numFeatures * 2 - 1).getDouble(0)
-        (trueRes, falseRes)
+    articles.indices.map { i =>
+      val falseRes = predicted.getRow(i).getScalar(numFeatures - 1).getDouble(0)
+      val trueRes = predicted.getRow(i).getScalar(numFeatures * 2 - 1).getDouble(0)
+      (trueRes, falseRes)
     }.toArray
   }
 }
@@ -84,7 +82,7 @@ object NeuralPredictor {
   /** For every partition, split partition into minibatches, predict minibatches, then combine */
   def predict(articles: RDD[Article], models: Map[String, NeuralModel], tfidf: TFIDF): RDD[Article] = {
     val bModels = CorpusContext.sc.broadcast(models)
-    articles.mapPartitions(partition => predictPartition(bModels, partition.toArray, tfidf).iterator)
+    articles.map(_.filterAnnotation(a => tfidf.contains(a.id) && W2VLoader.contains(a.fb))).filter(_.ann.nonEmpty).mapPartitions(partition => predictPartition(bModels, partition.toArray, tfidf).iterator)
   }
 
   def predictPartition(models: Broadcast[Map[String, NeuralModel]], partition: Array[Article], tfidf: TFIDF): Array[Article] = {
