@@ -53,6 +53,7 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
 
     "H-Loss" -> f"${exampleBased.hloss}%.3f",
     "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f",
+    "Sub-One-Acc" -> f"${exampleBased.subsetOneAcc}%.3f",
 
     // Label stats
     "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
@@ -73,12 +74,13 @@ case class LabelMetrics(predicted: RDD[Article]) {
 // Example-based metrics
 case class ExampleBased(predicted: RDD[Article], cats: Set[String]) {
   val p = predicted.count.toDouble
-  lazy val subsetAcc = predicted.filter(p => p.pred == p.iptc).count / p
-  lazy val hloss     = predicted.map(p => (p.iptc.union(p.pred) -- p.iptc.intersect(p.pred)).size.toDouble / p.iptc.union(p.pred).size).sum / p
-  lazy val precision = predicted.filter(_.pred.nonEmpty).map(p => p.iptc.intersect(p.pred).size.toDouble / p.pred.size).sum / p
-  lazy val recall    = predicted.map(p => p.iptc.intersect(p.pred).size.toDouble / p.iptc.size).sum / p
-  lazy val accuracy  = predicted.map(p => p.iptc.intersect(p.pred).size.toDouble / p.iptc.union(p.pred).size).sum / p
-  lazy val fscore    = 2 * (precision * recall) / (precision + recall)
+  lazy val subsetAcc    = predicted.filter(p => p.pred == p.iptc).count / p
+  lazy val subsetOneAcc = predicted.filter(p => p.pred.intersect(p.iptc).nonEmpty). count / p
+  lazy val hloss        = predicted.map(p => (p.iptc.union(p.pred) -- p.iptc.intersect(p.pred)).size.toDouble / p.iptc.union(p.pred).size).sum / p
+  lazy val precision    = predicted.filter(_.pred.nonEmpty).map(p => p.iptc.intersect(p.pred).size.toDouble / p.pred.size).sum / p
+  lazy val recall       = predicted.map(p => p.iptc.intersect(p.pred).size.toDouble / p.iptc.size).sum / p
+  lazy val accuracy     = predicted.map(p => p.iptc.intersect(p.pred).size.toDouble / p.iptc.union(p.pred).size).sum / p
+  lazy val fscore       = 2 * (precision * recall) / (precision + recall)
 }
 
 // Label-based metrics

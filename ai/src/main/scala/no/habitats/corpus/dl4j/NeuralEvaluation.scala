@@ -10,6 +10,7 @@ import org.deeplearning4j.datasets.iterator.DataSetIterator
 import org.deeplearning4j.eval.Evaluation
 import org.deeplearning4j.nn.conf.layers.{DenseLayer, GravesLSTM}
 import org.deeplearning4j.nn.multilayer.MultiLayerNetwork
+import org.nd4j.linalg.dataset.DataSet
 
 import scala.util.Try
 
@@ -78,7 +79,7 @@ object NeuralEvaluation {
     W2VLoader.preload()
     val start = System.currentTimeMillis()
     while (testIter.hasNext && batchesToEval.forall((count * batch) < _)) {
-      val t = testIter.next(batch)
+      val t: DataSet = testIter.next(batch)
       val features = t.getFeatureMatrix
       val labels = t.getLabels
       if (t.getFeaturesMaskArray != null) {
@@ -149,6 +150,7 @@ object NeuralEvaluation {
         //        "Ex.F-score" -> f"${exampleBased.fscore}%.3f",
         "H-Loss" -> f"${exampleBased.hloss}%.3f",
         "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f",
+        "Sub-One-Acc" -> f"${exampleBased.subsetOneAcc}%.3f",
 
         // Label stats
         "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
