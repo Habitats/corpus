@@ -35,7 +35,7 @@ object Tester {
   def testModels() = {
     Log.v("Testing models")
     val test = Fetcher.annotatedTestOrdered.map(_.toMinimal)
-    tester("ffn_bow_all", baseline).test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
+//    tester("ffn_bow_all", baseline).test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
 //    tester("ffn_w2v_all", baseline).test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
     tester("rnn_w2v_all", baseline).test(test, predict = true, shouldLogResults = Config.logResults.getOrElse(false))
 //    tester("nb_bow_all", baseline).test(test)

@@ -39,8 +39,6 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
     //    "Ex.Precision" -> f"${exampleBased.precision}%.3f",
     //    "Ex.Accuracy" -> f"${exampleBased.accuracy}%.3f",
     //    "Ex.F-score" -> f"${exampleBased.fscore}%.3f",
-    "H-Loss" -> f"${exampleBased.hloss}%.3f",
-    "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f",
 
     // Label-based
     "Ma.Recall" -> f"${macroAverage.recall}%.3f",
@@ -52,6 +50,9 @@ case class MLStats(predicted: RDD[Article], cats: Set[String]) {
     "Mi.Precision" -> f"${microAverage.precision}%.3f",
     "Mi.Accuracy" -> f"${microAverage.accuracy}%.3f",
     "Mi.F-score" -> f"${microAverage.fscore}%.3f",
+
+    "H-Loss" -> f"${exampleBased.hloss}%.3f",
+    "Sub-Acc" -> f"${exampleBased.subsetAcc}%.3f",
 
     // Label stats
     "LCard" -> f"${labelMetrics.labelCardinality}%.3f",
