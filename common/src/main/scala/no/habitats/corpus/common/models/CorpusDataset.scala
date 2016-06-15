@@ -72,7 +72,7 @@ object CorpusDataset {
 
   def documentVectorMlLib(article: Article, tfidf: TFIDF, ordered: Boolean): Vector = {
     val annotationIds: Map[String, Float] = annotationSet(article, tfidf, ordered)
-    val vectors: Iterable[INDArray] = annotationIds.map { case (id, tfidfVal) => Transforms.round(W2VLoader.normalize(wordVector(id).mul(tfidfVal))) }
+    val vectors: Iterable[INDArray] = annotationIds.map { case (id, tfidfVal) => W2VLoader.normalize(wordVector(id).mul(tfidfVal)) }
     MLLibUtil.toVector(vectors.reduce(_.addi(_)))
   }
 
