@@ -83,6 +83,7 @@ object SparkUtil {
         case "trainRNNW2V" => Trainer.trainRNNW2V()
         case "trainFFNW2V" => Trainer.trainFFNW2V()
         case "trainFFNW2VInc" => Trainer.trainIncrementalFFN()
+        case "trainFFNW2VInc2" => Trainer.trainIncrementalFFN2()
         case "trainFFNBoW" => Trainer.trainFFNBoW()
         case "trainNaiveW2V" => Trainer.trainNaiveW2V()
         case "trainNaiveBoW" => Trainer.trainNaiveBoW()
