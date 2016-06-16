@@ -129,7 +129,15 @@ object Trainer extends Serializable {
   def trainIncrementalFFN() = {
     for(i <- 5000 until 200000 by 5000) {
       val train = sc.parallelize(Fetcher.annotatedTrainOrdered.take(i))
-      val validation = Fetcher.annotatedValidationOrdered
+      val validation = sc.parallelize(Fetcher.annotatedValidationOrdered.take(50000))
+      FeedforwardTrainer("incremental", Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
+    }
+  }
+
+  def trainIncrementalFFN2() = {
+    for(i <- 10000 until 200000 by 10000) {
+      val train = sc.parallelize(Fetcher.annotatedTrainOrdered.take(i))
+      val validation = sc.parallelize(Fetcher.annotatedValidationOrdered.take(50000))
       FeedforwardTrainer("incremental", Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
     }
   }
