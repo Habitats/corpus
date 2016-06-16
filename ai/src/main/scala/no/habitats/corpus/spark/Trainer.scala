@@ -126,6 +126,22 @@ object Trainer extends Serializable {
     FeedforwardTrainer(Config.tag.getOrElse(Config.prefsName), Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
   }
 
+  def trainIncrementalFFN() = {
+    for(i <- 5000 until 200000 by 5000) {
+      val train = sc.parallelize(Fetcher.annotatedTrainOrdered.take(i))
+      val validation = Fetcher.annotatedValidationOrdered
+      FeedforwardTrainer("incremental", Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
+    }
+  }
+
+  def trainIncrementalNB() = {
+    for(i <- 5000 until 200000 by 5000) {
+      val train = sc.parallelize(Fetcher.annotatedTrainOrdered.take(i))
+      val validation = Fetcher.annotatedValidationOrdered
+      NaiveBayesTrainer("incremental", superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
+    }
+  }
+
   def trainFFNBoW() = {
     val (train, validation) = Fetcher.ordered()
     FeedforwardTrainer(Config.tag.getOrElse(Config.prefsName), Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainBoW(train, validation, termFrequencyThreshold = 100)
