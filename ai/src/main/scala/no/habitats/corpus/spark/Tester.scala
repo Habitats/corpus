@@ -10,6 +10,7 @@ import no.habitats.corpus.common.models.{Article, CorpusDataset}
 import no.habitats.corpus.dl4j.NeuralEvaluation
 import no.habitats.corpus.dl4j.networks.{FeedForwardIterator, RNNIterator}
 import no.habitats.corpus.mllib.{MlLibUtils, Prefs}
+import org.apache.commons.io.FileUtils
 import org.apache.spark.mllib.classification.NaiveBayesModel
 import org.apache.spark.rdd.RDD
 import org.deeplearning4j.datasets.iterator.DataSetIterator
@@ -90,7 +91,7 @@ object Tester {
     //    testBuckets(length, tester("nb_w2v_all", baseline), _.wc)
     //    testBuckets(length, tester("ffn_w2v_all", baseline), _.wc)
     //    Try(testBuckets(length, tester("ffn_bow_all", baseline), _.wc))
-    Try(testBuckets(length, tester("rnn_w2v_all", baseline), _.id.toInt))
+    Try(testBuckets(length, tester("rnn_w2v_all", baseline), _.id.toInt, predict = true, shouldLogResults = true))
   }
 
   def testTimeDecay() = {
@@ -115,7 +116,7 @@ object Tester {
   }
 
   /** Test model on every test set matching name */
-  def testBuckets(tag: String, tester: Testable, criterion: Article => Double) = {
+  def testBuckets(tag: String, tester: Testable, criterion: Article => Double, predict: Boolean = false, shouldLogResults: Boolean = false) = {
     val start = System.currentTimeMillis()
     val name = tester.name
     val resFile: String = tester.testDir + s"$name.txt"
@@ -135,7 +136,7 @@ object Tester {
       .sortBy(_._1)
     rdds.foreach { case (index, n) => {
       Log.toFile(s"$tag group: $index -  min: ${Try(n.map(criterion).min).getOrElse("N/A")} - max: ${Try(n.map(criterion).max).getOrElse("N/A")}", resFileLabels)
-      tester.test(n, iteration = index)
+      tester.test(n, iteration = index, predict = predict, shouldLogResults = shouldLogResults)
     }
     }
     Log.toFile(s"Testing finished in ${SparkUtil.prettyTime(System.currentTimeMillis() - start)}", resFile)
@@ -149,6 +150,7 @@ sealed trait Testable {
 
   val modelDir: String = Config.modelDir(name, tag)
   val testDir : String = Config.testDir(name, tag)
+  val predDir : String = Config.predictionPath(name, tag)
 
   def iter(test: CorpusDataset, label: String): DataSetIterator = ???
 
@@ -170,10 +172,11 @@ sealed trait Testable {
   }
 
   def logResults(articles: RDD[Article]) = {
+    FileUtils.deleteQuietly(new File(predDir))
     articles.sortBy(_.id).foreach(a => {
       a.pred.foreach(p => {
-        val folder: String = Config.dataPath + s"predictions/$name/" + (if (a.iptc.contains(p)) "tp" else "fp")
-        Log.saveToFile(a.toStringFull, folder + p)
+        val folder: String = predDir + (if (a.iptc.contains(p)) "tp/" else "fp/")
+        Log.saveToFile(a.toStringFull, folder + p, overwrite = false)
       })
     })
   }

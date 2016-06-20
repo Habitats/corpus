@@ -111,6 +111,7 @@ object Config {
   def modelDir(name: String, tag: String): String = formatPath(conf.getProperty("model_path")) + tag + "/" + name + "/model/"
   def testDir(name: String, tag: String): String = formatPath(conf.getProperty("model_path")) + tag + "/" + name + "/test/"
   def trainDir(name: String, tag: String): String = formatPath(conf.getProperty("model_path")) + tag + "/" + name + "/train/"
+  def predictionPath(name: String, tag: String): String = formatPath(conf.getProperty("model_path")) + tag + "/" + name + "/predictions/"
 
   def getArgs: Arguments = args
   def prefsName: String = args.copy(job = None).toString.replaceAll("\\s+|,", "_").replaceAll("_+", "_")
