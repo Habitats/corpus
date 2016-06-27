@@ -76,8 +76,9 @@ object SparkUtil {
         case "tnesDocumentVectors" => tnesDocumentVectors()
         case "tnesWordVectors" => tnesWordVectors()
         case "stats" =>
-          CorpusStats.labelCompute(Fetcher.annotatedTrainOrdered)
-//          CorpusStats.labelDiversity(Fetcher.annotatedRddMinimal)
+//          CorpusStats.labelCompute(Fetcher.annotatedTrainOrdered)
+          new CorpusStats(Fetcher.annotatedTrainOrdered, "equal_annotations").equalAnnotations()
+        //          CorpusStats.labelDiversity(Fetcher.annotatedRddMinimal)
 
         // Modelling
         case "trainRNNW2V" => Trainer.trainRNNW2V()

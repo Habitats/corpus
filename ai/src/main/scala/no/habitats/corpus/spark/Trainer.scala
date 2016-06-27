@@ -135,17 +135,17 @@ object Trainer extends Serializable {
   }
 
   def trainIncrementalFFN2() = {
-    for(i <- 10000 until 200000 by 10000) {
+    for(i <- Seq(100, 250, 500, 1000, 2000, 3000, 5000, 10000, 20000, 50000, 100000, 200000, 500000)) {
       val train = sc.parallelize(Fetcher.annotatedTrainOrdered.take(i))
-      val validation = sc.parallelize(Fetcher.annotatedValidationOrdered.take(50000))
+      val validation = sc.parallelize(Fetcher.annotatedValidationOrdered.take(10000))
       FeedforwardTrainer("incremental", Seq(Config.learningRate.getOrElse(0.05)), superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
     }
   }
 
   def trainIncrementalNB() = {
-    for(i <- 5000 until 200000 by 5000) {
+    for(i <- Seq(100, 250, 500, 1000, 2000, 3000, 5000, 10000, 20000, 50000, 100000, 200000, 500000)) {
       val train = sc.parallelize(Fetcher.annotatedTrainOrdered.take(i))
-      val validation = Fetcher.annotatedValidationOrdered
+      val validation = sc.parallelize(Fetcher.annotatedValidationOrdered.take(10000))
       NaiveBayesTrainer("incremental", superSample = Config.superSample.getOrElse(false)).trainW2V(train, validation)
     }
   }

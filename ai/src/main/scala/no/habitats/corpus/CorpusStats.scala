@@ -47,6 +47,11 @@ case class CorpusStats(rdd: RDD[Article], name: String) {
     }
   }
 
+  def equalAnnotations() = {
+    val res = rdd.filter(a => a.ann.size > 3).groupBy(_.ann.values.map(_.phrase).toSet).filter(_._2.size > 2).map{case (k,v) => k.mkString(", ") + "\n" + v.map(_.toResult).mkString("\n")}.collect.mkString("\n\n")
+    Log.toFile(res, Config.dataPath + "equal_annotations.txt")
+  }
+
   def termFrequencyAnalysis(): Unit = {
     var filtered = this.rdd
     for (i <- (0 until 10) ++ (10 until 100 by 10) ++ (100 until 1000 by 100) ++ (1000 until 10000 by 1000)) {
