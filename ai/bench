@@ -1,0 +1,64 @@
+Numbers are average ms over 10 last iterations. Batches aren't identical, so some vary.
+
+### Single
+Google (32c) 1x OMP_NUM_THREADS=1 MKL_NUM_THREADS=32, maxing 100% on 32c
+35431
+
+Google (32c) 1x OMP_NUM_THREADS=1 MKL_NUM_THREADS=32, maxing 100% on 16c
+8934
+11132
+11892
+10746
+
+Google (32c) 1x OMP_NUM_THREADS=2 MKL_NUM_THREADS=32, maxing 100% on 16c
+7911
+10311
+10991
+10212
+
+Google (32c) 1x OMP_NUM_THREADS=4 MKL_NUM_THREADS=32, maxing 100% on 16c
+7399
+9681
+
+Google (32c) 1x OMP_NUM_THREADS=4 MKL_NUM_THREADS=32, maxing 100% on 16c
+7796
+9295
+
+Google (32c) 1x OMP_NUM_THREADS=32 MKL_NUM_THREADS=32, maxing 100% on 16c
+7816
+9070
+
+### Two jobs at the same time
+Google (32c) 2x OMP_NUM_THREADS=2 MKL_NUM_THREADS=32 
+11681 + 10085 
+14346 + 13147
+18059 + 16360 
+
+Google (32c) 2x OMP_NUM_THREADS=1 MKL_NUM_THREADS=32 
+11308 + 11620
+14761 + 14587
+15911 + 15770
+
+### Single 
+Joyent (20c) 1x 
+38887
+
+Joyent (20c) 1x OMP_NUM_THREADS=1 MKL_NUM_THREADS=32 
+10303
+10599
+12789
+10235
+10418
+
+Joyent (20c) 1x OMP_NUM_THREADS=2 MKL_NUM_THREADS=32 
+9600
+10644
+13396
+
+11032
+11584
+
+### Two jobs at the same time
+Joyent (20c) 2x OMP_NUM_THREADS=2 MKL_NUM_THREADS=32 
+22880 + 22562
+29853 + 29889
